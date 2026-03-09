@@ -26,7 +26,6 @@ const menuSections: MenuSection[] = [
     items: [
       { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
       { to: "/owner/qna", label: "AI QnA", icon: "chat_bubble" },
-      { to: "/owner/pos-simulation", label: "POS 시뮬레이션", icon: "terminal" },
     ],
   },
   {

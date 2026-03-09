@@ -11,7 +11,6 @@ const breadcrumbMap: Record<string, Crumb[]> = {
   "/overview":                [{ label: "대시보드" }],
   "/owner/dashboard":         [{ label: "점주" }, { label: "점주 홈" }],
   "/owner/qna":               [{ label: "점주" }, { label: "AI QnA" }],
-  "/owner/pos-simulation":    [{ label: "점주" }, { label: "POS 시뮬레이션" }],
   "/supervisor/dashboard":    [{ label: "SV" }, { label: "SV 홈" }],
   "/supervisor/analysis":     [{ label: "SV" }, { label: "SV 분석" }],
   "/supervisor/actions":      [{ label: "SV" }, { label: "액션 관리" }],

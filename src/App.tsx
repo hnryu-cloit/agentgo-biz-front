@@ -5,7 +5,6 @@ import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { OwnerDashboardPage } from "@/pages/OwnerDashboardPage";
 import { QnaPage } from "@/pages/QnaPage";
-import { PosSimulationPage } from "@/pages/PosSimulationPage";
 import { SupervisorDashboardPage } from "@/pages/SupervisorDashboardPage";
 import { SvAnalysisPage } from "@/pages/SvAnalysisPage";
 import { SvActionsPage } from "@/pages/SvActionsPage";
@@ -36,7 +35,6 @@ export const App: React.FC = () => {
         {/* 점주 */}
         <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
         <Route path="/owner/qna" element={<QnaPage />} />
-        <Route path="/owner/pos-simulation" element={<PosSimulationPage />} />
 
         {/* SV */}
         <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
