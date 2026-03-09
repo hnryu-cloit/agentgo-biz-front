@@ -1,5 +1,6 @@
 import type React from "react";
-import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import Logo from "@/assets/logo.svg";
 
@@ -76,7 +77,29 @@ const menuSections: MenuSection[] = [
   },
 ];
 
+function getInitialOpen(pathname: string): Set<string> {
+  const open = new Set<string>();
+  for (const s of menuSections) {
+    if (s.section && s.items.some((item) => pathname.startsWith(item.to))) {
+      open.add(s.section);
+    }
+  }
+  return open;
+}
+
 export const Sidebar: React.FC = () => {
+  const { pathname } = useLocation();
+  const [openSections, setOpenSections] = useState<Set<string>>(() => getInitialOpen(pathname));
+
+  const toggle = (section: string) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  };
+
   return (
     <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-border/75 bg-white/92 backdrop-blur-sm lg:flex">
       <div className="flex w-full flex-col p-5">
@@ -85,33 +108,76 @@ export const Sidebar: React.FC = () => {
         </NavLink>
 
         <nav className="mt-5 flex-1 space-y-0.5 overflow-y-auto pb-4">
-          {menuSections.map((section, sIdx) => (
-            <div key={sIdx} className={sIdx > 0 ? "mt-3" : ""}>
-              {section.section && (
-                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                  {section.section}
-                </p>
-              )}
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
-                      isActive
-                        ? "border border-[#CFE0FF] bg-[#EDF3FF] text-[#2454C8]"
-                        : "border border-transparent text-slate-600 hover:border-[#E4EBF8] hover:bg-[#F7FAFF] hover:text-slate-900",
-                    )
-                  }
+          {menuSections.map((section, sIdx) => {
+            if (!section.section) {
+              return (
+                <div key={sIdx}>
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
+                          isActive
+                            ? "border border-[#CFE0FF] bg-[#EDF3FF] text-[#2454C8]"
+                            : "border border-transparent text-slate-600 hover:border-[#E4EBF8] hover:bg-[#F7FAFF] hover:text-slate-900",
+                        )
+                      }
+                    >
+                      <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              );
+            }
+
+            const isOpen = openSections.has(section.section);
+            const hasActive = section.items.some((item) => pathname.startsWith(item.to));
+
+            return (
+              <div key={sIdx} className="mt-3">
+                <button
+                  onClick={() => toggle(section.section!)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-1.5 transition-colors",
+                    hasActive ? "text-[#2454C8]" : "text-slate-400 hover:text-slate-600",
+                  )}
                 >
-                  <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </div>
-          ))}
+                  <span className="text-[10px] font-semibold uppercase tracking-widest">
+                    {section.section}
+                  </span>
+                  <span className="material-symbols-outlined text-[14px]">
+                    {isOpen ? "expand_less" : "expand_more"}
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="mt-0.5 space-y-0.5">
+                    {section.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
+                            isActive
+                              ? "border border-[#CFE0FF] bg-[#EDF3FF] text-[#2454C8]"
+                              : "border border-transparent text-slate-600 hover:border-[#E4EBF8] hover:bg-[#F7FAFF] hover:text-slate-900",
+                          )
+                        }
+                      >
+                        <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="border-t border-border/60 pt-4 text-center">
