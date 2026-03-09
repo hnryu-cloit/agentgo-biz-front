@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useState } from "react";
 import {
   Network,
@@ -9,6 +10,11 @@ import {
   Map,
   Server,
   AlertTriangle,
+  CheckCircle2,
+  Clock,
+  RotateCcw,
+  Database,
+  TriangleAlert,
 } from "lucide-react";
 
 type TabKey = "agents" | "workflows" | "data" | "risk";
@@ -28,6 +34,60 @@ const initialAgents: Agent[] = [
   { id: "a3", name: "실행 에이전트", health: 92, lastRun: "1분 전", dailyTasks: 86, status: "정상" },
   { id: "a4", name: "OCR 에이전트", health: 78, lastRun: "45분 전", dailyTasks: 21, status: "주의" },
   { id: "a5", name: "리포트 에이전트", health: 100, lastRun: "10분 전", dailyTasks: 15, status: "정상" },
+];
+
+type WorkflowRun = {
+  id: string;
+  name: string;
+  stage: "분석" | "전략" | "실행";
+  status: "completed" | "running" | "failed" | "pending";
+  store: string;
+  duration?: string;
+  startedAt: string;
+};
+
+const workflowRuns: WorkflowRun[] = [
+  { id: "w1", name: "매출 하락 분석 → 프로모션 전략 → 쿠폰 발송", stage: "실행", status: "completed", store: "A매장", duration: "2분 14초", startedAt: "14:22" },
+  { id: "w2", name: "이탈 고객 세그먼트 → RFM 오퍼 → 포인트 지급", stage: "전략", status: "running", store: "C매장", startedAt: "14:31" },
+  { id: "w3", name: "메뉴 마진 분석 → 가격 조정 전략", stage: "분석", status: "failed", store: "B매장", duration: "48초", startedAt: "13:55" },
+  { id: "w4", name: "신규 회원 온보딩 → 웰컴 쿠폰 발송", stage: "실행", status: "completed", store: "전체", duration: "1분 03초", startedAt: "13:10" },
+  { id: "w5", name: "공지 OCR → 이행 체크리스트 배포", stage: "실행", status: "completed", store: "전체", duration: "38초", startedAt: "12:45" },
+];
+
+type DataQuality = {
+  storeId: string;
+  name: string;
+  score: number;
+  sales: boolean;
+  cost: boolean;
+  customer: boolean;
+  review: boolean;
+  lastUpdate: string;
+};
+
+const dataQualityRows: DataQuality[] = [
+  { storeId: "S001", name: "A매장 (강남)", score: 98, sales: true, cost: true, customer: true, review: true, lastUpdate: "오늘 09:00" },
+  { storeId: "S002", name: "B매장 (홍대)", score: 74, sales: true, cost: false, customer: true, review: false, lastUpdate: "어제 18:30" },
+  { storeId: "S003", name: "C매장 (신촌)", score: 91, sales: true, cost: true, customer: true, review: false, lastUpdate: "오늘 08:50" },
+  { storeId: "S004", name: "D매장 (건대)", score: 55, sales: false, cost: false, customer: true, review: false, lastUpdate: "3일 전" },
+  { storeId: "S005", name: "E매장 (이태원)", score: 88, sales: true, cost: true, customer: false, review: true, lastUpdate: "오늘 10:15" },
+];
+
+type RiskCase = {
+  id: string;
+  type: "취소급증" | "할인과다" | "포인트누수";
+  store: string;
+  detail: string;
+  level: "P0" | "P1" | "P2";
+  status: "open" | "acknowledged" | "resolved";
+  detectedAt: string;
+};
+
+const riskCases: RiskCase[] = [
+  { id: "r1", type: "취소급증", store: "A매장", detail: "전일 대비 취소율 +18%p (5.2% → 23.4%)", level: "P0", status: "open", detectedAt: "오늘 14:12" },
+  { id: "r2", type: "할인과다", store: "D매장", detail: "할인 비중 32% 초과 (임계값: 20%)", level: "P1", status: "acknowledged", detectedAt: "오늘 11:40" },
+  { id: "r3", type: "포인트누수", store: "B매장", detail: "포인트 사용 대비 발급 비율 이상 (3.1x)", level: "P1", status: "open", detectedAt: "어제 22:05" },
+  { id: "r4", type: "취소급증", store: "C매장", detail: "주말 취소율 연속 2주 증가 추세", level: "P2", status: "resolved", detectedAt: "3일 전" },
 ];
 
 const regions = [
@@ -195,9 +255,145 @@ export const HqControlTowerPage = () => {
                 ))}
             </div>
           )}
-          {tab !== "agents" && (
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 text-sm text-slate-700">
-              {tab} 탭 상세 내용은 준비 중입니다.
+          {tab === "workflows" && (
+            <div className="space-y-3">
+              {workflowRuns.map((wf) => {
+                const stageColors: Record<WorkflowRun["stage"], string> = {
+                  "분석": "bg-blue-50 text-blue-700",
+                  "전략": "bg-purple-50 text-purple-700",
+                  "실행": "bg-emerald-50 text-emerald-700",
+                };
+                const statusInfo: Record<WorkflowRun["status"], { icon: React.ReactNode; label: string; cls: string }> = {
+                  completed: { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "완료", cls: "text-emerald-600" },
+                  running: { icon: <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />, label: "실행중", cls: "text-primary" },
+                  failed: { icon: <AlertTriangle className="h-4 w-4 text-red-500" />, label: "실패", cls: "text-red-600" },
+                  pending: { icon: <Clock className="h-4 w-4 text-slate-400" />, label: "대기", cls: "text-slate-400" },
+                };
+                const si = statusInfo[wf.status];
+                return (
+                  <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-border bg-white p-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${stageColors[wf.stage]}`}>{wf.stage}</span>
+                        <p className="text-sm font-medium text-slate-800 truncate">{wf.name}</p>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-400">{wf.store} · {wf.startedAt} 시작{wf.duration && ` · ${wf.duration} 소요`}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className={`flex items-center gap-1.5 text-xs font-medium ${si.cls}`}>
+                        {si.icon}
+                        {si.label}
+                      </div>
+                      {wf.status === "failed" && (
+                        <button className="flex items-center gap-1 rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-700 hover:bg-[#F8FAFF]">
+                          <RotateCcw className="h-3 w-3" />재실행
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {tab === "data" && (
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="bg-[#F7FAFF] text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">매장</th>
+                    <th className="px-4 py-3 text-center">품질 점수</th>
+                    <th className="px-4 py-3 text-center">매출</th>
+                    <th className="px-4 py-3 text-center">원가</th>
+                    <th className="px-4 py-3 text-center">고객</th>
+                    <th className="px-4 py-3 text-center">리뷰</th>
+                    <th className="px-4 py-3">최근 업데이트</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataQualityRows.map((row) => {
+                    const scoreColor = row.score >= 90 ? "text-emerald-600" : row.score >= 70 ? "text-amber-600" : "text-red-600";
+                    const scoreBg = row.score >= 90 ? "bg-emerald-50" : row.score >= 70 ? "bg-amber-50" : "bg-red-50";
+                    const check = (v: boolean) => v
+                      ? <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                      : <TriangleAlert className="h-4 w-4 text-red-400 mx-auto" />;
+                    return (
+                      <tr key={row.storeId} className="border-t border-border">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-slate-800">{row.name}</p>
+                          <p className="text-[11px] text-slate-400">{row.storeId}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${scoreBg} ${scoreColor}`}>
+                            {row.score}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">{check(row.sales)}</td>
+                        <td className="px-4 py-3 text-center">{check(row.cost)}</td>
+                        <td className="px-4 py-3 text-center">{check(row.customer)}</td>
+                        <td className="px-4 py-3 text-center">{check(row.review)}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{row.lastUpdate}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {tab === "risk" && (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                {(["취소급증", "할인과다", "포인트누수"] as const).map((type) => {
+                  const count = riskCases.filter((r) => r.type === type && r.status !== "resolved").length;
+                  const icons: Record<string, React.ReactNode> = {
+                    "취소급증": <AlertTriangle className="h-5 w-5 text-red-500" />,
+                    "할인과다": <Database className="h-5 w-5 text-amber-500" />,
+                    "포인트누수": <ShieldAlert className="h-5 w-5 text-orange-500" />,
+                  };
+                  return (
+                    <div key={type} className={`rounded-xl border p-4 ${count > 0 ? "border-red-200 bg-red-50" : "border-[#DCE4F3] bg-[#F7FAFF]"}`}>
+                      <div className="flex items-center gap-2">
+                        {icons[type]}
+                        <p className="text-sm font-semibold text-slate-800">{type}</p>
+                      </div>
+                      <p className={`mt-2 text-2xl font-bold ${count > 0 ? "text-red-600" : "text-slate-400"}`}>{count}건</p>
+                      <p className="mt-0.5 text-xs text-slate-500">미처리 경보</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full min-w-[600px] text-left text-sm">
+                  <thead className="bg-[#F7FAFF] text-slate-600">
+                    <tr>
+                      <th className="px-4 py-3">유형</th>
+                      <th className="px-4 py-3">매장</th>
+                      <th className="px-4 py-3">내용</th>
+                      <th className="px-4 py-3">등급</th>
+                      <th className="px-4 py-3">상태</th>
+                      <th className="px-4 py-3">탐지 시각</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {riskCases.map((r) => {
+                      const levelColor = r.level === "P0" ? "border-red-200 bg-red-50 text-red-700" : r.level === "P1" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-[#DCE4F3] bg-[#F7FAFF] text-slate-600";
+                      const statusLabel = r.status === "open" ? "미처리" : r.status === "acknowledged" ? "확인됨" : "해결됨";
+                      const statusColor = r.status === "open" ? "text-red-600" : r.status === "acknowledged" ? "text-amber-600" : "text-emerald-600";
+                      return (
+                        <tr key={r.id} className="border-t border-border">
+                          <td className="px-4 py-3 font-medium text-slate-800">{r.type}</td>
+                          <td className="px-4 py-3 text-slate-600">{r.store}</td>
+                          <td className="px-4 py-3 text-slate-600 text-xs">{r.detail}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded border px-2 py-0.5 text-xs font-bold ${levelColor}`}>{r.level}</span>
+                          </td>
+                          <td className={`px-4 py-3 text-xs font-medium ${statusColor}`}>{statusLabel}</td>
+                          <td className="px-4 py-3 text-xs text-slate-500">{r.detectedAt}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

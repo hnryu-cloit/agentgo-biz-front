@@ -14,6 +14,11 @@ import {
   UtensilsCrossed,
   FileText,
   CheckCircle2,
+  Star,
+  AlertTriangle,
+  Megaphone,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
 
@@ -62,6 +67,38 @@ const kpis = [
 const dayCurve = [52, 61, 74, 48, 57, 83, 69];
 const avgCurve = [60, 65, 70, 55, 62, 75, 72];
 
+// PQ 분해 데이터
+const pqData = [
+  { label: "이번 주", sales: 870, qty: 124, unitPrice: 7016 },
+  { label: "전주", sales: 989, qty: 151, unitPrice: 6549 },
+];
+
+// 마진 경보 메뉴
+type MarginAlert = {
+  menu: string;
+  margin: number;
+  target: number;
+  cost: number;
+  price: number;
+  suggestedPrice: number;
+  risk: "high" | "medium";
+};
+
+const marginAlerts: MarginAlert[] = [
+  { menu: "메뉴B (아메리카노)", margin: 18.1, target: 22, cost: 1200, price: 4500, suggestedPrice: 5000, risk: "high" },
+  { menu: "메뉴F (카페라떼)", margin: 20.4, target: 22, cost: 1800, price: 5500, suggestedPrice: 5800, risk: "medium" },
+  { menu: "메뉴K (샌드위치)", margin: 19.7, target: 24, cost: 3200, price: 6900, suggestedPrice: 7500, risk: "high" },
+];
+
+// 리뷰 감성 데이터
+const reviewData = {
+  positive: ["친절한 직원", "깔끔한 매장", "맛있어요", "커피 맛 좋음", "가성비 좋음"],
+  negative: ["대기 시간 길어요", "주차 불편", "가격 비쌈", "양이 적어요"],
+  responseGuide: "대기 시간 관련 불만이 가장 많습니다. 피크타임(12~13시) 추가 인력 배치를 권장합니다.",
+  total: 284,
+  posRate: 71,
+};
+
 export const OwnerDashboardPage: React.FC = () => {
   const store = storeResources[0];
   const [proofModal, setProofModal] = useState<number | null>(null);
@@ -71,10 +108,44 @@ export const OwnerDashboardPage: React.FC = () => {
   const currentProof = useMemo(() => actions.find((a) => a.id === proofModal) ?? null, [proofModal]);
   const currentConfirm = useMemo(() => actions.find((a) => a.id === confirmModal) ?? null, [confirmModal]);
   const maxCurve = Math.max(...dayCurve, ...avgCurve);
+  const maxPQ = Math.max(pqData[0].sales, pqData[1].sales);
 
   return (
     <>
       <div className="space-y-6">
+
+        {/* Morning Briefing */}
+        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 md:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary">
+                <Megaphone className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">모닝 브리핑</p>
+                <p className="mt-0.5 text-sm font-bold text-slate-900">오늘 오전 7시 기준 브리핑입니다.</p>
+              </div>
+            </div>
+            <span className="shrink-0 text-xs text-slate-400">2026-03-08 07:00</span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3">
+              <p className="text-xs font-medium text-slate-500">전일 실적</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">매출 870,000원 (목표 104%)</p>
+              <p className="text-xs text-red-500">객수 -18% · 객단가 +2.3%</p>
+            </div>
+            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3">
+              <p className="text-xs font-medium text-slate-500">오늘 예측</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">예상 매출 912,000원</p>
+              <p className="text-xs text-emerald-600">비 예보로 배달 주문 +15% 전망</p>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <p className="text-xs font-medium text-amber-700">필수 공지</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">포장재 입고 수량 확인</p>
+              <p className="text-xs text-amber-600">마감: 3월 10일 · 미확인 1건</p>
+            </div>
+          </div>
+        </section>
 
         {/* Welcome Banner */}
         <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
@@ -155,8 +226,6 @@ export const OwnerDashboardPage: React.FC = () => {
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">지금 바로 실행 가능한 우선 액션 3가지입니다.</p>
-
-          {/* 전체 진행바 */}
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
             <div
               className="h-full rounded-full bg-primary transition-all"
@@ -175,7 +244,6 @@ export const OwnerDashboardPage: React.FC = () => {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  {/* 번호 */}
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     done.includes(action.id)
                       ? "bg-primary text-white"
@@ -226,7 +294,7 @@ export const OwnerDashboardPage: React.FC = () => {
           </div>
         </section>
 
-        {/* 차트 + 매장 정보 */}
+        {/* 차트 2개 */}
         <section className="grid gap-4 lg:grid-cols-2">
 
           {/* 시간대별 매출 */}
@@ -262,57 +330,192 @@ export const OwnerDashboardPage: React.FC = () => {
             </div>
           </article>
 
-          {/* 매장 기준 정보 */}
+          {/* PQ 분해 차트 */}
           <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
             <div className="flex items-center gap-2">
-              <UtensilsCrossed className="h-5 w-5 text-slate-400" />
-              <h3 className="text-lg font-bold text-slate-900">매장 기준 정보</h3>
+              <TrendingDown className="h-5 w-5 text-slate-400" />
+              <h3 className="text-lg font-bold text-slate-900">객단가·객수 분해</h3>
             </div>
-
-            <div className="mt-4 space-y-2.5">
-              {[
-                { icon: Phone, label: "전화", value: store?.phone },
-                { icon: Clock, label: "영업시간", value: store?.openHours },
-                { icon: Clock, label: "브레이크", value: store?.breakTime },
-                { icon: ParkingCircle, label: "주차", value: store?.parking },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5">
-                  <div className="rounded-lg bg-[#EEF4FF] p-1.5">
-                    <Icon className="h-3.5 w-3.5 text-primary" />
+            <p className="mt-0.5 text-xs text-slate-400">매출 변화를 두 요인으로 분해한 분석입니다</p>
+            <div className="mt-4 space-y-4">
+              {pqData.map((d) => (
+                <div key={d.label}>
+                  <div className="mb-1.5 flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{d.label}</span>
+                    <span className="text-slate-500">{d.sales.toLocaleString()}천원</span>
                   </div>
-                  <span className="w-16 shrink-0 text-xs font-medium text-slate-400">{label}</span>
-                  <span className="text-sm text-slate-700">{value}</span>
+                  <div className="flex h-8 overflow-hidden rounded-lg">
+                    <div
+                      className="flex items-center justify-center bg-primary/80 text-[10px] font-bold text-white transition-all"
+                      style={{ width: `${(d.qty / (d.qty + d.unitPrice / 1000)) * 100}%` }}
+                    >
+                      객수
+                    </div>
+                    <div
+                      className="flex items-center justify-center bg-primary/30 text-[10px] font-bold text-primary transition-all"
+                      style={{ width: `${(d.unitPrice / 1000 / (d.qty + d.unitPrice / 1000)) * 100}%` }}
+                    >
+                      객단가
+                    </div>
+                  </div>
+                  <div className="mt-1 flex justify-between text-xs text-slate-400">
+                    <span>객수 {d.qty}명</span>
+                    <span>객단가 {d.unitPrice.toLocaleString()}원</span>
+                  </div>
+                </div>
+              ))}
+              <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3 text-xs text-slate-600">
+                <span className="font-semibold text-slate-800">해석:</span> 객수 감소(-18%)가 주원인이며, 객단가는 소폭 상승(+2.3%)했습니다. 객수 회복이 우선 과제입니다.
+              </div>
+            </div>
+          </article>
+        </section>
+
+        {/* 마진 경보 + 리뷰 감성 */}
+        <section className="grid gap-4 lg:grid-cols-2">
+
+          {/* 메뉴 마진 경보 */}
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <h3 className="text-lg font-bold text-slate-900">메뉴 마진 경보</h3>
+              <span className="ml-auto rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">
+                위험 {marginAlerts.filter((m) => m.risk === "high").length}건
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">원가 상승으로 마진 하락이 감지된 메뉴입니다.</p>
+
+            <div className="mt-4 space-y-3">
+              {marginAlerts.map((alert) => (
+                <div
+                  key={alert.menu}
+                  className={`rounded-xl border p-3 ${
+                    alert.risk === "high"
+                      ? "border-red-200 bg-red-50"
+                      : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-900">{alert.menu}</p>
+                    <span className={`rounded px-2 py-0.5 text-xs font-bold text-white ${
+                      alert.risk === "high" ? "bg-red-500" : "bg-amber-500"
+                    }`}>
+                      {alert.risk === "high" ? "위험" : "주의"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                    <span>현재 마진 <strong className="text-red-600">{alert.margin}%</strong></span>
+                    <span>목표 {alert.target}%</span>
+                    <span className="ml-auto text-primary">권장가 {alert.suggestedPrice.toLocaleString()}원</span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/60">
+                    <div
+                      className={`h-full rounded-full ${alert.risk === "high" ? "bg-red-400" : "bg-amber-400"}`}
+                      style={{ width: `${(alert.margin / alert.target) * 100}%` }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
+          </article>
 
-            {/* 시그니처 메뉴 */}
-            {store?.signatureMenus && (
-              <div className="mt-3">
-                <p className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-                  <UtensilsCrossed className="h-3.5 w-3.5" />시그니처 메뉴
+          {/* 리뷰 감성 요약 */}
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+            <div className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-400" />
+              <h3 className="text-lg font-bold text-slate-900">리뷰 감성 요약</h3>
+              <span className="ml-auto text-sm text-slate-500">총 {reviewData.total}건</span>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#DCE4F3]">
+                <div className="h-full rounded-full bg-emerald-400" style={{ width: `${reviewData.posRate}%` }} />
+              </div>
+              <span className="text-sm font-semibold text-emerald-600">{reviewData.posRate}%</span>
+              <span className="text-xs text-slate-400">긍정</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                  <TrendingUp className="h-3.5 w-3.5" />긍정 키워드
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {store.signatureMenus.map((menu) => (
-                    <span key={menu} className="rounded-full border border-[#DCE4F3] bg-[#F7FAFF] px-2.5 py-1 text-xs text-slate-600">
-                      {menu}
+                  {reviewData.positive.map((kw) => (
+                    <span key={kw} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                      {kw}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
-
-            {store?.menuPdfFile && (
-              <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5">
-                <div className="rounded-lg bg-[#EEF4FF] p-1.5">
-                  <FileText className="h-3.5 w-3.5 text-primary" />
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-red-600">
+                  <TrendingDown className="h-3.5 w-3.5" />부정 키워드
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {reviewData.negative.map((kw) => (
+                    <span key={kw} className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-600">
+                      {kw}
+                    </span>
+                  ))}
                 </div>
-                <span className="text-xs text-slate-500">{store.menuPdfFile}</span>
               </div>
-            )}
-          </article>
+            </div>
 
+            <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
+              <p className="text-xs font-semibold text-slate-700">대응 가이드</p>
+              <p className="mt-0.5 text-xs text-slate-500">{reviewData.responseGuide}</p>
+            </div>
+          </article>
         </section>
+
+        {/* 매장 기준 정보 */}
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="h-5 w-5 text-slate-400" />
+            <h3 className="text-lg font-bold text-slate-900">매장 기준 정보</h3>
+          </div>
+
+          <div className="mt-4 grid gap-2.5 md:grid-cols-2">
+            {[
+              { icon: Phone, label: "전화", value: store?.phone },
+              { icon: Clock, label: "영업시간", value: store?.openHours },
+              { icon: Clock, label: "브레이크", value: store?.breakTime },
+              { icon: ParkingCircle, label: "주차", value: store?.parking },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5">
+                <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                  <Icon className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <span className="w-16 shrink-0 text-xs font-medium text-slate-400">{label}</span>
+                <span className="text-sm text-slate-700">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {store?.signatureMenus && (
+            <div className="mt-3">
+              <p className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+                <UtensilsCrossed className="h-3.5 w-3.5" />시그니처 메뉴
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {store.signatureMenus.map((menu) => (
+                  <span key={menu} className="rounded-full border border-[#DCE4F3] bg-[#F7FAFF] px-2.5 py-1 text-xs text-slate-600">
+                    {menu}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {store?.menuPdfFile && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5">
+              <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <span className="text-xs text-slate-500">{store.menuPdfFile}</span>
+            </div>
+          )}
+        </article>
       </div>
 
       {/* 근거 모달 */}
