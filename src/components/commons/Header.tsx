@@ -4,28 +4,30 @@ import { useLocation } from "react-router-dom";
 import { Bell, X } from "lucide-react";
 import { sessionUser } from "@/data/sessionUser";
 
-const pageTitleMap: Record<string, string> = {
-  "/": "대시보드",
-  "/overview": "개요",
-  "/owner/dashboard": "점주 홈",
-  "/owner/qna": "AI QnA",
-  "/owner/pos-simulation": "POS 시뮬레이션",
-  "/supervisor/dashboard": "수퍼바이저 보드",
-  "/supervisor/analysis": "SV 분석",
-  "/supervisor/actions": "액션 관리",
-  "/supervisor/visit-log": "방문 기록",
-  "/hq/control-tower": "컨트롤 타워",
-  "/hq/notices": "공지 OCR",
-  "/hq/alerts/detail": "이상 경보 상세",
-  "/marketing/campaigns": "캠페인 설계",
-  "/marketing/rfm": "고객 세그먼트",
-  "/marketing/performance": "캠페인 성과",
-  "/analysis/roi": "프로모션 ROI",
-  "/analysis/benchmark": "매장 벤치마크",
-  "/reports": "리포트",
-  "/settings/users": "사용자 관리",
-  "/settings/stores": "매장 설정",
-  "/data/upload": "데이터 업로드",
+type Crumb = { label: string };
+
+const breadcrumbMap: Record<string, Crumb[]> = {
+  "/":                        [{ label: "대시보드" }],
+  "/overview":                [{ label: "대시보드" }],
+  "/owner/dashboard":         [{ label: "점주" }, { label: "점주 홈" }],
+  "/owner/qna":               [{ label: "점주" }, { label: "AI QnA" }],
+  "/owner/pos-simulation":    [{ label: "점주" }, { label: "POS 시뮬레이션" }],
+  "/supervisor/dashboard":    [{ label: "SV" }, { label: "SV 홈" }],
+  "/supervisor/analysis":     [{ label: "SV" }, { label: "SV 분석" }],
+  "/supervisor/actions":      [{ label: "SV" }, { label: "액션 관리" }],
+  "/supervisor/visit-log":    [{ label: "SV" }, { label: "방문 기록" }],
+  "/hq/control-tower":        [{ label: "본사" }, { label: "컨트롤 타워" }],
+  "/hq/notices":              [{ label: "본사" }, { label: "공지 OCR" }],
+  "/hq/alerts/detail":        [{ label: "본사" }, { label: "이상 경보 상세" }],
+  "/marketing/campaigns":     [{ label: "마케팅" }, { label: "캠페인 설계" }],
+  "/marketing/rfm":           [{ label: "마케팅" }, { label: "고객 세그먼트" }],
+  "/marketing/performance":   [{ label: "마케팅" }, { label: "캠페인 성과" }],
+  "/analysis/roi":            [{ label: "분석" }, { label: "프로모션 ROI" }],
+  "/analysis/benchmark":      [{ label: "분석" }, { label: "매장 벤치마크" }],
+  "/reports":                 [{ label: "리포트 / 설정" }, { label: "리포트" }],
+  "/settings/users":          [{ label: "리포트 / 설정" }, { label: "사용자 관리" }],
+  "/settings/stores":         [{ label: "리포트 / 설정" }, { label: "매장 설정" }],
+  "/data/upload":             [{ label: "데이터" }, { label: "데이터 업로드" }],
 };
 
 type Notification = {
@@ -53,7 +55,7 @@ const notifIcon: Record<Notification["type"], string> = {
 
 export const Header: React.FC = () => {
   const location = useLocation();
-  const pageTitle = pageTitleMap[location.pathname] ?? "대시보드";
+  const crumbs = breadcrumbMap[location.pathname] ?? [{ label: "대시보드" }];
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
 
@@ -68,8 +70,14 @@ export const Header: React.FC = () => {
       <div className="flex h-full items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-500">AgentGo Biz</span>
-          <span className="material-symbols-outlined text-[16px] text-slate-400">chevron_right</span>
-          <span className="text-base font-semibold text-slate-800">{pageTitle}</span>
+          {crumbs.map((crumb, i) => (
+            <span key={crumb.label} className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-slate-400">chevron_right</span>
+              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-500"}>
+                {crumb.label}
+              </span>
+            </span>
+          ))}
         </div>
 
         <div className="flex items-center gap-3">
