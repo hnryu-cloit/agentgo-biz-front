@@ -171,7 +171,7 @@ export const OwnerDashboardPage: React.FC = () => {
                 </span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">AI 매니저 가동 중</p>
+                <p className="text-sm font-semibold text-slate-900">AgentGo Biz 가동 중</p>
                 <p className="text-xs text-slate-500">3개의 새로운 제안이 있습니다</p>
               </div>
             </div>

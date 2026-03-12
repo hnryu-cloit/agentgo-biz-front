@@ -1,7 +1,8 @@
 import type React from "react";
 import { useRef, useState, useEffect } from "react";
-import { Send, Bot, User, X, MessageSquare, RotateCcw, Sparkles } from "lucide-react";
+import { Send, User, X, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Favicon from "/favicon.svg";
 
 type Message = {
   id: number;
@@ -16,7 +17,7 @@ const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
-    content: "안녕하세요! AgentGo AI 매니저입니다. 현재 페이지의 데이터나 매장 운영에 대해 궁금한 점을 질문해 주세요.",
+    content: "안녕하세요! AgentGo Biz입니다. 현재 페이지의 데이터나 매장 운영에 대해 궁금한 점을 질문해 주세요.",
     timestamp: "오전 07:00",
   },
 ];
@@ -93,25 +94,25 @@ export const FloatingAiChat: React.FC = () => {
         <div className="mb-4 flex h-[520px] w-[380px] flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-white">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
-                <Sparkles className="h-4 w-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm">
+                <img src={Favicon} alt="Icon" className="h-full w-full object-contain" />
               </div>
               <div>
-                <p className="text-sm font-bold">AgentGo AI 어시스턴트</p>
-                <p className="text-[10px] opacity-80">실시간 매장 운영 분석 중</p>
+                <p className="text-sm font-bold">AgentGo Biz 어시스턴트</p>
+                <p className="text-[10px] opacity-80 font-medium">실시간 운영 분석 지원</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => setMessages(initialMessages)}
-                className="rounded p-1 hover:bg-white/10"
+                className="rounded p-1 hover:bg-white/10 transition-colors"
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="rounded p-1 hover:bg-white/10"
+                className="rounded p-1 hover:bg-white/10 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -124,41 +125,41 @@ export const FloatingAiChat: React.FC = () => {
               {messages.map((msg) => (
                 <div key={msg.id} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "")}>
                   <div className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white",
-                    msg.role === "assistant" ? "bg-primary shadow-sm" : "bg-slate-400 shadow-sm"
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white overflow-hidden border border-slate-100 shadow-sm",
+                    msg.role === "assistant" ? "bg-white p-1" : "bg-slate-400"
                   )}>
-                    {msg.role === "assistant" ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                    {msg.role === "assistant" ? <img src={Favicon} className="h-full w-full" /> : <User className="h-4 w-4" />}
                   </div>
                   <div className={cn("flex max-w-[80%] flex-col gap-1.5", msg.role === "user" ? "items-end" : "items-start")}>
                     <div className={cn(
                       "rounded-2xl px-3 py-2 text-sm shadow-sm",
                       msg.role === "user" 
                         ? "rounded-tr-sm bg-primary text-white" 
-                        : "rounded-tl-sm border border-[#DCE4F3] bg-white text-slate-800"
+                        : "rounded-tl-sm border border-[#DCE4F3] bg-white text-slate-800 font-medium"
                     )}>
                       {msg.content}
                     </div>
                     {msg.evidence && (
                       <div className="w-full rounded-xl border border-[#DCE4F3] bg-white/50 p-2.5 shadow-sm">
-                        <p className="mb-1.5 text-[10px] font-bold text-primary">ANALYSIS BASIS</p>
+                        <p className="mb-1.5 text-[10px] font-bold text-primary uppercase tracking-wider">Analysis Basis</p>
                         <div className="space-y-1">
                           {msg.evidence.map((ev) => (
                             <div key={ev.label} className="flex justify-between text-[11px]">
-                              <span className="text-slate-400">{ev.label}</span>
-                              <span className="font-semibold text-slate-600">{ev.value}</span>
+                              <span className="text-slate-400 font-medium">{ev.label}</span>
+                              <span className="font-bold text-slate-600">{ev.value}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                    <span className="text-[9px] text-slate-400">{msg.timestamp}</span>
+                    <span className="text-[9px] font-bold text-slate-300">{msg.timestamp}</span>
                   </div>
                 </div>
               ))}
               {loading && (
                 <div className="flex gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                    <Bot className="h-4 w-4" />
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white border border-slate-100 p-1 shadow-sm">
+                    <img src={Favicon} className="h-full w-full" />
                   </div>
                   <div className="rounded-2xl rounded-tl-sm border border-[#DCE4F3] bg-white px-3 py-2 shadow-sm">
                     <div className="flex gap-1">
@@ -175,28 +176,28 @@ export const FloatingAiChat: React.FC = () => {
 
           {/* Input Area */}
           <div className="border-t border-border bg-white p-3">
-            <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-[#F8FAFF] px-3 py-1.5 transition-all focus-within:border-primary/50 focus-within:bg-white">
+            <div className="flex items-center gap-2 rounded-xl border border-[#D6E0F0] bg-[#F8FAFF] px-3 py-1.5 transition-all focus-within:border-primary/50 focus-within:bg-white focus-within:shadow-sm">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder="질문을 입력하세요..."
-                className="flex-1 bg-transparent text-sm outline-none"
+                className="flex-1 bg-transparent text-sm font-medium outline-none text-slate-700"
               />
               <button 
                 onClick={send}
                 disabled={!input.trim() || loading}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-30"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-all hover:bg-[#1E5BE9] disabled:opacity-30 active:scale-95"
               >
                 <Send className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="mt-2 flex gap-1.5">
+            <div className="mt-2.5 flex gap-1.5">
               {["매출 분석", "이탈 징후"].map((tag) => (
                 <button
                   key={tag}
                   onClick={() => setInput(tag)}
-                  className="rounded-full border border-[#DCE4F3] bg-white px-2 py-0.5 text-[10px] text-slate-500 hover:border-primary/50 hover:text-primary"
+                  className="rounded-full border border-[#DCE4F3] bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-500 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
                 >
                   {tag}
                 </button>
@@ -210,13 +211,19 @@ export const FloatingAiChat: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95",
-          isOpen ? "bg-slate-800 text-white" : "bg-primary text-white"
+          "flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border-2",
+          isOpen ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-primary/10 text-primary"
         )}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+        {isOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <div className="h-8 w-8">
+            <img src={Favicon} alt="AI" className="h-full w-full object-contain" />
+          </div>
+        )}
         {!isOpen && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 animate-bounce items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 animate-bounce items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
             1
           </span>
         )}

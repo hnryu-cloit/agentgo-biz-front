@@ -16,7 +16,7 @@ const initialMessages: Message[] = [
     id: 1,
     role: "assistant",
     content:
-      "안녕하세요! AI 매니저입니다. 매장 운영에 관해 궁금한 것을 자유롭게 질문해 주세요. 매출, 고객, 마진, 캠페인 등 다양한 주제를 분석해 드립니다.",
+      "안녕하세요! AgentGo Biz입니다. 매장 운영에 관해 궁금한 것을 자유롭게 질문해 주세요. 매출, 고객, 마진, 캠페인 등 다양한 주제를 분석해 드립니다.",
     timestamp: "07:00",
   },
 ];
@@ -134,7 +134,7 @@ export const QnaPage: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">AI QnA</h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            AI 매니저에게 자유롭게 질문하세요. 근거 데이터와 함께 답변드립니다.
+            AgentGo Biz에게 자유롭게 질문하세요. 근거 데이터와 함께 답변드립니다.
           </p>
         </div>
         <button
