@@ -1,5 +1,4 @@
 import type React from "react";
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import Logo from "@/assets/logo.svg";
@@ -25,7 +24,6 @@ const menuSections: MenuSection[] = [
     section: "점주",
     items: [
       { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
-      { to: "/owner/qna", label: "AI QnA", icon: "chat_bubble" },
     ],
   },
   {
@@ -76,111 +74,81 @@ const menuSections: MenuSection[] = [
   },
 ];
 
-function getInitialOpen(pathname: string): Set<string> {
-  const open = new Set<string>();
-  for (const s of menuSections) {
-    if (s.section && s.items.some((item) => pathname.startsWith(item.to))) {
-      open.add(s.section);
-    }
-  }
-  return open;
-}
-
 export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
-  const [openSections, setOpenSections] = useState<Set<string>>(() => getInitialOpen(pathname));
-
-  const toggle = (section: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(section)) next.delete(section);
-      else next.add(section);
-      return next;
-    });
-  };
 
   return (
-    <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-border/75 bg-white/92 backdrop-blur-sm lg:flex">
+    <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-border bg-white lg:flex">
       <div className="flex w-full flex-col p-5">
         <NavLink to="/" className="inline-flex items-center px-1">
           <img src={Logo} alt="AgentGo" className="h-7 w-auto" />
         </NavLink>
 
-        <nav className="mt-5 flex-1 space-y-0.5 overflow-y-auto pb-4">
+        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pb-6 scrollbar-hide">
           {menuSections.map((section, sIdx) => {
-            if (!section.section) {
-              return (
-                <div key={sIdx}>
+            const hasActive = section.items.some((item) => 
+              item.to === "/" ? pathname === "/" : pathname.startsWith(item.to)
+            );
+
+            return (
+              <div key={sIdx} className="space-y-1">
+                {section.section && (
+                  <div className="px-3 py-1">
+                    <span className={cn(
+                      "text-[10px] font-bold uppercase tracking-[0.12em]",
+                      hasActive ? "text-primary" : "text-slate-400"
+                    )}>
+                      {section.section}
+                    </span>
+                  </div>
+                )}
+
+                <div className={cn(
+                  "space-y-0.5",
+                  section.section && "relative ml-1 border-l border-slate-100 pl-2"
+                )}>
                   {section.items.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      end
+                      end={item.to === "/"}
                       className={({ isActive }) =>
                         cn(
-                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
+                          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-all",
                           isActive
-                            ? "border border-[#CFE0FF] bg-[#EDF3FF] text-[#2454C8]"
-                            : "border border-transparent text-slate-600 hover:border-[#E4EBF8] hover:bg-[#F7FAFF] hover:text-slate-900",
+                            ? "bg-[#EDF3FF] text-[#2454C8]"
+                            : "text-slate-500 hover:bg-[#F7FAFF] hover:text-slate-900"
                         )
                       }
                     >
-                      <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                      <span>{item.label}</span>
+                      {({ isActive }) => (
+                        <>
+                          {/* Active Indicator Bar */}
+                          {isActive && (
+                            <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-[#2454C8]" />
+                          )}
+                          
+                          <span className={cn(
+                            "material-symbols-outlined text-[20px] transition-colors",
+                            isActive ? "text-[#2454C8] font-variation-fill" : "text-slate-400 group-hover:text-slate-600"
+                          )}>
+                            {item.icon}
+                          </span>
+                          <span className={isActive ? "font-bold" : "font-medium"}>
+                            {item.label}
+                          </span>
+                        </>
+                      )}
                     </NavLink>
                   ))}
                 </div>
-              );
-            }
-
-            const isOpen = openSections.has(section.section);
-            const hasActive = section.items.some((item) => pathname.startsWith(item.to));
-
-            return (
-              <div key={sIdx} className="mt-3">
-                <button
-                  onClick={() => toggle(section.section!)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-1.5 transition-colors",
-                    hasActive ? "text-[#2454C8]" : "text-slate-400 hover:text-slate-600",
-                  )}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-widest">
-                    {section.section}
-                  </span>
-                  <span className="material-symbols-outlined text-[14px]">
-                    {isOpen ? "expand_less" : "expand_more"}
-                  </span>
-                </button>
-
-                {isOpen && (
-                  <div className="mt-0.5 space-y-0.5">
-                    {section.items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) =>
-                          cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
-                            isActive
-                              ? "border border-[#CFE0FF] bg-[#EDF3FF] text-[#2454C8]"
-                              : "border border-transparent text-slate-600 hover:border-[#E4EBF8] hover:bg-[#F7FAFF] hover:text-slate-900",
-                          )
-                        }
-                      >
-                        <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
         </nav>
 
         <div className="border-t border-border/60 pt-4 text-center">
-          <p className="text-xs text-slate-400">
+          <p className="text-[10px] leading-relaxed text-slate-400">
             © 2026 ITCEN CLOIT<br />All rights reserved
           </p>
         </div>
