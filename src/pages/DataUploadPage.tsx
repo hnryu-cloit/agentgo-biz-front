@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, CheckCircle2, Clock, AlertCircle, FileText } from "lucide-react";
+import { Upload, CheckCircle2, Clock, AlertCircle, FileText, RefreshCcw } from "lucide-react";
 import { storeNames } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
 
@@ -7,100 +7,58 @@ type UploadType = "sales" | "cost" | "customer" | "review";
 
 const typeTabs: { value: UploadType; label: string }[] = [
   { value: "sales", label: "매출" },
-  { value: "cost", label: "원가/메뉴" },
-  { value: "customer", label: "고객/포인트" },
-  { value: "review", label: "리뷰" },
+  { value: "cost", label: "원재료/원가" },
+  { value: "customer", label: "고객/멤버십" },
+  { value: "review", label: "리뷰/클레임" },
 ];
 
-type ColumnGuide = {
-  required: string[];
-  optional: string[];
-  note?: string;
-};
-
-const columnGuides: Record<UploadType, ColumnGuide> = {
+const columnGuides: Record<UploadType, { required: string[]; optional: string[]; note?: string }> = {
   sales: {
-    required: ["store_id", "sale_date", "menu_id", "quantity", "amount", "payment_type"],
-    optional: ["discount_amount", "cancel_flag", "order_channel"],
-    note: "날짜 형식: YYYY-MM-DD",
+    required: ["매장코드", "주문일시", "메뉴명", "결제금액"],
+    optional: ["주문번호", "할인금액", "결제수단", "채널(배달/홀)"],
+    note: "POS 매출 데이터 기준 (CSV/XLSX)",
   },
   cost: {
-    required: ["menu_id", "menu_name", "category", "cost_price", "sale_price"],
-    optional: ["effective_date", "supplier_id", "unit"],
-    note: "메뉴ID는 POS 메뉴 코드와 일치해야 합니다",
+    required: ["매장코드", "재료명", "입고단가", "수량"],
+    optional: ["거래처", "유통기한", "안전재고수준"],
   },
   customer: {
-    required: ["customer_key", "consent_yn", "visit_date", "point_earn", "point_use"],
-    optional: ["grade", "birth_month", "channel"],
-    note: "개인정보(이름/전화/이메일)는 자동 마스킹 처리됩니다",
+    required: ["고객ID", "가입일", "최근방문일", "누적금액"],
+    optional: ["연령대", "성별", "포인트잔액"],
   },
   review: {
-    required: ["review_date", "platform", "review_text", "star_rating"],
-    optional: ["menu_id", "store_id", "reply_yn"],
-    note: "날짜 형식: YYYY-MM-DD, 평점: 1~5",
+    required: ["리뷰ID", "작성일", "평점", "내용"],
+    optional: ["답변여부", "주문메뉴", "이미지유무"],
   },
 };
-
-type PipelineStep = {
-  label: string;
-  status: "completed" | "processing" | "pending" | "failed";
-  duration?: string;
-};
-
-const pipelineSteps: PipelineStep[] = [
-  { label: "정규화", status: "completed", duration: "2.1초" },
-  { label: "KPI 집계", status: "completed", duration: "4.8초" },
-  { label: "마진가드 재계산", status: "processing" },
-  { label: "RFM 재산출", status: "pending" },
-  { label: "이상탐지", status: "pending" },
-  { label: "브리핑 예약", status: "pending" },
-];
 
 type UploadHistory = {
   id: string;
   fileName: string;
   type: string;
   store: string;
-  status: "completed" | "processing" | "error";
-  uploadedAt: string;
   rows: number;
+  uploadedAt: string;
+  status: "completed" | "processing" | "error";
 };
 
-const uploadHistory: UploadHistory[] = [
-  { id: "u1", fileName: "sales_2026_03_05.csv", type: "매출", store: "전체", status: "completed", uploadedAt: "2026-03-05 14:20", rows: 12480 },
-  { id: "u2", fileName: "cost_menu_v3.xlsx", type: "원가/메뉴", store: "전체", status: "completed", uploadedAt: "2026-03-04 09:10", rows: 342 },
-  { id: "u3", fileName: "customers_march.csv", type: "고객/포인트", store: "A매장", status: "error", uploadedAt: "2026-03-03 16:55", rows: 0 },
-  { id: "u4", fileName: "reviews_feb.csv", type: "리뷰", store: "전체", status: "completed", uploadedAt: "2026-03-01 11:30", rows: 4821 },
+const initialHistory: UploadHistory[] = [
+  { id: "h1", fileName: "2026_03_매출_강남역점.xlsx", type: "매출", store: "강남역점", rows: 1240, uploadedAt: "2026-03-09 10:20", status: "completed" },
+  { id: "h2", fileName: "고객_멤버십_W10.csv", type: "고객", store: "전체", rows: 8500, uploadedAt: "2026-03-09 09:15", status: "completed" },
+  { id: "h3", fileName: "원가_데이터_v2.xlsx", type: "원가", store: "역삼점", rows: 0, uploadedAt: "2026-03-08 16:45", status: "error" },
+  { id: "h4", fileName: "리뷰_수집_데이터.csv", type: "리뷰", store: "논현점", rows: 450, uploadedAt: "2026-03-08 14:30", status: "completed" },
 ];
-
-const statusBadge = (s: UploadHistory["status"]) => {
-  if (s === "completed") return "border-[#BFD4FF] bg-[#EEF4FF] text-primary";
-  if (s === "error") return "border-red-200 bg-red-50 text-red-600";
-  return "border-amber-200 bg-amber-50 text-amber-600";
-};
-
-const statusLabel: Record<UploadHistory["status"], string> = {
-  completed: "완료",
-  processing: "처리중",
-  error: "오류",
-};
-
-const pipelineColor = (s: PipelineStep["status"]) => {
-  if (s === "completed") return "bg-emerald-500 text-white";
-  if (s === "processing") return "bg-primary text-white animate-pulse";
-  if (s === "failed") return "bg-red-500 text-white";
-  return "bg-[#DCE4F3] text-slate-400";
-};
 
 export const DataUploadPage = () => {
   const [selectedType, setSelectedType] = useState<UploadType>("sales");
   const [selectedStore, setSelectedStore] = useState("전체 매장");
-  const [showPipeline, setShowPipeline] = useState(true);
+  const [showPipeline, setShowPipeline] = useState(false);
+  const [uploadHistory] = useState(initialHistory);
 
   const guide = columnGuides[selectedType];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       {/* Header */}
       <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <h2 className="text-2xl font-bold text-slate-900">데이터 업로드</h2>
@@ -144,19 +102,13 @@ export const DataUploadPage = () => {
               <p className="mb-1.5 text-xs font-semibold text-slate-400">권장 컬럼</p>
               <div className="flex flex-wrap gap-1.5">
                 {guide.optional.map((col) => (
-                  <span key={col} className="rounded border border-[#DCE4F3] bg-white px-2 py-0.5 font-mono text-[11px] text-slate-500 shadow-sm">
+                  <span key={col} className="rounded border border-[#DCE4F3] bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-500 shadow-sm">
                     {col}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-          {guide.note && (
-            <p className="mt-2.5 flex items-center gap-1.5 text-xs text-primary font-medium">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              {guide.note}
-            </p>
-          )}
         </div>
 
         {/* Upload + Preview */}
@@ -195,7 +147,7 @@ export const DataUploadPage = () => {
               </div>
             </div>
 
-            <button className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90">
+            <button onClick={() => setShowPipeline(true)} className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90">
               업로드 적용
             </button>
           </div>
@@ -209,125 +161,52 @@ export const DataUploadPage = () => {
         </div>
       </section>
 
-      {/* Pipeline Visualization */}
-      {showPipeline && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated animate-in fade-in zoom-in-95 duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">업로드 처리 파이프라인</h3>
-              <p className="mt-0.5 text-sm text-slate-500">업로드 적용 후 6단계 데이터 처리 현황입니다.</p>
-            </div>
-            <button
-              onClick={() => setShowPipeline(false)}
-              className="rounded-lg border border-[#D6E0F0] bg-white px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              닫기
-            </button>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-            {pipelineSteps.map((step, idx) => (
-              <div key={step.label} className="flex flex-col items-center gap-2">
-                <div className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm transition-all duration-500",
-                  pipelineColor(step.status)
-                )}>
-                  {step.status === "completed" ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : step.status === "processing" ? (
-                    <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  ) : (
-                    <span className="text-xs">{idx + 1}</span>
-                  )}
-                </div>
-                <div className="text-center">
-                  <p className={cn(
-                    "text-xs font-semibold",
-                    step.status === "pending" ? "text-slate-400" : "text-slate-700"
-                  )}>
-                    {step.label}
-                  </p>
-                  {step.duration && (
-                    <p className="text-[10px] font-medium text-slate-400">{step.duration}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 flex items-center gap-4 text-[11px] font-semibold text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-sm" />완료
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-primary shadow-sm" />처리중
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#DCE4F3] shadow-sm" />대기중
-            </span>
-            <button className="ml-auto rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition-colors hover:bg-[#F8FAFF]">
-              완료 시 알림 받기
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Upload History */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">업로드 이력</h3>
-            <p className="mt-0.5 text-sm text-slate-500">최근 업로드 이력 및 처리 현황입니다.</p>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {(["전체", "완료", "오류"] as const).map((f) => (
-              <button key={f} className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition-colors hover:bg-[#F8FAFF]">
-                {f}
-              </button>
-            ))}
-          </div>
+      {/* Upload History Section */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900">업로드 이력</h3>
+          <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Recent 10 Entries</span>
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border shadow-sm">
-          <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-[#F7FAFF] text-slate-600">
+        <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-[#F7FAFF] text-slate-500 border-b border-border">
               <tr>
-                <th className="px-4 py-3 font-semibold">파일명</th>
-                <th className="px-4 py-3 font-semibold">유형</th>
-                <th className="px-4 py-3 font-semibold">매장</th>
-                <th className="px-4 py-3 font-semibold text-center">건수</th>
-                <th className="px-4 py-3 font-semibold">업로드 일시</th>
-                <th className="px-4 py-3 font-semibold">상태</th>
-                <th className="px-4 py-3 text-right font-semibold">액션</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50">파일명</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">유형</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-32">매장</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">건수</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 w-48">업로드 일시</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-32">상태</th>
+                <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider text-right w-24">액션</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-50">
               {uploadHistory.map((row) => (
-                <tr key={row.id} className="border-t border-border transition-colors hover:bg-slate-50/50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="rounded bg-slate-100 p-1">
-                        <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-                      </div>
-                      <span className="font-semibold text-slate-800">{row.fileName}</span>
+                <tr key={row.id} className="group transition-all hover:bg-slate-50/80 font-medium">
+                  <td className="pl-8 pr-4 py-4 border-r border-slate-100/50">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-4 w-4 text-slate-300" />
+                      <span className="font-bold text-slate-800">{row.fileName}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 font-medium">{row.type}</td>
-                  <td className="px-4 py-3 text-slate-600 font-medium">{row.store}</td>
-                  <td className="px-4 py-3 text-slate-600 text-center font-mono">{row.rows > 0 ? row.rows.toLocaleString() : "-"}</td>
-                  <td className="px-4 py-3 text-slate-500 text-xs">{row.uploadedAt}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4 text-center border-r border-slate-100/50 text-slate-600">{row.type}</td>
+                  <td className="px-4 py-4 text-center border-r border-slate-100/50 text-slate-600">{row.store}</td>
+                  <td className="px-4 py-4 text-center border-r border-slate-100/50 font-mono text-xs">{row.rows > 0 ? row.rows.toLocaleString() : "-"}</td>
+                  <td className="px-4 py-4 text-slate-500 text-xs border-r border-slate-100/50 font-mono">{row.uploadedAt}</td>
+                  <td className="px-4 py-4 text-center border-r border-slate-100/50">
                     <span className={cn(
-                      "rounded-full border px-2.5 py-0.5 text-[11px] font-bold shadow-sm",
-                      statusBadge(row.status)
+                      "inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-black shadow-sm",
+                      row.status === "completed" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                      row.status === "error" ? "bg-red-50 text-red-600 border-red-100" : "bg-blue-50 text-primary border-blue-100"
                     )}>
-                      {statusLabel[row.status]}
+                      {row.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="pl-4 pr-8 py-4 text-right">
                     {row.status === "error" && (
-                      <button className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50">
-                        재처리
+                      <button className="p-2 rounded-xl bg-white border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 shadow-sm transition-all">
+                        <RefreshCcw className="h-4 w-4" />
                       </button>
                     )}
                   </td>
@@ -335,6 +214,22 @@ export const DataUploadPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Standard Pagination Area */}
+        <div className="px-8 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Page 1 of 3</p>
+          <div className="flex items-center gap-1">
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-30 shadow-sm">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold shadow-md shadow-primary/20">1</button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-slate-600 text-xs font-bold hover:bg-slate-50 transition-all">2</button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-slate-600 text-xs font-bold hover:bg-slate-50 transition-all">3</button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all shadow-sm">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
         </div>
       </section>
     </div>
