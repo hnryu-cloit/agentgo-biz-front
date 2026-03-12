@@ -64,7 +64,8 @@ export const BenchmarkPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <h2 className="text-2xl font-bold text-slate-900">매장 벤치마크</h2>
+        <p className="text-sm font-semibold text-primary">성과 분석</p>
+        <h2 className="mt-1 text-2xl font-bold text-slate-900">매장 벤치마크</h2>
         <p className="mt-1 text-base text-slate-500">
           유사 상권·브랜드 매장과 핵심 지표를 비교하고 개선 우선순위를 파악합니다.
         </p>
