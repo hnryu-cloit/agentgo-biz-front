@@ -25,7 +25,7 @@ export const CampaignDesignerPage: React.FC = () => {
     <div className="space-y-6">
 
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-semibold text-primary">마케팅</p>
@@ -34,7 +34,7 @@ export const CampaignDesignerPage: React.FC = () => {
               세그먼트를 선택하고 오퍼를 설계한 뒤 승인 요청까지 진행합니다.
             </p>
           </div>
-          <div className="rounded-xl bg-[#EEF4FF] p-3">
+          <div className="rounded-xl bg-[#EEF4FF] p-3 shadow-sm">
             <Megaphone className="h-6 w-6 text-primary" />
           </div>
         </div>
@@ -44,7 +44,7 @@ export const CampaignDesignerPage: React.FC = () => {
           {["세그먼트 선택", "오퍼 설계", "메시지 작성", "승인 요청"].map((step, idx) => (
             <div key={step} className="flex items-center">
               <div className="flex items-center gap-2">
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shadow-sm ${
                   idx < 2 ? "bg-primary text-white" : "border border-[#DCE4F3] bg-white text-slate-400"
                 }`}>
                   {idx + 1}
@@ -63,7 +63,7 @@ export const CampaignDesignerPage: React.FC = () => {
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* Step 1. 세그먼트 선택 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <Users className="h-5 w-5 text-slate-400" />
             Step 1. 세그먼트 선택
@@ -75,7 +75,7 @@ export const CampaignDesignerPage: React.FC = () => {
               <button
                 key={seg.id}
                 onClick={() => setSelectedSegment(seg.id)}
-                className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
+                className={`w-full rounded-xl border px-4 py-3 text-left transition-all hover:shadow-sm ${
                   selectedSegment === seg.id
                     ? "border-[#BFD4FF] bg-[#EEF4FF]"
                     : "border-[#DCE4F3] bg-[#F7FAFF] hover:border-[#BFD1ED]"
@@ -93,7 +93,7 @@ export const CampaignDesignerPage: React.FC = () => {
           </div>
 
           {selected && (
-            <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
+            <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3 shadow-sm">
               <p className="text-xs text-slate-500">선택된 세그먼트</p>
               <p className="mt-0.5 text-sm font-semibold text-slate-900">
                 {selected.name} · {selected.users}
@@ -103,7 +103,7 @@ export const CampaignDesignerPage: React.FC = () => {
         </article>
 
         {/* Step 2. 오퍼 설계 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <Sparkles className="h-5 w-5 text-slate-400" />
             Step 2. 오퍼 설계
@@ -116,7 +116,7 @@ export const CampaignDesignerPage: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setSelectedPreset(idx)}
-                className={`w-full rounded-xl border px-4 py-2.5 text-left transition-colors ${
+                className={`w-full rounded-xl border px-4 py-2.5 text-left transition-all hover:shadow-sm ${
                   selectedPreset === idx
                     ? "border-[#BFD4FF] bg-[#EEF4FF]"
                     : "border-[#DCE4F3] bg-[#F7FAFF] hover:border-[#BFD1ED]"
@@ -136,7 +136,7 @@ export const CampaignDesignerPage: React.FC = () => {
           <div className="mt-4">
             <div className="mb-1 flex items-center justify-between">
               <label className="text-sm font-medium text-slate-700">할인율</label>
-              <span className="rounded border border-[#DCE4F3] bg-[#F7FAFF] px-2 py-0.5 text-sm font-bold text-primary">
+              <span className="rounded border border-[#CFE0FF] bg-[#EEF4FF] px-2 py-0.5 text-sm font-bold text-primary shadow-sm">
                 {discount}%
               </span>
             </div>
@@ -158,7 +158,7 @@ export const CampaignDesignerPage: React.FC = () => {
           <div className="mt-4 flex-1">
             <label className="mb-1 block text-sm font-medium text-slate-700">발송 메시지</label>
             <textarea
-              className="h-24 w-full rounded-xl border border-[#D6E0F0] bg-white p-3 text-sm text-slate-700 outline-none focus:border-primary/50"
+              className="h-24 w-full rounded-xl border border-[#D6E0F0] bg-white p-3 text-sm text-slate-700 outline-none transition-colors focus:border-primary/50"
               defaultValue={`고객님, 오랜만에 방문하시면 ${discount}% 할인 혜택을 드립니다. (7일 유효)`}
             />
           </div>
@@ -167,7 +167,7 @@ export const CampaignDesignerPage: React.FC = () => {
             <button className="flex-1 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F8FAFF]">
               테스트 발송
             </button>
-            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]">
               승인 요청
             </button>
           </div>
@@ -176,7 +176,7 @@ export const CampaignDesignerPage: React.FC = () => {
       </section>
 
       {/* 예상 성과 요약 */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
           <BarChart2 className="h-5 w-5 text-slate-400" />
           예상 성과 요약
@@ -188,7 +188,7 @@ export const CampaignDesignerPage: React.FC = () => {
             { label: "예상 복귀율", value: "24.0%" },
             { label: "예상 ROI", value: "416%" },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
+            <div key={stat.label} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
               <p className="text-xs text-slate-500">{stat.label}</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{stat.value}</p>
             </div>

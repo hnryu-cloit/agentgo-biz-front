@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Upload, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Upload, CheckCircle2, Clock, AlertCircle, FileText } from "lucide-react";
 import { storeNames } from "@/data/mockStoreResource";
+import { cn } from "@/lib/utils";
 
 type UploadType = "sales" | "cost" | "customer" | "review";
 
@@ -101,7 +102,7 @@ export const DataUploadPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <h2 className="text-2xl font-bold text-slate-900">데이터 업로드</h2>
         <p className="mt-1 text-base text-slate-500">원천 파일을 업로드하고 처리 상태를 확인합니다.</p>
 
@@ -111,11 +112,12 @@ export const DataUploadPage = () => {
             <button
               key={tab.value}
               onClick={() => setSelectedType(tab.value)}
-              className={
+              className={cn(
+                "rounded-lg border px-3 py-2 text-sm font-semibold transition-all shadow-sm",
                 selectedType === tab.value
-                  ? "rounded-lg border border-[#BFD4FF] bg-[#EEF4FF] px-3 py-2 text-sm font-semibold text-[#2454C8]"
-                  : "rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm font-medium text-slate-600"
-              }
+                  ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
+                  : "border-[#D6E0F0] bg-white text-slate-600 hover:bg-[#F8FAFF]"
+              )}
             >
               {tab.label}
             </button>
@@ -123,26 +125,26 @@ export const DataUploadPage = () => {
         </div>
 
         {/* Column Guide Panel */}
-        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-600">
+        <div className="mt-4 rounded-xl border border-[#CFE0FF] bg-[#F7FAFF] p-4 shadow-sm">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary">
             {typeTabs.find((t) => t.value === selectedType)?.label} — 컬럼 안내
           </p>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className="mb-1.5 text-xs font-semibold text-blue-700">필수 컬럼</p>
+              <p className="mb-1.5 text-xs font-semibold text-slate-700">필수 컬럼</p>
               <div className="flex flex-wrap gap-1.5">
                 {guide.required.map((col) => (
-                  <span key={col} className="rounded border border-blue-200 bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-blue-700">
+                  <span key={col} className="rounded border border-[#CFE0FF] bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-primary shadow-sm">
                     {col}
                   </span>
                 ))}
               </div>
             </div>
             <div>
-              <p className="mb-1.5 text-xs font-semibold text-slate-500">권장 컬럼</p>
+              <p className="mb-1.5 text-xs font-semibold text-slate-400">권장 컬럼</p>
               <div className="flex flex-wrap gap-1.5">
                 {guide.optional.map((col) => (
-                  <span key={col} className="rounded border border-[#DCE4F3] bg-white px-2 py-0.5 font-mono text-[11px] text-slate-500">
+                  <span key={col} className="rounded border border-[#DCE4F3] bg-white px-2 py-0.5 font-mono text-[11px] text-slate-500 shadow-sm">
                     {col}
                   </span>
                 ))}
@@ -150,7 +152,7 @@ export const DataUploadPage = () => {
             </div>
           </div>
           {guide.note && (
-            <p className="mt-2.5 flex items-center gap-1.5 text-xs text-blue-600">
+            <p className="mt-2.5 flex items-center gap-1.5 text-xs text-primary font-medium">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               {guide.note}
             </p>
@@ -160,22 +162,22 @@ export const DataUploadPage = () => {
         {/* Upload + Preview */}
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div>
-            <div className="rounded-xl border-2 border-dashed border-[#DCE4F3] bg-[#F7FAFF] p-8 text-center">
+            <div className="rounded-xl border-2 border-dashed border-[#DCE4F3] bg-[#F7FAFF] p-8 text-center transition-colors hover:border-primary/30">
               <Upload className="mx-auto h-8 w-8 text-slate-300" />
               <p className="mt-3 text-sm font-semibold text-slate-700">파일을 드래그하거나 선택하세요</p>
               <p className="mt-1 text-xs text-slate-400">CSV · XLSX 지원 (최대 50MB)</p>
-              <button className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">
+              <button className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90">
                 파일 선택
               </button>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">매장</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase">매장</label>
                 <select
                   value={selectedStore}
                   onChange={(e) => setSelectedStore(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm"
+                  className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
                 >
                   <option>전체 매장</option>
                   {storeNames.map((name) => (
@@ -184,23 +186,23 @@ export const DataUploadPage = () => {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">데이터 기간</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase">데이터 기간</label>
                 <input
                   type="month"
                   defaultValue="2026-03"
-                  className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm"
+                  className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
                 />
               </div>
             </div>
 
-            <button className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+            <button className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90">
               업로드 적용
             </button>
           </div>
 
-          <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
-            <p className="text-sm font-semibold text-slate-800">미리보기 (상위 10행)</p>
-            <div className="mt-3 flex h-48 items-center justify-center rounded-lg border border-[#D6E0F0] bg-white text-sm text-slate-500">
+          <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">미리보기 (상위 10행)</p>
+            <div className="flex h-48 items-center justify-center rounded-lg border border-[#DCE4F3] bg-white text-sm text-slate-400 shadow-inner">
               선택된 파일이 없습니다
             </div>
           </div>
@@ -209,7 +211,7 @@ export const DataUploadPage = () => {
 
       {/* Pipeline Visualization */}
       {showPipeline && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated animate-in fade-in zoom-in-95 duration-300">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-900">업로드 처리 파이프라인</h3>
@@ -217,7 +219,7 @@ export const DataUploadPage = () => {
             </div>
             <button
               onClick={() => setShowPipeline(false)}
-              className="rounded border border-border px-2 py-1 text-xs text-slate-500"
+              className="rounded-lg border border-[#D6E0F0] bg-white px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
             >
               닫기
             </button>
@@ -226,7 +228,10 @@ export const DataUploadPage = () => {
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {pipelineSteps.map((step, idx) => (
               <div key={step.label} className="flex flex-col items-center gap-2">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${pipelineColor(step.status)}`}>
+                <div className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm transition-all duration-500",
+                  pipelineColor(step.status)
+                )}>
                   {step.status === "completed" ? (
                     <CheckCircle2 className="h-5 w-5" />
                   ) : step.status === "processing" ? (
@@ -236,34 +241,31 @@ export const DataUploadPage = () => {
                   )}
                 </div>
                 <div className="text-center">
-                  <p className={`text-xs font-semibold ${step.status === "pending" ? "text-slate-400" : "text-slate-700"}`}>
+                  <p className={cn(
+                    "text-xs font-semibold",
+                    step.status === "pending" ? "text-slate-400" : "text-slate-700"
+                  )}>
                     {step.label}
                   </p>
                   {step.duration && (
-                    <p className="text-[10px] text-slate-400">{step.duration}</p>
-                  )}
-                  {step.status === "processing" && (
-                    <p className="text-[10px] text-primary">처리중...</p>
+                    <p className="text-[10px] font-medium text-slate-400">{step.duration}</p>
                   )}
                 </div>
-                {idx < pipelineSteps.length - 1 && (
-                  <div className="absolute hidden" />
-                )}
               </div>
             ))}
           </div>
 
-          <div className="mt-5 flex items-center gap-4 text-xs text-slate-500">
+          <div className="mt-5 flex items-center gap-4 text-[11px] font-semibold text-slate-500">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />완료
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-sm" />완료
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />처리중
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary shadow-sm" />처리중
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#DCE4F3]" />대기중
+              <span className="h-2 w-2 rounded-full bg-[#DCE4F3] shadow-sm" />대기중
             </span>
-            <button className="ml-auto rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-[#F8FAFF]">
+            <button className="ml-auto rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition-colors hover:bg-[#F8FAFF]">
               완료 시 알림 받기
             </button>
           </div>
@@ -271,55 +273,60 @@ export const DataUploadPage = () => {
       )}
 
       {/* Upload History */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-900">업로드 이력</h3>
             <p className="mt-0.5 text-sm text-slate-500">최근 업로드 이력 및 처리 현황입니다.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {(["전체", "완료", "오류"] as const).map((f) => (
-              <button key={f} className="rounded border border-[#D6E0F0] bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-[#F8FAFF]">
+              <button key={f} className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition-colors hover:bg-[#F8FAFF]">
                 {f}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-[#F7FAFF] text-slate-600">
               <tr>
-                <th className="px-4 py-3">파일명</th>
-                <th className="px-4 py-3">유형</th>
-                <th className="px-4 py-3">매장</th>
-                <th className="px-4 py-3">건수</th>
-                <th className="px-4 py-3">업로드 일시</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3 text-right">액션</th>
+                <th className="px-4 py-3 font-semibold">파일명</th>
+                <th className="px-4 py-3 font-semibold">유형</th>
+                <th className="px-4 py-3 font-semibold">매장</th>
+                <th className="px-4 py-3 font-semibold text-center">건수</th>
+                <th className="px-4 py-3 font-semibold">업로드 일시</th>
+                <th className="px-4 py-3 font-semibold">상태</th>
+                <th className="px-4 py-3 text-right font-semibold">액션</th>
               </tr>
             </thead>
             <tbody>
               {uploadHistory.map((row) => (
-                <tr key={row.id} className="border-t border-border">
+                <tr key={row.id} className="border-t border-border transition-colors hover:bg-slate-50/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                      <span className="font-medium text-slate-800">{row.fileName}</span>
+                      <div className="rounded bg-slate-100 p-1">
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                      </div>
+                      <span className="font-semibold text-slate-800">{row.fileName}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{row.type}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.store}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.rows > 0 ? row.rows.toLocaleString() : "-"}</td>
-                  <td className="px-4 py-3 text-slate-500">{row.uploadedAt}</td>
+                  <td className="px-4 py-3 text-slate-600 font-medium">{row.type}</td>
+                  <td className="px-4 py-3 text-slate-600 font-medium">{row.store}</td>
+                  <td className="px-4 py-3 text-slate-600 text-center font-mono">{row.rows > 0 ? row.rows.toLocaleString() : "-"}</td>
+                  <td className="px-4 py-3 text-slate-500 text-xs">{row.uploadedAt}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded border px-2 py-0.5 text-xs font-medium ${statusBadge(row.status)}`}>
+                    <span className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-[11px] font-bold shadow-sm",
+                      statusBadge(row.status)
+                    )}>
                       {statusLabel[row.status]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     {row.status === "error" && (
-                      <button className="rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-700 hover:bg-[#F8FAFF]">
+                      <button className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50">
                         재처리
                       </button>
                     )}

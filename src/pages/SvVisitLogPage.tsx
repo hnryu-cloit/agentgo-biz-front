@@ -2,6 +2,7 @@ import type React from "react";
 import { useState } from "react";
 import { MapPin, Plus, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
+import { cn } from "@/lib/utils";
 
 type VisitRecord = {
   id: string;
@@ -90,87 +91,99 @@ export const SvVisitLogPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-        <div className="flex items-end justify-between">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">방문 기록</h2>
-            <p className="mt-1 text-sm text-slate-500">매장 방문 후 특이사항·지도 내용·후속 액션을 기록합니다.</p>
+            <p className="text-sm font-semibold text-primary">현장 기록</p>
+            <h2 className="text-2xl font-bold text-slate-900">매장 방문 로그</h2>
+            <p className="mt-1 text-base text-slate-500">가맹점 방문 후 발생한 특이사항 및 코칭 가이드를 상세히 기록합니다.</p>
           </div>
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            className="group flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
           >
-            <Plus className="h-4 w-4" />
-            방문 기록 추가
+            <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+            새 방문 일지 작성
           </button>
         </div>
       </section>
 
       {/* New Log Form */}
       {showForm && (
-        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 md:p-6">
-          <h3 className="text-base font-bold text-slate-900">새 방문 기록</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">방문 매장</label>
+        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-6 shadow-elevated animate-in zoom-in-95 duration-300">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="rounded-lg bg-white p-1.5 shadow-sm border border-[#CFE0FF]">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">신규 방문 기록 작성</h3>
+          </div>
+          
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">방문 매장 선택</label>
               <select
                 value={form.store}
                 onChange={(e) => setForm((f) => ({ ...f, store: e.target.value }))}
-                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm"
+                className="h-11 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50 transition-all"
               >
                 {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">방문일</label>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">현장 방문 일자</label>
               <input
                 type="date"
                 value={form.visitDate}
                 onChange={(e) => setForm((f) => ({ ...f, visitDate: e.target.value }))}
-                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm"
+                className="h-11 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50 transition-all"
               />
             </div>
           </div>
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-slate-700">방문 특이사항 / 지도 내용</label>
+          
+          <div className="mt-5 space-y-1.5">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">주요 코칭 내용 및 특이사항</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              placeholder="방문 시 확인한 내용, 코칭 사항 등을 기록하세요..."
+              placeholder="방문 시 확인한 운영 상태, 점주 면담 내용, 개선 필요 사항 등을 자유롭게 기록하세요..."
               rows={4}
-              className="w-full rounded-xl border border-[#D6E0F0] bg-white px-3 py-2 text-sm resize-none focus:outline-none"
+              className="w-full rounded-2xl border border-[#D6E0F0] bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-primary/50 transition-all resize-none"
             />
           </div>
-          <div className="mt-3">
-            <label className="mb-1 block text-sm font-medium text-slate-700">후속 액션</label>
-            <input
-              type="text"
-              value={form.followup}
-              onChange={(e) => setForm((f) => ({ ...f, followup: e.target.value }))}
-              placeholder="예) 2주 이내 재방문 확인"
-              className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm"
-            />
+          
+          <div className="mt-5 space-y-1.5">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">SV 권고 후속 액션 (Follow-up)</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={form.followup}
+                onChange={(e) => setForm((f) => ({ ...f, followup: e.target.value }))}
+                placeholder="예) 차주 피크타임 인력 충원 여부 재확인"
+                className="h-11 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50 transition-all"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase">Required</div>
+            </div>
           </div>
 
           {saved ? (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <p className="text-sm font-medium text-emerald-700">방문 기록이 저장되었습니다.</p>
+            <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-white shadow-lg animate-in fade-in zoom-in-95 duration-500">
+              <CheckCircle2 className="h-5 w-5 shadow-sm" />
+              <p className="text-sm font-black">방문 일지가 성공적으로 등록되었습니다.</p>
             </div>
           ) : (
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 pt-6">
               <button
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700"
+                className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-500 shadow-sm transition-all hover:bg-slate-50"
               >
-                취소
+                작성 취소
               </button>
               <button
                 onClick={handleSave}
                 disabled={!form.notes.trim()}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-10 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
               >
-                저장
+                일지 저장하기
               </button>
             </div>
           )}
@@ -178,43 +191,57 @@ export const SvVisitLogPage: React.FC = () => {
       )}
 
       {/* Visit Records */}
-      <section className="space-y-3">
+      <section className="space-y-4">
         {visits.map((v) => (
-          <article key={v.id} className="rounded-2xl border border-border/90 bg-card">
+          <article key={v.id} className={cn(
+            "rounded-2xl border transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden",
+            v.expanded ? "border-[#CFE0FF] bg-white ring-1 ring-primary/5 shadow-md" : "border-border/90 bg-card"
+          )}>
             <button
               onClick={() => toggleExpand(v.id)}
-              className="flex w-full items-center justify-between p-5"
+              className="flex w-full items-center justify-between p-5 transition-colors hover:bg-slate-50/50"
             >
-              <div className="flex items-center gap-3 text-left">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF4FF]">
-                  <MapPin className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-4 text-left">
+                <div className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm transition-colors",
+                  v.expanded ? "bg-primary text-white" : "bg-[#EEF4FF] text-primary"
+                )}>
+                  <MapPin className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{v.store}</p>
-                  <p className="text-xs text-slate-400">{v.visitDate} · {v.supervisor}</p>
+                  <p className="text-base font-bold text-slate-900">{v.store}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-0.5">
+                    {v.visitDate} <span className="mx-1 text-slate-200">|</span> {v.supervisor}
+                  </p>
                 </div>
               </div>
-              {v.expanded
-                ? <ChevronUp className="h-4 w-4 text-slate-400" />
-                : <ChevronDown className="h-4 w-4 text-slate-400" />
-              }
+              <div className={cn(
+                "rounded-full p-1.5 transition-all",
+                v.expanded ? "bg-primary/10 text-primary rotate-180" : "bg-slate-100 text-slate-400"
+              )}>
+                <ChevronDown className="h-4 w-4" />
+              </div>
             </button>
 
             {v.expanded && (
-              <div className="border-t border-border/60 px-5 pb-5">
-                <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
-                  <p className="text-xs font-semibold text-slate-500">방문 특이사항 / 지도 내용</p>
-                  <p className="mt-1.5 text-sm text-slate-700 leading-relaxed">{v.notes}</p>
+              <div className="border-t border-slate-100 bg-[#F8FAFF]/30 px-6 py-6 animate-in slide-in-from-top-2 duration-300">
+                <div className="rounded-2xl border border-[#DCE4F3] bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Observations</span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-700 leading-relaxed">{v.notes}</p>
                 </div>
 
                 {v.followups.length > 0 && (
-                  <div className="mt-3">
-                    <p className="mb-2 text-xs font-semibold text-slate-500">후속 액션</p>
-                    <div className="space-y-1.5">
+                  <div className="mt-5 space-y-3 px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary uppercase tracking-widest">Follow-ups</span>
+                    </div>
+                    <div className="grid gap-2">
                       {v.followups.map((f) => (
-                        <div key={f} className="flex items-center gap-2 text-sm text-slate-700">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                          {f}
+                        <div key={f} className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/30 px-4 py-2.5 shadow-sm">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span className="text-sm font-bold text-slate-700">{f}</span>
                         </div>
                       ))}
                     </div>

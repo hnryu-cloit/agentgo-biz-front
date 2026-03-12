@@ -1,6 +1,7 @@
 import type React from "react";
 import { useMemo, useState } from "react";
 import { BarChart2, Download, TrendingUp, Users, ShoppingBag, DollarSign } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Channel = "전체" | "앱푸시" | "알림톡" | "이메일";
 
@@ -87,37 +88,39 @@ export const CampaignPerformancePage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">캠페인 성과</h2>
-            <p className="mt-1 text-sm text-slate-500">채널별 오픈율·사용률·재방문·매출기여를 분석합니다.</p>
+            <p className="text-sm font-semibold text-primary">마케팅</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">캠페인 성과</h2>
+            <p className="mt-1 text-base text-slate-500">채널별 오픈율·사용률·재방문·매출기여를 분석합니다.</p>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="month"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="h-9 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700"
+              className="h-9 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
             />
-            <button className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-600 hover:bg-[#F8FAFF]">
+            <button className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm font-bold text-slate-600 hover:bg-[#F8FAFF] shadow-sm transition-colors">
               <Download className="h-3.5 w-3.5" />
-              CSV
+              데이터 내보내기
             </button>
           </div>
         </div>
 
         {/* Channel Tabs */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           {channels.map((ch) => (
             <button
               key={ch}
               onClick={() => setActiveChannel(ch)}
-              className={
+              className={cn(
+                "rounded-lg border px-4 py-2 text-sm font-bold transition-all shadow-sm",
                 activeChannel === ch
-                  ? "rounded-lg border border-[#BFD4FF] bg-[#EEF4FF] px-3 py-1.5 text-sm font-semibold text-primary"
-                  : "rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-sm font-medium text-slate-600"
-              }
+                  ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
+                  : "border-[#D6E0F0] bg-white text-slate-500 hover:bg-[#F8FAFF]"
+              )}
             >
               {ch}
             </button>
@@ -128,48 +131,50 @@ export const CampaignPerformancePage: React.FC = () => {
       {/* Summary KPIs */}
       <section className="grid gap-4 md:grid-cols-4">
         {[
-          { label: "총 발송", value: totalSent.toLocaleString(), unit: "건", icon: Users, color: "text-primary" },
-          { label: "쿠폰 사용", value: totalUsed.toLocaleString(), unit: "건", icon: ShoppingBag, color: "text-amber-600" },
-          { label: "재방문", value: totalRevisit.toLocaleString(), unit: "명", icon: TrendingUp, color: "text-emerald-600" },
-          { label: "매출 기여", value: (totalRevenue / 10000).toFixed(0), unit: "만원", icon: DollarSign, color: "text-purple-600" },
+          { label: "총 발송", value: totalSent.toLocaleString(), unit: "건", icon: Users, color: "text-[#2454C8]", bg: "bg-[#EEF4FF]" },
+          { label: "쿠폰 사용", value: totalUsed.toLocaleString(), unit: "건", icon: ShoppingBag, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "재방문", value: totalRevisit.toLocaleString(), unit: "명", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "매출 기여", value: (totalRevenue / 10000).toFixed(0), unit: "만원", icon: DollarSign, color: "text-purple-600", bg: "bg-purple-50" },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5">
+            <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
-                <div className="rounded-lg bg-[#EEF4FF] p-1.5">
-                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                <p className="text-sm font-bold text-slate-500">{kpi.label}</p>
+                <div className={cn("rounded-lg p-1.5 shadow-sm", kpi.bg)}>
+                  <Icon className={cn("h-4 w-4", kpi.color)} />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                {kpi.value}
-                <span className="ml-1 text-base font-normal text-slate-400">{kpi.unit}</span>
-              </p>
+              <div className="mt-4 flex items-baseline gap-1">
+                <p className="text-3xl font-bold text-slate-900 leading-none">{kpi.value}</p>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{kpi.unit}</span>
+              </div>
             </article>
           );
         })}
       </section>
 
       {/* Campaign Table */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-        <div className="flex items-center gap-2">
-          <BarChart2 className="h-5 w-5 text-slate-400" />
-          <h3 className="text-lg font-bold text-slate-900">캠페인별 성과</h3>
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="rounded-lg bg-slate-100 p-1.5 shadow-sm">
+            <BarChart2 className="h-5 w-5 text-slate-500" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">캠페인별 상세 성과</h3>
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-[#F7FAFF] text-slate-600">
               <tr>
-                <th className="px-4 py-3">캠페인명</th>
-                <th className="px-4 py-3">채널</th>
-                <th className="px-4 py-3">세그먼트</th>
-                <th className="px-4 py-3 text-right">발송</th>
-                <th className="px-4 py-3 text-right">오픈율</th>
-                <th className="px-4 py-3 text-right">사용율</th>
-                <th className="px-4 py-3 text-right">재방문</th>
-                <th className="px-4 py-3 text-right">매출 기여</th>
+                <th className="px-4 py-3 font-bold">캠페인명</th>
+                <th className="px-4 py-3 font-bold text-center">채널</th>
+                <th className="px-4 py-3 font-bold text-center">세그먼트</th>
+                <th className="px-4 py-3 text-right font-bold">발송</th>
+                <th className="px-4 py-3 text-right font-bold">오픈율</th>
+                <th className="px-4 py-3 text-right font-bold">사용율</th>
+                <th className="px-4 py-3 text-right font-bold">재방문</th>
+                <th className="px-4 py-3 text-right font-bold">매출 기여</th>
               </tr>
             </thead>
             <tbody>
@@ -177,27 +182,33 @@ export const CampaignPerformancePage: React.FC = () => {
                 const openRate = Math.round((c.opened / c.sent) * 100);
                 const useRate = Math.round((c.used / c.sent) * 100);
                 return (
-                  <tr key={c.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-medium text-slate-800">{c.name}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded border border-[#DCE4F3] bg-white px-2 py-0.5 text-xs text-slate-600">
+                  <tr key={c.id} className="border-t border-border transition-colors hover:bg-slate-50/50">
+                    <td className="px-4 py-3 font-bold text-slate-800">{c.name}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-bold text-[#2454C8] shadow-sm">
                         {c.channel}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{c.segment}</td>
-                    <td className="px-4 py-3 text-right text-slate-700">{c.sent.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-center text-slate-500 font-medium">{c.segment}</td>
+                    <td className="px-4 py-3 text-right text-slate-700 font-mono font-medium">{c.sent.toLocaleString()}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`font-semibold ${openRate >= 70 ? "text-emerald-600" : "text-amber-600"}`}>
+                      <span className={cn(
+                        "rounded px-1.5 py-0.5 text-xs font-black shadow-sm",
+                        openRate >= 70 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                      )}>
                         {openRate}%
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`font-semibold ${useRate >= 25 ? "text-emerald-600" : "text-slate-700"}`}>
+                      <span className={cn(
+                        "font-bold text-sm",
+                        useRate >= 25 ? "text-emerald-600 underline underline-offset-4 decoration-emerald-200" : "text-slate-700"
+                      )}>
                         {useRate}%
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-700">{c.revisited}명</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-right text-slate-700 font-medium">{c.revisited}명</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-900">
                       {(c.revenue / 10000).toFixed(0)}만원
                     </td>
                   </tr>
@@ -207,25 +218,25 @@ export const CampaignPerformancePage: React.FC = () => {
           </table>
         </div>
 
-        {/* Bar Chart (Mock) */}
-        <div className="mt-6">
-          <p className="mb-3 text-sm font-semibold text-slate-700">캠페인별 매출 기여 비교</p>
-          <div className="space-y-3">
+        {/* Bar Chart (Visual Summary) */}
+        <div className="mt-8 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-5 shadow-sm">
+          <p className="mb-4 text-xs font-bold text-slate-400 uppercase tracking-[0.15em]">Campaign Revenue Comparison</p>
+          <div className="space-y-4">
             {filtered.map((c) => {
               const pct = Math.round((c.revenue / Math.max(...filtered.map((f) => f.revenue))) * 100);
               return (
-                <div key={c.id} className="flex items-center gap-3">
-                  <span className="w-32 shrink-0 truncate text-xs text-slate-600">{c.name}</span>
+                <div key={c.id} className="flex items-center gap-4">
+                  <span className="w-32 shrink-0 truncate text-xs font-bold text-slate-600">{c.name}</span>
                   <div className="flex-1">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
                       <div
-                        className="h-full rounded-full bg-primary transition-all"
+                        className="h-full rounded-full bg-primary shadow-sm transition-all duration-1000"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
                   </div>
-                  <span className="w-20 shrink-0 text-right text-xs font-semibold text-slate-700">
-                    {(c.revenue / 10000).toFixed(0)}만원
+                  <span className="w-24 shrink-0 text-right text-sm font-bold text-slate-900 font-mono">
+                    {(c.revenue / 10000).toFixed(0)}<span className="text-[10px] text-slate-400 ml-0.5">만원</span>
                   </span>
                 </div>
               );

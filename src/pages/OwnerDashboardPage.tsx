@@ -115,10 +115,10 @@ export const OwnerDashboardPage: React.FC = () => {
       <div className="space-y-6">
 
         {/* Morning Briefing */}
-        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 md:p-6">
+        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 md:p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
                 <Megaphone className="h-4 w-4 text-white" />
               </div>
               <div>
@@ -129,17 +129,17 @@ export const OwnerDashboardPage: React.FC = () => {
             <span className="shrink-0 text-xs text-slate-400">2026-03-08 07:00</span>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3">
+            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
               <p className="text-xs font-medium text-slate-500">전일 실적</p>
               <p className="mt-1 text-sm font-bold text-slate-900">매출 870,000원 (목표 104%)</p>
               <p className="text-xs text-red-500">객수 -18% · 객단가 +2.3%</p>
             </div>
-            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3">
+            <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
               <p className="text-xs font-medium text-slate-500">오늘 예측</p>
               <p className="mt-1 text-sm font-bold text-slate-900">예상 매출 912,000원</p>
               <p className="text-xs text-emerald-600">비 예보로 배달 주문 +15% 전망</p>
             </div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
               <p className="text-xs font-medium text-amber-700">필수 공지</p>
               <p className="mt-1 text-sm font-bold text-slate-900">포장재 입고 수량 확인</p>
               <p className="text-xs text-amber-600">마감: 3월 10일 · 미확인 1건</p>
@@ -148,11 +148,11 @@ export const OwnerDashboardPage: React.FC = () => {
         </section>
 
         {/* Welcome Banner */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="rounded-full border border-[#DCE4F3] bg-[#F7FAFF] px-3 py-1 text-xs font-semibold text-primary">
+                <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-3 py-1 text-xs font-semibold text-[#2454C8]">
                   {store?.name ?? "매장"}
                 </span>
                 <span className="text-sm text-slate-400">마지막 업데이트: 방금 전</span>
@@ -183,7 +183,7 @@ export const OwnerDashboardPage: React.FC = () => {
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5">
+              <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
                   <div className="rounded-lg bg-[#EEF4FF] p-1.5">
@@ -201,7 +201,7 @@ export const OwnerDashboardPage: React.FC = () => {
           })}
 
           {/* AI 예상 달성률 */}
-          <article className="rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] p-5">
+          <article className="rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-500">AI 예상 달성률</p>
               <div className="rounded-lg bg-[#EEF4FF] p-1.5">
@@ -217,7 +217,7 @@ export const OwnerDashboardPage: React.FC = () => {
         </section>
 
         {/* Action Board */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-slate-900">오늘의 운영 액션 보드</h3>
@@ -237,7 +237,7 @@ export const OwnerDashboardPage: React.FC = () => {
             {actions.map((action, idx) => (
               <article
                 key={action.id}
-                className={`rounded-xl border p-4 transition-colors ${
+                className={`rounded-xl border p-4 transition-all hover:shadow-sm ${
                   done.includes(action.id)
                     ? "border-[#BFD4FF] bg-[#EEF4FF]"
                     : "border-[#DCE4F3] bg-[#F7FAFF]"
@@ -264,7 +264,7 @@ export const OwnerDashboardPage: React.FC = () => {
                       </p>
                     </div>
                     <p className="mt-1.5 text-sm text-slate-600">{action.why}</p>
-                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#DCE4F3] bg-white px-2.5 py-1">
+                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#CFE0FF] bg-white px-2.5 py-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                       <span className="text-xs font-semibold text-primary">{action.impact}</span>
                     </div>
@@ -272,17 +272,17 @@ export const OwnerDashboardPage: React.FC = () => {
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           onClick={() => setConfirmModal(action.id)}
-                          className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                          className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
                         >
                           실행
                         </button>
                         <button
                           onClick={() => setProofModal(action.id)}
-                          className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700 hover:bg-[#F8FAFF]"
+                          className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-[#F8FAFF]"
                         >
                           근거 보기
                         </button>
-                        <button className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700 hover:bg-[#F8FAFF]">
+                        <button className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-[#F8FAFF]">
                           보류
                         </button>
                       </div>
@@ -298,7 +298,7 @@ export const OwnerDashboardPage: React.FC = () => {
         <section className="grid gap-4 lg:grid-cols-2">
 
           {/* 시간대별 매출 */}
-          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
             <div className="flex items-center gap-2">
               <BarChart2 className="h-5 w-5 text-slate-400" />
               <h3 className="text-lg font-bold text-slate-900">시간대별 매출 추이</h3>
@@ -331,7 +331,7 @@ export const OwnerDashboardPage: React.FC = () => {
           </article>
 
           {/* PQ 분해 차트 */}
-          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
             <div className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-slate-400" />
               <h3 className="text-lg font-bold text-slate-900">객단가·객수 분해</h3>
@@ -375,7 +375,7 @@ export const OwnerDashboardPage: React.FC = () => {
         <section className="grid gap-4 lg:grid-cols-2">
 
           {/* 메뉴 마진 경보 */}
-          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               <h3 className="text-lg font-bold text-slate-900">메뉴 마진 경보</h3>
@@ -389,7 +389,7 @@ export const OwnerDashboardPage: React.FC = () => {
               {marginAlerts.map((alert) => (
                 <div
                   key={alert.menu}
-                  className={`rounded-xl border p-3 ${
+                  className={`rounded-xl border p-3 shadow-sm ${
                     alert.risk === "high"
                       ? "border-red-200 bg-red-50"
                       : "border-amber-200 bg-amber-50"
@@ -420,7 +420,7 @@ export const OwnerDashboardPage: React.FC = () => {
           </article>
 
           {/* 리뷰 감성 요약 */}
-          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5 text-amber-400" />
               <h3 className="text-lg font-bold text-slate-900">리뷰 감성 요약</h3>
@@ -469,7 +469,7 @@ export const OwnerDashboardPage: React.FC = () => {
         </section>
 
         {/* 매장 기준 정보 */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="h-5 w-5 text-slate-400" />
             <h3 className="text-lg font-bold text-slate-900">매장 기준 정보</h3>
@@ -482,7 +482,7 @@ export const OwnerDashboardPage: React.FC = () => {
               { icon: Clock, label: "브레이크", value: store?.breakTime },
               { icon: ParkingCircle, label: "주차", value: store?.parking },
             ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5">
+              <div key={label} className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-2.5 transition-colors hover:border-[#BFD1ED]">
                 <div className="rounded-lg bg-[#EEF4FF] p-1.5">
                   <Icon className="h-3.5 w-3.5 text-primary" />
                 </div>

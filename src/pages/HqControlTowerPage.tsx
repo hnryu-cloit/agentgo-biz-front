@@ -121,11 +121,11 @@ export const HqControlTowerPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full border border-[#DCE4F3] bg-[#F7FAFF] px-3 py-1 text-xs font-semibold text-primary">
+              <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-3 py-1 text-xs font-semibold text-[#2454C8]">
                 본사 통합 관제 시스템
               </span>
               <span className="text-sm text-slate-400">AgentGo Biz HQ Control</span>
@@ -135,7 +135,7 @@ export const HqControlTowerPage = () => {
               AI 기반 위험 감지 및 전국 단위 데이터 분석이 활성화되어 있습니다.
             </p>
           </div>
-          <div className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3 shadow-sm transition-all hover:shadow-md">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF]">
               <Network className="h-5 w-5 text-primary" />
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -153,10 +153,12 @@ export const HqControlTowerPage = () => {
 
       {/* KPI Cards */}
       <section className="grid gap-4 md:grid-cols-4">
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">전국 총 매출</p>
-            <Activity className="h-4 w-4 text-slate-400" />
+            <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
           </div>
           <p className="mt-2 text-2xl font-bold text-slate-900">42.5억</p>
           <div className="mt-1 flex items-center gap-1 text-sm">
@@ -166,10 +168,12 @@ export const HqControlTowerPage = () => {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">운영 가맹점</p>
-            <Building2 className="h-4 w-4 text-slate-400" />
+            <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+              <Building2 className="h-4 w-4 text-primary" />
+            </div>
           </div>
           <p className="mt-2 text-2xl font-bold text-slate-900">248개</p>
           <div className="mt-1 flex items-center gap-1 text-sm">
@@ -179,10 +183,12 @@ export const HqControlTowerPage = () => {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">통합 회원 수</p>
-            <Users className="h-4 w-4 text-slate-400" />
+            <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+              <Users className="h-4 w-4 text-primary" />
+            </div>
           </div>
           <p className="mt-2 text-2xl font-bold text-slate-900">125만명</p>
           <div className="mt-1 flex items-center gap-1 text-sm">
@@ -192,12 +198,14 @@ export const HqControlTowerPage = () => {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">에스컬레이션 이슈</p>
-            <ShieldAlert className="h-4 w-4 text-red-500" />
+            <div className="rounded-lg bg-red-50 p-1.5">
+              <ShieldAlert className="h-4 w-4 text-red-500" />
+            </div>
           </div>
-          <p className="mt-2 text-2xl font-bold text-slate-900">14건</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 text-red-600">14건</p>
           <div className="mt-1 flex items-center gap-1 text-sm">
             <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
             <span className="font-medium text-red-600">본사 개입 요망</span>
@@ -207,8 +215,8 @@ export const HqControlTowerPage = () => {
       </section>
 
       {/* Agents Tab Section */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-        <p className="text-sm font-semibold text-brand-300">에이전트 관제</p>
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <p className="text-sm font-semibold text-primary">에이전트 관제</p>
         <h3 className="mt-1 text-lg font-bold text-slate-900">멀티 에이전트 헬스보드</h3>
 
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -224,7 +232,7 @@ export const HqControlTowerPage = () => {
               {agents
                 .sort((a, b) => (a.status === "주의" ? -1 : 1))
                 .map((agent) => (
-                  <article key={agent.id} className="rounded-xl border border-border bg-white p-4 shadow-sm">
+                  <article key={agent.id} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -237,7 +245,7 @@ export const HqControlTowerPage = () => {
                             Health {agent.health.toFixed(0)}%
                           </span>
                         </div>
-                        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
                           <div
                             className={`h-full transition-all duration-1000 ${
                               agent.health >= 90 ? "bg-emerald-500" : "bg-amber-500"
@@ -259,9 +267,9 @@ export const HqControlTowerPage = () => {
             <div className="space-y-3">
               {workflowRuns.map((wf) => {
                 const stageColors: Record<WorkflowRun["stage"], string> = {
-                  "분석": "bg-blue-50 text-blue-700",
-                  "전략": "bg-purple-50 text-purple-700",
-                  "실행": "bg-emerald-50 text-emerald-700",
+                  "분석": "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]",
+                  "전략": "border-purple-200 bg-purple-50 text-purple-700",
+                  "실행": "border-emerald-200 bg-emerald-50 text-emerald-700",
                 };
                 const statusInfo: Record<WorkflowRun["status"], { icon: React.ReactNode; label: string; cls: string }> = {
                   completed: { icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />, label: "완료", cls: "text-emerald-600" },
@@ -271,10 +279,10 @@ export const HqControlTowerPage = () => {
                 };
                 const si = statusInfo[wf.status];
                 return (
-                  <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-border bg-white p-4">
+                  <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${stageColors[wf.stage]}`}>{wf.stage}</span>
+                        <span className={`rounded border px-2 py-0.5 text-[11px] font-semibold ${stageColors[wf.stage]}`}>{wf.stage}</span>
                         <p className="text-sm font-medium text-slate-800 truncate">{wf.name}</p>
                       </div>
                       <p className="mt-1 text-xs text-slate-400">{wf.store} · {wf.startedAt} 시작{wf.duration && ` · ${wf.duration} 소요`}</p>
@@ -285,7 +293,7 @@ export const HqControlTowerPage = () => {
                         {si.label}
                       </div>
                       {wf.status === "failed" && (
-                        <button className="flex items-center gap-1 rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-700 hover:bg-[#F8FAFF]">
+                        <button className="flex items-center gap-1 rounded-lg border border-[#D6E0F0] bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:bg-[#F8FAFF]">
                           <RotateCcw className="h-3 w-3" />재실행
                         </button>
                       )}
@@ -296,17 +304,17 @@ export const HqControlTowerPage = () => {
             </div>
           )}
           {tab === "data" && (
-            <div className="overflow-x-auto rounded-xl border border-border">
+            <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead className="bg-[#F7FAFF] text-slate-600">
                   <tr>
-                    <th className="px-4 py-3">매장</th>
-                    <th className="px-4 py-3 text-center">품질 점수</th>
-                    <th className="px-4 py-3 text-center">매출</th>
-                    <th className="px-4 py-3 text-center">원가</th>
-                    <th className="px-4 py-3 text-center">고객</th>
-                    <th className="px-4 py-3 text-center">리뷰</th>
-                    <th className="px-4 py-3">최근 업데이트</th>
+                    <th className="px-4 py-3 font-semibold">매장</th>
+                    <th className="px-4 py-3 text-center font-semibold">품질 점수</th>
+                    <th className="px-4 py-3 text-center font-semibold">매출</th>
+                    <th className="px-4 py-3 text-center font-semibold">원가</th>
+                    <th className="px-4 py-3 text-center font-semibold">고객</th>
+                    <th className="px-4 py-3 text-center font-semibold">리뷰</th>
+                    <th className="px-4 py-3 font-semibold">최근 업데이트</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -317,9 +325,9 @@ export const HqControlTowerPage = () => {
                       ? <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
                       : <TriangleAlert className="h-4 w-4 text-red-400 mx-auto" />;
                     return (
-                      <tr key={row.storeId} className="border-t border-border">
+                      <tr key={row.storeId} className="border-t border-border transition-colors hover:bg-slate-50/50">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-slate-800">{row.name}</p>
+                          <p className="font-semibold text-slate-800">{row.name}</p>
                           <p className="text-[11px] text-slate-400">{row.storeId}</p>
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -350,7 +358,7 @@ export const HqControlTowerPage = () => {
                     "포인트누수": <ShieldAlert className="h-5 w-5 text-orange-500" />,
                   };
                   return (
-                    <div key={type} className={`rounded-xl border p-4 ${count > 0 ? "border-red-200 bg-red-50" : "border-[#DCE4F3] bg-[#F7FAFF]"}`}>
+                    <div key={type} className={`rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${count > 0 ? "border-red-200 bg-red-50" : "border-[#DCE4F3] bg-[#F7FAFF]"}`}>
                       <div className="flex items-center gap-2">
                         {icons[type]}
                         <p className="text-sm font-semibold text-slate-800">{type}</p>
@@ -361,16 +369,16 @@ export const HqControlTowerPage = () => {
                   );
                 })}
               </div>
-              <div className="overflow-x-auto rounded-xl border border-border">
+              <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
                 <table className="w-full min-w-[600px] text-left text-sm">
                   <thead className="bg-[#F7FAFF] text-slate-600">
                     <tr>
-                      <th className="px-4 py-3">유형</th>
-                      <th className="px-4 py-3">매장</th>
-                      <th className="px-4 py-3">내용</th>
-                      <th className="px-4 py-3">등급</th>
-                      <th className="px-4 py-3">상태</th>
-                      <th className="px-4 py-3">탐지 시각</th>
+                      <th className="px-4 py-3 font-semibold">유형</th>
+                      <th className="px-4 py-3 font-semibold">매장</th>
+                      <th className="px-4 py-3 font-semibold">내용</th>
+                      <th className="px-4 py-3 font-semibold">등급</th>
+                      <th className="px-4 py-3 font-semibold">상태</th>
+                      <th className="px-4 py-3 font-semibold">탐지 시각</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -379,14 +387,14 @@ export const HqControlTowerPage = () => {
                       const statusLabel = r.status === "open" ? "미처리" : r.status === "acknowledged" ? "확인됨" : "해결됨";
                       const statusColor = r.status === "open" ? "text-red-600" : r.status === "acknowledged" ? "text-amber-600" : "text-emerald-600";
                       return (
-                        <tr key={r.id} className="border-t border-border">
-                          <td className="px-4 py-3 font-medium text-slate-800">{r.type}</td>
+                        <tr key={r.id} className="border-t border-border transition-colors hover:bg-slate-50/50">
+                          <td className="px-4 py-3 font-semibold text-slate-800">{r.type}</td>
                           <td className="px-4 py-3 text-slate-600">{r.store}</td>
                           <td className="px-4 py-3 text-slate-600 text-xs">{r.detail}</td>
                           <td className="px-4 py-3">
                             <span className={`rounded border px-2 py-0.5 text-xs font-bold ${levelColor}`}>{r.level}</span>
                           </td>
-                          <td className={`px-4 py-3 text-xs font-medium ${statusColor}`}>{statusLabel}</td>
+                          <td className={`px-4 py-3 text-xs font-semibold ${statusColor}`}>{statusLabel}</td>
                           <td className="px-4 py-3 text-xs text-slate-500">{r.detectedAt}</td>
                         </tr>
                       );
@@ -402,9 +410,11 @@ export const HqControlTowerPage = () => {
       {/* Regional + Infra Section */}
       <section className="grid gap-6 lg:grid-cols-2">
         {/* Regional Forecast */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center gap-2 mb-1">
-            <Map className="h-5 w-5 text-indigo-500" />
+            <div className="rounded-lg bg-indigo-50 p-1.5">
+              <Map className="h-5 w-5 text-indigo-500" />
+            </div>
             <h3 className="text-lg font-bold text-slate-900">권역별 AI 매출 예측 모델링</h3>
           </div>
           <p className="text-sm text-slate-500 mb-5">전국 권역별 당월 목표 달성 예측치</p>
@@ -413,17 +423,17 @@ export const HqControlTowerPage = () => {
               <div key={r.label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 text-slate-700">
-                    <span className="rounded border border-[#DCE4F3] bg-[#F7FAFF] px-2 py-0.5 text-xs text-slate-600">{r.label}</span>
-                    {r.status}
+                    <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-2.5 py-0.5 text-xs font-semibold text-[#2454C8] shadow-sm">{r.label}</span>
+                    <span className="font-medium">{r.status}</span>
                   </span>
-                  <span className="font-semibold text-slate-900">{r.pct}%</span>
+                  <span className="font-bold text-slate-900">{r.pct}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(r.pct, 100)}%` }} />
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                  <div className="h-full rounded-full bg-primary shadow-sm" style={{ width: `${Math.min(r.pct, 100)}%` }} />
                 </div>
                 {r.warn && (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 shadow-sm">
+                    <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
                     {r.warn}
                   </div>
                 )}
@@ -433,16 +443,16 @@ export const HqControlTowerPage = () => {
         </article>
 
         {/* Data & Agent Infra */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-lg font-bold text-slate-900">데이터 인프라 및 에이전트 상태</h3>
-            <button className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-[#F8FAFF]">
+            <button className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-[#F8FAFF] shadow-sm">
               상세 로그
             </button>
           </div>
           <p className="text-sm text-slate-500 mb-5">전국 POS 연동 및 AI 추론 서버 상태</p>
           <div className="space-y-3">
-            <div className="flex items-start justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
+            <div className="flex items-start justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
               <div className="flex gap-3">
                 <div className="rounded-lg bg-[#EEF4FF] p-2">
                   <Server className="h-4 w-4 text-primary" />
@@ -452,10 +462,10 @@ export const HqControlTowerPage = () => {
                   <p className="mt-0.5 text-xs text-slate-500">248/248 매장 정상 수집 중</p>
                 </div>
               </div>
-              <span className="rounded border border-[#DCE4F3] bg-white px-2 py-1 text-xs font-medium text-slate-700">정상</span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600">정상</span>
             </div>
 
-            <div className="flex items-start justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
+            <div className="flex items-start justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
               <div className="flex gap-3">
                 <div className="rounded-lg bg-[#EEF4FF] p-2">
                   <Activity className="h-4 w-4 text-primary" />
@@ -465,20 +475,20 @@ export const HqControlTowerPage = () => {
                   <p className="mt-0.5 text-xs text-slate-500">CPU 42% / GPU 68% 점유율</p>
                 </div>
               </div>
-              <span className="rounded border border-[#DCE4F3] bg-white px-2 py-1 text-xs font-medium text-slate-700">양호</span>
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-primary">양호</span>
             </div>
 
-            <div className="flex items-start justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
+            <div className="flex items-start justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm transition-all hover:shadow-md">
               <div className="flex gap-3">
-                <div className="rounded-lg bg-[#EEF4FF] p-2">
-                  <AlertTriangle className="h-4 w-4 text-primary" />
+                <div className="rounded-lg bg-white p-2 shadow-sm">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">가맹점 발송 자동화 지연</p>
-                  <p className="mt-0.5 text-xs text-slate-500">알림톡 API 토큰 만료 임박 (D-2)</p>
+                  <p className="mt-0.5 text-xs text-amber-600 font-medium">알림톡 API 토큰 만료 임박 (D-2)</p>
                 </div>
               </div>
-              <button className="rounded-lg border border-[#D6E0F0] bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-[#F8FAFF]">
+              <button className="rounded-lg bg-amber-600 px-2.5 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all hover:opacity-90">
                 갱신 필요
               </button>
             </div>

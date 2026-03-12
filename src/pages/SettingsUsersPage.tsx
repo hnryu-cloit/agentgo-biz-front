@@ -2,6 +2,7 @@ import type React from "react";
 import { useState } from "react";
 import { UserPlus, CheckCircle2, XCircle, Mail, Store } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
+import { cn } from "@/lib/utils";
 
 type UserRole = "store_owner" | "supervisor" | "hq_admin" | "marketer";
 
@@ -68,90 +69,103 @@ export const SettingsUsersPage: React.FC = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
+              <p className="text-sm font-semibold text-primary">설정</p>
               <h2 className="text-2xl font-bold text-slate-900">사용자 관리</h2>
-              <p className="mt-1 text-sm text-slate-500">조직 내 사용자 초대·비활성화 및 SV 담당 매장을 배정합니다.</p>
+              <p className="mt-1 text-base text-slate-500">조직 내 사용자 권한 관리 및 슈퍼바이저 담당 매장을 배정합니다.</p>
             </div>
             <button
               onClick={() => setShowInvite(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95"
             >
               <UserPlus className="h-4 w-4" />
-              사용자 초대
+              신규 사용자 초대
             </button>
           </div>
         </section>
 
         {/* User Table */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-          <div className="overflow-x-auto rounded-xl border border-border">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+          <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="bg-[#F7FAFF] text-slate-600">
                 <tr>
-                  <th className="px-4 py-3">이름</th>
-                  <th className="px-4 py-3">이메일</th>
-                  <th className="px-4 py-3">역할</th>
-                  <th className="px-4 py-3">담당 매장</th>
-                  <th className="px-4 py-3">가입일</th>
-                  <th className="px-4 py-3">상태</th>
-                  <th className="px-4 py-3 text-right">액션</th>
+                  <th className="px-4 py-3 font-bold">사용자 정보</th>
+                  <th className="px-4 py-3 font-bold text-center">역할</th>
+                  <th className="px-4 py-3 font-bold">담당 매장</th>
+                  <th className="px-4 py-3 font-bold text-center">상태</th>
+                  <th className="px-4 py-3 text-right font-bold">액션</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className={`border-t border-border ${!u.active ? "opacity-50" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-slate-800">{u.name}</td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded border px-2 py-0.5 text-xs font-semibold ${
+                  <tr key={u.id} className={cn(
+                    "border-t border-border transition-colors hover:bg-slate-50/50",
+                    !u.active ? "opacity-50 grayscale-[0.5]" : ""
+                  )}>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800">{u.name}</span>
+                        <span className="text-[11px] font-medium text-slate-400 font-mono mt-0.5">{u.email}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={cn(
+                        "rounded-full border px-2.5 py-0.5 text-[11px] font-black shadow-sm",
                         u.role === "hq_admin" ? "border-purple-200 bg-purple-50 text-purple-700"
-                          : u.role === "supervisor" ? "border-[#BFD4FF] bg-[#EEF4FF] text-primary"
-                          : "border-[#DCE4F3] bg-white text-slate-600"
-                      }`}>
+                          : u.role === "supervisor" ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
+                          : "border-[#DCE4F3] bg-white text-slate-500"
+                      )}>
                         {roleLabel[u.role]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       {u.assignedStores && u.assignedStores.length > 0 ? (
-                        <span className="text-xs text-slate-600">{u.assignedStores.join(", ")}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {u.assignedStores.map(s => (
+                            <span key={s} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">{s}</span>
+                          ))}
+                        </div>
                       ) : (
-                        <span className="text-xs text-slate-300">-</span>
+                        <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">No Assignment</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400">{u.createdAt}</td>
-                    <td className="px-4 py-3">
-                      {u.active ? (
-                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                          <CheckCircle2 className="h-3.5 w-3.5" />활성
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-xs font-medium text-slate-400">
-                          <XCircle className="h-3.5 w-3.5" />비활성
-                        </span>
-                      )}
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-center">
+                        {u.active ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600 border border-emerald-100 shadow-sm">
+                            <CheckCircle2 className="h-3 w-3" />ACTIVE
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-400 border border-slate-200">
+                            <XCircle className="h-3 w-3" />INACTIVE
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         {u.role === "supervisor" && (
                           <button
                             onClick={() => { setShowSvAssign(u.id); setSvStores(u.assignedStores ?? []); }}
-                            className="flex items-center gap-1 rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-700 hover:bg-[#F8FAFF]"
+                            className="flex items-center gap-1 rounded-lg border border-[#D6E0F0] bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-[#F8FAFF] shadow-sm transition-colors"
                           >
-                            <Store className="h-3 w-3" />
+                            <Store className="h-3.5 w-3.5" />
                             매장배정
                           </button>
                         )}
                         <button
                           onClick={() => toggleActive(u.id)}
-                          className={`rounded border px-2 py-1 text-xs ${
+                          className={cn(
+                            "rounded-lg border px-2.5 py-1.5 text-xs font-bold shadow-sm transition-all",
                             u.active
-                              ? "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                              : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          }`}
+                              ? "border-red-200 bg-white text-red-600 hover:bg-red-50"
+                              : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+                          )}
                         >
-                          {u.active ? "비활성화" : "활성화"}
+                          {u.active ? "비활성화" : "활성화하기"}
                         </button>
                       </div>
                     </td>

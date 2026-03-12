@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState } from "react";
 import { ScanLine, Upload, FileText, CheckSquare, Send, Clock, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ocrLines = [
   { text: "3월 10일(화)까지 테이크아웃 포트 A/B 전체 교체 실시", confidence: 98 },
@@ -37,7 +38,7 @@ export const NoticeOcrPage: React.FC = () => {
     <div className="space-y-6">
 
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-semibold text-primary">운영 자동화</p>
@@ -46,7 +47,7 @@ export const NoticeOcrPage: React.FC = () => {
               공지 이미지를 업로드하면 OCR 결과와 필수 체크리스트가 자동 생성됩니다.
             </p>
           </div>
-          <div className="rounded-xl bg-[#EEF4FF] p-3">
+          <div className="rounded-xl bg-[#EEF4FF] p-3 shadow-sm">
             <ScanLine className="h-6 w-6 text-primary" />
           </div>
         </div>
@@ -56,12 +57,16 @@ export const NoticeOcrPage: React.FC = () => {
           {["이미지 업로드", "OCR 분석", "체크리스트 확인", "전체 배포"].map((step, idx) => (
             <div key={step} className="flex items-center">
               <div className="flex items-center gap-2">
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                <div className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shadow-sm",
                   idx < 3 ? "bg-primary text-white" : "border border-[#DCE4F3] bg-white text-slate-400"
-                }`}>
+                )}>
                   {idx < 2 ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
                 </div>
-                <span className={`text-xs font-medium ${idx < 3 ? "text-primary" : "text-slate-400"}`}>
+                <span className={cn(
+                  "text-xs font-semibold",
+                  idx < 3 ? "text-primary" : "text-slate-400"
+                )}>
                   {step}
                 </span>
               </div>
@@ -75,7 +80,7 @@ export const NoticeOcrPage: React.FC = () => {
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* Step 1. 이미지 업로드 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <Upload className="h-5 w-5 text-slate-400" />
             Step 1. 이미지 업로드
@@ -83,29 +88,29 @@ export const NoticeOcrPage: React.FC = () => {
           <p className="mt-1 text-sm text-slate-500">공지 원본 이미지 또는 PDF를 업로드합니다.</p>
 
           {uploaded ? (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
-              <div className="rounded-lg bg-[#EEF4FF] p-2">
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#CFE0FF] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
+              <div className="rounded-lg bg-[#EEF4FF] p-2 shadow-sm">
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">공지_2026_03_10.jpg</p>
-                <p className="text-xs text-slate-400">2.4 MB · JPG</p>
+                <p className="text-sm font-bold text-slate-900 truncate">공지_2026_03_10.jpg</p>
+                <p className="text-xs text-slate-400 font-medium">2.4 MB · JPG</p>
               </div>
               <button
                 onClick={() => setUploaded(false)}
-                className="rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-500 hover:bg-[#F8FAFF]"
+                className="rounded-lg border border-[#D6E0F0] bg-white px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-[#F8FAFF] transition-colors shadow-sm"
               >
                 변경
               </button>
             </div>
           ) : (
-            <div className="mt-4 rounded-xl border-2 border-dashed border-[#DCE4F3] bg-[#F7FAFF] p-8 text-center">
+            <div className="mt-4 rounded-xl border-2 border-dashed border-[#DCE4F3] bg-[#F7FAFF] p-8 text-center transition-colors hover:border-primary/30">
               <Upload className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-3 text-sm font-medium text-slate-700">공지 이미지를 드래그하거나 업로드하세요</p>
+              <p className="mt-3 text-sm font-semibold text-slate-700">공지 이미지를 드래그하거나 업로드하세요</p>
               <p className="mt-1 text-xs text-slate-400">JPG · PNG · PDF 지원</p>
               <button
                 onClick={() => setUploaded(true)}
-                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
               >
                 파일 선택
               </button>
@@ -114,32 +119,32 @@ export const NoticeOcrPage: React.FC = () => {
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">공지 대상</label>
-              <select className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50">
+              <label className="mb-1 block text-xs font-bold text-slate-500 uppercase tracking-wider">공지 대상</label>
+              <select className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50">
                 <option>전체 매장</option>
                 <option>강남구 매장</option>
                 <option>종로구 매장</option>
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">공지 날짜</label>
+              <label className="mb-1 block text-xs font-bold text-slate-500 uppercase tracking-wider">공지 날짜</label>
               <input
                 type="date"
                 defaultValue="2026-03-10"
-                className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50"
+                className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
               />
             </div>
           </div>
         </article>
 
         {/* Step 2. OCR 결과 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
               <ScanLine className="h-5 w-5 text-slate-400" />
               Step 2. OCR 결과 확인
             </h3>
-            <span className="rounded border border-[#BFD4FF] bg-[#EEF4FF] px-2 py-0.5 text-xs font-semibold text-primary">
+            <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-2.5 py-0.5 text-xs font-bold text-[#2454C8] shadow-sm">
               신뢰도 96%
             </span>
           </div>
@@ -147,13 +152,13 @@ export const NoticeOcrPage: React.FC = () => {
 
           <div className="mt-4 flex-1 space-y-2">
             {ocrLines.map((line, idx) => (
-              <div key={idx} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
-                <p className="text-sm text-slate-700 leading-relaxed">{line.text}</p>
+              <div key={idx} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3 shadow-sm transition-all hover:shadow-md">
+                <p className="text-sm font-medium text-slate-700 leading-relaxed">{line.text}</p>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#DCE4F3]">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${line.confidence}%` }} />
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                    <div className="h-full rounded-full bg-primary shadow-sm" style={{ width: `${line.confidence}%` }} />
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0">{line.confidence}%</span>
+                  <span className="text-[10px] font-bold text-slate-400 shrink-0">{line.confidence}%</span>
                 </div>
               </div>
             ))}
@@ -166,17 +171,17 @@ export const NoticeOcrPage: React.FC = () => {
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* Step 3. 체크리스트 */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
               <CheckSquare className="h-5 w-5 text-slate-400" />
               Step 3. 자동 생성 체크리스트
             </h3>
-            <span className="text-sm text-slate-500">{doneCount}/{checklist.length} 완료</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{doneCount}/{checklist.length} 완료</span>
           </div>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className="h-full rounded-full bg-primary transition-all shadow-sm"
               style={{ width: `${(doneCount / checklist.length) * 100}%` }}
             />
           </div>
@@ -186,34 +191,39 @@ export const NoticeOcrPage: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => toggleCheck(item.id)}
-                className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all shadow-sm hover:shadow-md",
                   checks.includes(item.id)
-                    ? "border-[#BFD4FF] bg-[#EEF4FF]"
+                    ? "border-[#CFE0FF] bg-[#EEF4FF]"
                     : "border-[#DCE4F3] bg-[#F7FAFF] hover:border-[#BFD1ED]"
-                }`}
+                )}
               >
-                <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                <div className={cn(
+                  "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors shadow-sm",
                   checks.includes(item.id) ? "border-primary bg-primary" : "border-[#DCE4F3] bg-white"
-                }`}>
+                )}>
                   {checks.includes(item.id) && (
                     <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
-                      <path d="M1.5 5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1.5 5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
                 </div>
-                <span className={`flex-1 text-sm font-medium ${checks.includes(item.id) ? "text-primary" : "text-slate-700"}`}>
+                <span className={cn(
+                  "flex-1 text-sm font-semibold transition-colors",
+                  checks.includes(item.id) ? "text-[#2454C8]" : "text-slate-700"
+                )}>
                   {item.task}
                 </span>
-                <span className="text-xs text-slate-400">마감 {item.deadline}</span>
+                <span className="text-[11px] font-bold text-slate-400">마감 {item.deadline}</span>
               </button>
             ))}
           </div>
 
           <div className="mt-4 flex gap-2">
-            <button className="flex-1 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F8FAFF]">
+            <button className="flex-1 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-[#F8FAFF] shadow-sm">
               임시 저장
             </button>
-            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 shadow-md">
               <span className="flex items-center justify-center gap-1.5">
                 <Send className="h-4 w-4" />
                 배포 실행
@@ -223,7 +233,7 @@ export const NoticeOcrPage: React.FC = () => {
         </article>
 
         {/* Step 4. 배포 현황 */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <Clock className="h-5 w-5 text-slate-400" />
             Step 4. 배포 현황
@@ -234,21 +244,23 @@ export const NoticeOcrPage: React.FC = () => {
             {deployHistory.map((item) => (
               <div
                 key={item.store}
-                className="flex items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3"
+                className="flex items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3 shadow-sm transition-all hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`h-2 w-2 rounded-full shrink-0 ${
+                  <div className={cn(
+                    "h-2 w-2 rounded-full shrink-0 shadow-sm",
                     item.status === "완료" ? "bg-emerald-400" : "bg-slate-300"
-                  }`} />
-                  <p className="text-sm font-medium text-slate-900">{item.store}</p>
+                  )} />
+                  <p className="text-sm font-bold text-slate-800">{item.store}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400">{item.time}</span>
-                  <span className={`rounded border px-2 py-0.5 text-xs font-medium ${
+                  <span className="text-[11px] font-bold text-slate-400 font-mono">{item.time}</span>
+                  <span className={cn(
+                    "rounded-full border px-2.5 py-0.5 text-[11px] font-bold shadow-sm",
                     item.status === "완료"
-                      ? "border-[#BFD4FF] bg-[#EEF4FF] text-primary"
+                      ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
                       : "border-[#DCE4F3] bg-white text-slate-400"
-                  }`}>
+                  )}>
                     {item.status}
                   </span>
                 </div>
@@ -256,16 +268,16 @@ export const NoticeOcrPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">배포 완료</span>
-              <span className="font-bold text-slate-900">
-                {deployHistory.filter((d) => d.status === "완료").length}/{deployHistory.length} 매장
+          <div className="mt-4 rounded-xl border border-[#CFE0FF] bg-[#F7FAFF] p-4 shadow-sm">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
+              <span className="text-primary">배포 완료율</span>
+              <span className="text-slate-900">
+                {deployHistory.filter((d) => d.status === "완료").length}/{deployHistory.length} 매장 ({Math.round((deployHistory.filter((d) => d.status === "완료").length / deployHistory.length) * 100)}%)
               </span>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
+            <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
               <div
-                className="h-full rounded-full bg-primary"
+                className="h-full rounded-full bg-primary shadow-sm transition-all duration-700"
                 style={{ width: `${(deployHistory.filter((d) => d.status === "완료").length / deployHistory.length) * 100}%` }}
               />
             </div>

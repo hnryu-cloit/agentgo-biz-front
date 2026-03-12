@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Users, TrendingDown, Crown, AlertCircle, Filter, Send } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type SegmentKey = "vip" | "loyal" | "at_risk" | "churned";
 
@@ -100,35 +101,47 @@ export const RfmSegmentPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <h2 className="text-2xl font-bold text-slate-900">고객 세그먼트 (RFM)</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          최근성·빈도·금액 기준으로 고객을 분류하고 이탈 위험 고객을 관리합니다.
+        <p className="mt-1 text-base text-slate-500">
+          최근성·빈도·금액 기준으로 고객을 분류하고 AI 기반 이탈 위험군을 정밀 관리합니다.
         </p>
       </section>
 
       {/* Segment KPI Cards */}
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {segments.map((seg) => {
+          const isActive = selected === seg.key;
           return (
             <article
               key={seg.key}
-              onClick={() => setSelected(selected === seg.key ? null : seg.key)}
-              className={`cursor-pointer rounded-2xl border p-5 transition-all ${
-                selected === seg.key
-                  ? seg.borderColor + " ring-2 ring-offset-1 ring-primary/30"
+              onClick={() => setSelected(isActive ? null : seg.key)}
+              className={cn(
+                "cursor-pointer rounded-2xl border p-5 transition-all shadow-elevated hover:shadow-md",
+                isActive
+                  ? cn(seg.borderColor, "ring-2 ring-offset-2 ring-primary/40 scale-[1.02]")
                   : "border-border/90 bg-card hover:border-[#DCE4F3]"
-              }`}
+              )}
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-500">{seg.label}</p>
-                {segmentIcons[seg.key]}
+                <p className={cn("text-sm font-bold uppercase tracking-wider", isActive ? seg.color : "text-slate-500")}>
+                  {seg.label}
+                </p>
+                <div className={cn("rounded-lg p-1.5 shadow-sm bg-white/50", isActive ? "" : "bg-slate-50")}>
+                  {segmentIcons[seg.key]}
+                </div>
               </div>
-              <p className="mt-2 text-3xl font-bold text-slate-900">{seg.count.toLocaleString()}명</p>
-              <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                <span>매출 기여 {seg.salesShare}%</span>
-                <span>·</span>
-                <span>평균 방문 {seg.avgVisit}회/월</span>
+              <p className="mt-4 text-3xl font-black text-slate-900 leading-none">
+                {seg.count.toLocaleString()}<span className="text-sm ml-1 font-bold text-slate-400">명</span>
+              </p>
+              <div className="mt-4 flex flex-col gap-1.5 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-slate-400">매출 기여도</span>
+                  <span className="text-slate-700">{seg.salesShare}%</span>
+                </div>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full bg-primary/60" style={{ width: `${seg.salesShare}%` }} />
+                </div>
               </div>
             </article>
           );
@@ -137,100 +150,116 @@ export const RfmSegmentPage: React.FC = () => {
 
       {/* Segment Detail */}
       {activeSegment && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-          <h3 className="text-lg font-bold text-slate-900">{activeSegment.label} 상세</h3>
-          <p className="mt-0.5 text-sm text-slate-500">{activeSegment.description}</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
-              <p className="text-xs font-medium text-slate-400">고객 수</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{activeSegment.count.toLocaleString()}명</p>
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex items-center gap-2 mb-4">
+            <div className={cn("rounded-lg p-1.5 shadow-sm bg-white border border-slate-100")}>
+              {segmentIcons[activeSegment.key]}
             </div>
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
-              <p className="text-xs font-medium text-slate-400">매출 기여</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{activeSegment.salesShare}%</p>
-            </div>
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
-              <p className="text-xs font-medium text-slate-400">평균 방문 빈도</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{activeSegment.avgVisit}회/월</p>
-            </div>
+            <h3 className="text-lg font-bold text-slate-900">{activeSegment.label} 분석 상세</h3>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${activeSegment.salesShare}%` }}
-            />
+          <p className="text-sm font-medium text-slate-500 leading-relaxed">{activeSegment.description}</p>
+          
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Customers</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.count.toLocaleString()}명</p>
+            </div>
+            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue Share</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.salesShare}%</p>
+            </div>
+            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. Frequency</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.avgVisit}회<span className="text-xs ml-1">/월</span></p>
+            </div>
           </div>
         </section>
       )}
 
       {/* Churn Risk List */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">이탈 고객 후보 리스트</h3>
-            <p className="mt-0.5 text-sm text-slate-500">방문 지연 고객 리스트 — 위험 점수 순 정렬</p>
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-red-50 p-1.5 shadow-sm">
+              <TrendingDown className="h-5 w-5 text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">이탈 위험군 집중 관리</h3>
+              <p className="text-xs font-medium text-slate-400">방문 지연 기간 및 위험 점수 기반 정렬</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-600 hover:bg-[#F8FAFF]">
-              <Filter className="h-3.5 w-3.5" />
-              필터
-            </button>
-          </div>
+          <button className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm font-bold text-slate-600 hover:bg-[#F8FAFF] shadow-sm transition-colors">
+            <Filter className="h-3.5 w-3.5" />
+            데이터 필터
+          </button>
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-[#F7FAFF] text-slate-600">
               <tr>
-                <th className="px-4 py-3">고객 ID</th>
-                <th className="px-4 py-3">등급</th>
-                <th className="px-4 py-3">미방문</th>
-                <th className="px-4 py-3">위험 점수</th>
-                <th className="px-4 py-3">예상 LTV</th>
-                <th className="px-4 py-3 text-right">오퍼 제외</th>
+                <th className="px-4 py-3 font-bold">고객 ID</th>
+                <th className="px-4 py-3 font-bold text-center">현재 등급</th>
+                <th className="px-4 py-3 font-bold text-center">미방문 기간</th>
+                <th className="px-4 py-3 font-bold">AI 위험 점수</th>
+                <th className="px-4 py-3 font-bold">예상 LTV</th>
+                <th className="px-4 py-3 text-right font-bold">액션</th>
               </tr>
             </thead>
             <tbody>
               {customers.map((c) => (
                 <tr
                   key={c.id}
-                  className={`border-t border-border ${c.excluded ? "opacity-40" : ""}`}
+                  className={cn(
+                    "border-t border-border transition-all hover:bg-slate-50/50 font-medium",
+                    c.excluded ? "opacity-40 grayscale" : ""
+                  )}
                 >
-                  <td className="px-4 py-3 font-mono text-xs font-medium text-slate-800">{c.id}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      c.grade === "VIP" ? "border border-purple-200 bg-purple-50 text-purple-700" : "border border-[#DCE4F3] bg-white text-slate-600"
-                    }`}>
+                  <td className="px-4 py-3 font-mono text-xs font-bold text-[#2454C8]">{c.id}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[11px] font-black shadow-sm border",
+                      c.grade === "VIP" 
+                        ? "border-purple-200 bg-purple-50 text-purple-700" 
+                        : "border-[#DCE4F3] bg-white text-slate-500"
+                    )}>
                       {c.grade}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`font-medium ${c.daysSince >= 45 ? "text-red-600" : "text-amber-600"}`}>
-                      {c.daysSince}일
+                  <td className="px-4 py-3 text-center">
+                    <span className={cn(
+                      "text-sm font-bold",
+                      c.daysSince >= 45 ? "text-red-600" : "text-amber-600"
+                    )}>
+                      {c.daysSince}<span className="text-[10px] ml-0.5">일</span>
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[#DCE4F3]">
+                    <div className="flex items-center gap-3">
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100 shadow-inner">
                         <div
-                          className={`h-full rounded-full ${c.riskScore >= 85 ? "bg-red-400" : "bg-amber-400"}`}
+                          className={cn(
+                            "h-full rounded-full shadow-sm transition-all duration-700",
+                            c.riskScore >= 85 ? "bg-red-500" : "bg-amber-500"
+                          )}
                           style={{ width: `${c.riskScore}%` }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-slate-700">{c.riskScore}</span>
+                      <span className="text-xs font-black text-slate-700 font-mono">{c.riskScore}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{c.predictedLtv.toLocaleString()}원</td>
+                  <td className="px-4 py-3 text-slate-700 font-bold font-mono">{c.predictedLtv.toLocaleString()}원</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => toggleExclude(c.id)}
-                      className={`rounded border px-2 py-1 text-xs transition-colors ${
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-xs font-black transition-all shadow-sm",
                         c.excluded
-                          ? "border-[#D6E0F0] bg-white text-slate-600"
-                          : "border-red-200 bg-red-50 text-red-600"
-                      }`}
+                          ? "border-[#D6E0F0] bg-white text-slate-400"
+                          : "border-red-200 bg-white text-red-600 hover:bg-red-50"
+                      )}
                     >
-                      {c.excluded ? "포함" : "제외"}
+                      {c.excluded ? "포함시키기" : "제외하기"}
                     </button>
                   </td>
                 </tr>
@@ -239,23 +268,28 @@ export const RfmSegmentPage: React.FC = () => {
           </table>
         </div>
 
-        {/* Send Offer */}
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
-          <p className="text-sm text-slate-600">
-            선택 대상 <strong className="text-primary">{targetCount}명</strong>에게 오퍼를 발송합니다.
-          </p>
+        {/* Send Offer Panel */}
+        <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] px-6 py-4 shadow-sm">
+          <div className="flex items-center gap-3 mb-3 md:mb-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-[#CFE0FF]">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm font-bold text-slate-700">
+              최종 타겟팅 대상 <strong className="text-[#2454C8] text-lg mx-0.5">{targetCount}명</strong>
+            </p>
+          </div>
           {sentOffer ? (
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
-              <AlertCircle className="h-4 w-4" />
-              발송 완료
-            </span>
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-white shadow-md animate-in slide-in-from-right-4 duration-500">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-sm font-black">캠페인 발송 완료</span>
+            </div>
           ) : (
             <button
               onClick={() => setSentOffer(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="group flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
             >
-              <Send className="h-3.5 w-3.5" />
-              캠페인 연계 발송
+              <Send className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              맞춤 오퍼 발송하기
             </button>
           )}
         </div>

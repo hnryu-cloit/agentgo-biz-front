@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState } from "react";
 import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type ReportType = "daily_owner" | "weekly_hq";
 type ReportStatus = "ready" | "generating" | "failed";
@@ -29,7 +30,7 @@ const typeLabel: Record<ReportType, string> = {
 };
 
 const typeColor: Record<ReportType, string> = {
-  daily_owner: "border-[#BFD4FF] bg-[#EEF4FF] text-primary",
+  daily_owner: "border-[#BFD4FF] bg-[#EEF4FF] text-[#2454C8]",
   weekly_hq: "border-purple-200 bg-purple-50 text-purple-700",
 };
 
@@ -77,120 +78,135 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">리포트</h2>
-            <p className="mt-1 text-sm text-slate-500">자동 생성된 일간·주간 리포트를 조회하고 다운로드합니다.</p>
+            <p className="text-sm font-semibold text-primary">문서 센터</p>
+            <h2 className="text-2xl font-bold text-slate-900">통합 리포트 허브</h2>
+            <p className="mt-1 text-base text-slate-500">AI가 자동 생성한 일간·주간 운영 리포트를 조회하고 관리합니다.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={() => handleGenerate("daily_owner")}
               disabled={!!generating}
-              className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-[#F8FAFF] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
             >
-              <FileText className="h-3.5 w-3.5" />
+              <FileText className="h-4 w-4" />
               일간 리포트 생성
             </button>
             <button
               onClick={() => handleGenerate("weekly_hq")}
               disabled={!!generating}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <FileText className="h-3.5 w-3.5" />
-              주간 리포트 생성
+              <FileText className="h-4 w-4" />
+              주간 통합 리포트 생성
             </button>
           </div>
         </div>
 
         {/* Filter */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-1.5 w-fit shadow-sm">
           {(["전체", "daily_owner", "weekly_hq"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={
+              className={cn(
+                "rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
                 filter === f
-                  ? "rounded-lg border border-[#BFD4FF] bg-[#EEF4FF] px-3 py-1.5 text-sm font-semibold text-primary"
-                  : "rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-sm text-slate-600"
-              }
+                  ? "bg-white text-[#2454C8] shadow-sm"
+                  : "text-slate-400 hover:text-slate-600"
+              )}
             >
-              {f === "전체" ? "전체" : typeLabel[f]}
+              {f === "전체" ? "전체 리포트" : typeLabel[f]}
             </button>
           ))}
         </div>
       </section>
 
       {/* Report List */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-        <div className="overflow-x-auto rounded-xl border border-border">
+      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-[#F7FAFF] text-slate-600">
               <tr>
-                <th className="px-4 py-3">유형</th>
-                <th className="px-4 py-3">리포트명</th>
-                <th className="px-4 py-3">대상 기간</th>
-                <th className="px-4 py-3">생성 일시</th>
-                <th className="px-4 py-3">크기</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3 text-right">액션</th>
+                <th className="px-4 py-3 font-bold text-center">분류</th>
+                <th className="px-4 py-3 font-bold">리포트 제목</th>
+                <th className="px-4 py-3 font-bold text-center">대상 기간</th>
+                <th className="px-4 py-3 font-bold">생성 일시</th>
+                <th className="px-4 py-3 font-bold text-center">파일 크기</th>
+                <th className="px-4 py-3 font-bold text-center">상태</th>
+                <th className="px-4 py-3 text-right font-bold">액션</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((r) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="px-4 py-3">
-                    <span className={`rounded border px-2 py-0.5 text-xs font-semibold ${typeColor[r.type]}`}>
-                      {typeLabel[r.type]}
+                <tr key={r.id} className={cn(
+                  "border-t border-border transition-colors hover:bg-slate-50/50 font-medium",
+                  r.status === "generating" ? "bg-primary/[0.01]" : ""
+                )}>
+                  <td className="px-4 py-4 text-center">
+                    <span className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-[10px] font-black shadow-sm",
+                      typeColor[r.type]
+                    )}>
+                      {typeLabel[r.type].replace(" ", "").toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-800">{r.title}</td>
-                  <td className="px-4 py-3 text-slate-500">{r.period}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-slate-300" />
+                      <span className="font-bold text-slate-800">{r.title}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-center text-slate-500 font-mono text-xs">{r.period}</td>
+                  <td className="px-4 py-4 text-slate-500 text-xs">
                     {r.status === "generating" ? (
-                      <span className="flex items-center gap-1.5 text-primary">
+                      <span className="flex items-center gap-2 text-primary font-bold animate-pulse">
                         <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        생성 중...
+                        GENERATING...
                       </span>
                     ) : (
-                      r.createdAt
+                      <span className="font-mono">{r.createdAt}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-400 text-xs">{r.size ?? "-"}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4 text-center text-slate-400 font-mono text-xs">{r.size ?? "-"}</td>
+                  <td className="px-4 py-4 text-center">
                     {r.status === "ready" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                        <CheckCircle2 className="h-3.5 w-3.5" />완료
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-600 border border-emerald-100 shadow-sm">
+                        <CheckCircle2 className="h-3 w-3" />READY
                       </span>
                     )}
                     {r.status === "generating" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                        <Clock className="h-3.5 w-3.5" />생성중
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-primary border border-blue-100 shadow-sm">
+                        <Clock className="h-3 w-3" />RUNNING
                       </span>
                     )}
                     {r.status === "failed" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />실패
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-black text-red-600 border border-red-100 shadow-sm">
+                        <AlertCircle className="h-3 w-3" />FAILED
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {r.status === "ready" && (
-                      <button className="flex items-center gap-1 rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-700 hover:bg-[#F8FAFF] ml-auto">
-                        <Download className="h-3 w-3" />
-                        다운로드
-                      </button>
-                    )}
-                    {r.status === "failed" && (
-                      <button
-                        onClick={() => handleRetry(r.id)}
-                        disabled={retrying === r.id}
-                        className="flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100 ml-auto disabled:opacity-50"
-                      >
-                        <RefreshCcw className={`h-3 w-3 ${retrying === r.id ? "animate-spin" : ""}`} />
-                        재시도
-                      </button>
-                    )}
+                  <td className="px-4 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      {r.status === "ready" && (
+                        <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-primary/30">
+                          <Download className="h-3.5 w-3.5" />
+                          다운로드
+                        </button>
+                      )}
+                      {r.status === "failed" && (
+                        <button
+                          onClick={() => handleRetry(r.id)}
+                          disabled={retrying === r.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm transition-all hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <RefreshCcw className={cn("h-3.5 w-3.5", retrying === r.id ? "animate-spin" : "")} />
+                          재시도하기
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

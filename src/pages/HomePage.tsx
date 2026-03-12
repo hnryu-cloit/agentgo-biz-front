@@ -87,7 +87,7 @@ export const HomePage: React.FC = () => {
     <div className="space-y-6 pb-8">
 
       {/* Welcome Banner */}
-      <section className="rounded-2xl border border-border/90 bg-card p-6 md:p-8">
+      <section className="rounded-2xl border border-border/90 bg-card p-6 md:p-8 shadow-elevated">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">AgentGo Biz</p>
         <h1 className="mt-2 font-title text-3xl leading-tight text-slate-900 md:text-4xl">
           멀티에이전트 운영 허브
@@ -98,14 +98,14 @@ export const HomePage: React.FC = () => {
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
             to="/owner/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
           >
             점주 대시보드 시작
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             to="/hq/control-tower"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F8FAFF]"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F8FAFF]"
           >
             본사 관제 보기
           </Link>
@@ -125,7 +125,7 @@ export const HomePage: React.FC = () => {
               <Link
                 key={item.to}
                 to={item.to}
-                className="group flex flex-col gap-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 transition-colors hover:border-[#BFD1ED]"
+                className="group flex flex-col gap-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 transition-colors hover:border-[#BFD1ED] hover:shadow-sm"
               >
                 <div className="flex items-start justify-between">
                   <div className="rounded-lg bg-[#EEF4FF] p-2">
@@ -158,7 +158,7 @@ export const HomePage: React.FC = () => {
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5">
+              <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
                   <div className="rounded-lg bg-[#EEF4FF] p-1.5">
@@ -177,7 +177,7 @@ export const HomePage: React.FC = () => {
       <section className="grid gap-6 lg:grid-cols-2">
 
         {/* Recent Activity */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="mb-4 flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-bold text-slate-700">최근 활동</h3>
@@ -207,7 +207,7 @@ export const HomePage: React.FC = () => {
         </article>
 
         {/* Agent Status */}
-        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="mb-4 flex items-center gap-2">
             <Bot className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-bold text-slate-700">에이전트 상태</h3>

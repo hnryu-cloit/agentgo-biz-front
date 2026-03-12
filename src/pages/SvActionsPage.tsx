@@ -2,6 +2,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Clock, XCircle, AlertTriangle, Send } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
+import { cn } from "@/lib/utils";
 
 type ActionStatus = "completed" | "pending" | "ignored";
 
@@ -92,111 +93,137 @@ export const SvActionsPage: React.FC = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">액션 관리</h2>
-              <p className="mt-1 text-sm text-slate-500">점주 권장 액션 이행 현황을 추적하고 에스컬레이션합니다.</p>
+              <p className="text-sm font-semibold text-primary">현장 코칭</p>
+              <h2 className="text-2xl font-bold text-slate-900">운영 액션 관리</h2>
+              <p className="mt-1 text-base text-slate-500">점주에게 제안된 AI 액션의 이행 현황을 모니터링하고 이슈를 보고합니다.</p>
             </div>
             <button
               onClick={() => setShowEscModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="group flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
             >
-              <AlertTriangle className="h-4 w-4" />
-              본사 에스컬레이션
+              <AlertTriangle className="h-4 w-4 transition-transform group-hover:scale-110" />
+              본사 긴급 에스컬레이션
             </button>
           </div>
         </section>
 
         {/* 이행률 Summary */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-          <h3 className="text-lg font-bold text-slate-900">매장별 액션 이행률</h3>
-          <div className="mt-4 space-y-3">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="rounded-lg bg-slate-100 p-1.5 shadow-sm">
+              <CheckCircle2 className="h-5 w-5 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">매장별 가이드 이행률</h3>
+          </div>
+          
+          <div className="space-y-5">
             {rateByStore.map((r) => (
-              <div key={r.name} className="flex items-center gap-3">
-                <span className="w-16 shrink-0 text-sm font-medium text-slate-700">{r.name}</span>
+              <div key={r.name} className="group flex items-center gap-4">
+                <span className="w-20 shrink-0 text-sm font-bold text-slate-700">{r.name}</span>
                 <div className="flex-1">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
                     <div
-                      className={`h-full rounded-full transition-all ${
+                      className={cn(
+                        "h-full rounded-full transition-all duration-1000 shadow-sm",
                         r.rate === 100 ? "bg-emerald-400" : r.rate >= 50 ? "bg-primary" : "bg-red-400"
-                      }`}
+                      )}
                       style={{ width: `${r.rate}%` }}
                     />
                   </div>
                 </div>
-                <span className="w-10 shrink-0 text-right text-xs text-slate-500">{r.done}/{r.total}</span>
-                <span className={`w-10 shrink-0 text-right text-sm font-bold ${
-                  r.rate === 100 ? "text-emerald-600" : r.rate >= 50 ? "text-primary" : "text-red-600"
-                }`}>{r.rate}%</span>
-                {r.rate < 50 && (
-                  <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-                    미이행↑
-                  </span>
-                )}
+                <div className="flex w-32 shrink-0 items-center justify-end gap-3">
+                  <span className="text-[11px] font-bold text-slate-400 font-mono">{r.done}/{r.total} <span className="opacity-60">ACTS</span></span>
+                  <span className={cn(
+                    "w-12 text-right text-sm font-black",
+                    r.rate === 100 ? "text-emerald-600" : r.rate >= 50 ? "text-[#2454C8]" : "text-red-600"
+                  )}>{r.rate}%</span>
+                  {r.rate < 50 && (
+                    <span className="rounded bg-red-50 px-1.5 py-0.5 text-[9px] font-black text-red-600 border border-red-100 shadow-sm animate-pulse">
+                      RISK
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </section>
 
         {/* Action List */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-lg font-bold text-slate-900">액션 이행 내역</h3>
-            <div className="flex flex-wrap gap-2">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-[#EEF4FF] p-1.5 shadow-sm">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">전체 액션 히스토리</h3>
+            </div>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-1.5 shadow-sm">
               <select
                 value={filterStore}
                 onChange={(e) => setFilterStore(e.target.value)}
-                className="h-8 rounded-lg border border-[#D6E0F0] bg-white px-2 text-xs text-slate-700"
+                className="h-8 rounded-lg bg-white px-3 text-[11px] font-bold text-slate-600 shadow-sm outline-none border border-slate-200"
               >
                 <option value="전체">전체 매장</option>
                 {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
+              <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block" />
               {(["전체", "completed", "pending", "ignored"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s)}
-                  className={
+                  className={cn(
+                    "rounded-lg px-3 py-1 text-[11px] font-black transition-all",
                     filterStatus === s
-                      ? "rounded border border-[#BFD4FF] bg-[#EEF4FF] px-2 py-1 text-xs font-semibold text-primary"
-                      : "rounded border border-[#D6E0F0] bg-white px-2 py-1 text-xs text-slate-600"
-                  }
+                      ? "bg-white text-[#2454C8] shadow-sm"
+                      : "text-slate-400 hover:text-slate-600"
+                  )}
                 >
-                  {s === "전체" ? "전체" : statusLabel[s]}
+                  {s === "전체" ? "ALL" : statusLabel[s].toUpperCase()}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="bg-[#F7FAFF] text-slate-600">
                 <tr>
-                  <th className="px-4 py-3">매장</th>
-                  <th className="px-4 py-3">액션</th>
-                  <th className="px-4 py-3">등급</th>
-                  <th className="px-4 py-3">제안일</th>
-                  <th className="px-4 py-3">이행일</th>
-                  <th className="px-4 py-3">상태</th>
+                  <th className="px-4 py-3 font-bold">매장명</th>
+                  <th className="px-4 py-3 font-bold">액션 타이틀</th>
+                  <th className="px-4 py-3 font-bold text-center">우선순위</th>
+                  <th className="px-4 py-3 font-bold text-center">제안일</th>
+                  <th className="px-4 py-3 font-bold text-center">이행일</th>
+                  <th className="px-4 py-3 text-right font-bold">현재 상태</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((a) => (
-                  <tr key={a.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-medium text-slate-800">{a.store}</td>
-                    <td className="px-4 py-3 text-slate-700">{a.title}</td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded px-2 py-0.5 text-xs font-bold text-white ${a.level === "P0" ? "bg-red-500" : "bg-amber-500"}`}>
+                  <tr key={a.id} className="border-t border-border transition-colors hover:bg-slate-50/50 font-medium">
+                    <td className="px-4 py-4 font-bold text-slate-800">{a.store}</td>
+                    <td className="px-4 py-4 text-slate-600 text-[13px]">{a.title}</td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={cn(
+                        "rounded px-2 py-0.5 text-[10px] font-black text-white shadow-sm",
+                        a.level === "P0" ? "bg-red-500" : "bg-amber-500"
+                      )}>
                         {a.level}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{a.proposedAt}</td>
-                    <td className="px-4 py-3 text-slate-500">{a.completedAt ?? "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium w-fit ${statusClass[a.status]}`}>
-                        {statusIcon[a.status]}
-                        {statusLabel[a.status]}
-                      </span>
+                    <td className="px-4 py-4 text-center text-slate-400 font-mono text-xs">{a.proposedAt}</td>
+                    <td className="px-4 py-4 text-center text-slate-400 font-mono text-xs">{a.completedAt ?? "-"}</td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end">
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold shadow-sm",
+                          statusClass[a.status]
+                        )}>
+                          {statusIcon[a.status]}
+                          {statusLabel[a.status]}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ))}
