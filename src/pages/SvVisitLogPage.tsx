@@ -4,7 +4,7 @@ import {
   MapPin, Plus, CheckCircle2, ChevronDown, 
   Sparkles, ClipboardCheck, MessageSquare, Camera, 
   User, Calendar, Trash2, Send, LayoutGrid,
-  Edit3, Save, X
+  Edit3, Save, X, AlertCircle
 } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
@@ -77,24 +77,6 @@ const initialVisits: VisitRecord[] = [
     ],
     expanded: false,
     isEditing: false,
-  },
-  {
-    id: "v3",
-    store: storeNames[2],
-    visitDate: "2026-02-21",
-    supervisor: "김수진 SV",
-    aiBriefing: "공지 이행률이 65%로 구역 내 최하위권. 본사 정책 반영 속도 개선 필요.",
-    checklist: [
-      { id: "c8", category: "데이터", task: "공지 OCR 체크리스트 이행", status: "fail" },
-      { id: "c9", category: "운영", task: "주간 재고 실사 기록", status: "pass" },
-    ],
-    notes: "점주님의 디지털 도구 활용도가 낮아 공지 확인이 늦어짐. 대면 가이드 및 앱 알림 설정 재교육 실시함.",
-    ownerFeedback: "시스템 적응에 시간이 걸리나 적극적 개선 의지 보임.",
-    followups: [
-      { id: "f4", task: "앱 알림 대시보드 위젯 설정 지원", deadline: "02-25", done: true },
-    ],
-    expanded: false,
-    isEditing: false,
   }
 ];
 
@@ -105,6 +87,8 @@ export const SvVisitLogPage: React.FC = () => {
     store: storeNames[0],
     visitDate: new Date().toISOString().split("T")[0],
     notes: "",
+    ownerFeedback: "",
+    followup: "",
   });
 
   const toggleExpand = (id: string) => {
@@ -152,20 +136,23 @@ export const SvVisitLogPage: React.FC = () => {
       store: newLog.store,
       visitDate: newLog.visitDate,
       supervisor: "김수진 SV",
-      aiBriefing: "신규 등록된 방문 일지입니다. AI 분석 데이터 수집 중...",
+      aiBriefing: "방문 전 AI 분석 결과: 최근 매출 추이는 안정적이나, 피크타임 운영 효율화가 필요한 지점이 감지됩니다.",
       checklist: [
-        { id: `nc1-${Date.now()}`, category: "운영", task: "기본 운영 수칙 준수", status: "pass" },
-        { id: `nc2-${Date.now()}`, category: "서비스", task: "고객 응대 친절도", status: "pass" },
+        { id: `nc1-${Date.now()}`, category: "운영", task: "매장 오픈 수칙 준수", status: "pass" },
+        { id: `nc2-${Date.now()}`, category: "위생", task: "주방 및 홀 위생 상태", status: "pass" },
+        { id: `nc3-${Date.now()}`, category: "서비스", task: "직원 용모 및 친절도", status: "pass" },
       ],
       notes: newLog.notes,
-      ownerFeedback: "",
-      followups: [],
+      ownerFeedback: newLog.ownerFeedback,
+      followups: newLog.followup ? [
+        { id: `nf1-${Date.now()}`, task: newLog.followup, deadline: "차주 중", done: false }
+      ] : [],
       expanded: true,
       isEditing: false,
     };
     setVisits([record, ...visits]);
     setShowForm(false);
-    setNewLog({ store: storeNames[0], visitDate: new Date().toISOString().split("T")[0], notes: "" });
+    setNewLog({ store: storeNames[0], visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
   };
 
   return (
@@ -193,43 +180,71 @@ export const SvVisitLogPage: React.FC = () => {
         <section className="rounded-2xl border border-border/90 bg-card p-6 shadow-elevated animate-in zoom-in-95 duration-300">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-900">새 방문 기록 작성</h3>
-            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <X className="h-5 w-5" />
+            </button>
           </div>
           
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">방문 매장</label>
-              <select 
-                value={newLog.store}
-                onChange={(e) => setNewLog({ ...newLog, store: e.target.value })}
-                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50"
-              >
-                {storeNames.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
+          <div className="space-y-5">
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 px-1">방문 매장</label>
+                <select 
+                  value={newLog.store}
+                  onChange={(e) => setNewLog({ ...newLog, store: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
+                >
+                  {storeNames.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 px-1">방문 일자</label>
+                <input 
+                  type="date"
+                  value={newLog.visitDate}
+                  onChange={(e) => setNewLog({ ...newLog, visitDate: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">방문 일자</label>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 px-1">현장 점검 상세</label>
+              <textarea 
+                value={newLog.notes}
+                onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
+                placeholder="방문 목적 및 현장 특이사항을 입력하세요..."
+                rows={3}
+                className="w-full rounded-xl border border-[#D6E0F0] bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 px-1">점주 피드백</label>
+              <textarea 
+                value={newLog.ownerFeedback}
+                onChange={(e) => setNewLog({ ...newLog, ownerFeedback: e.target.value })}
+                placeholder="점주 요청 사항이나 면담 내용을 입력하세요..."
+                rows={2}
+                className="w-full rounded-xl border border-[#D6E0F0] bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 px-1">주요 후속 조치 (Follow-up)</label>
               <input 
-                type="date"
-                value={newLog.visitDate}
-                onChange={(e) => setNewLog({ ...newLog, visitDate: e.target.value })}
-                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50"
+                type="text"
+                value={newLog.followup}
+                onChange={(e) => setNewLog({ ...newLog, followup: e.target.value })}
+                placeholder="예) 차주 인력 충원 여부 확인"
+                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
               />
             </div>
           </div>
-          <div className="mt-5">
-            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">주요 방문 내용</label>
-            <textarea 
-              value={newLog.notes}
-              onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
-              placeholder="방문 목적 및 현장 특이사항을 입력하세요..."
-              rows={3}
-              className="w-full rounded-xl border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary/50 resize-none"
-            />
-          </div>
-          <div className="mt-6 flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="rounded-lg border border-[#D6E0F0] bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-[#F8FAFF]">취소</button>
-            <button onClick={handleCreate} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#1E5BE9]">저장하기</button>
+
+          <div className="mt-8 flex justify-end gap-2 border-t border-slate-100 pt-6">
+            <button onClick={() => setShowForm(false)} className="rounded-lg border border-[#D6E0F0] bg-white px-6 py-2 text-sm font-medium text-slate-600 hover:bg-[#F8FAFF] transition-colors">취소</button>
+            <button onClick={handleCreate} className="rounded-lg bg-primary px-8 py-2 text-sm font-bold text-white shadow-md hover:bg-[#1E5BE9] transition-all active:scale-95">방문 일지 저장하기</button>
           </div>
         </section>
       )}
@@ -312,7 +327,7 @@ export const SvVisitLogPage: React.FC = () => {
                   {/* Left Column */}
                   <div className="lg:col-span-7 p-6 border-r border-border/60 space-y-6">
                     {/* AI Briefing */}
-                    <div className="rounded-xl border border-primary/10 bg-[#F7FAFF] p-4 shadow-sm">
+                    <div className="rounded-xl border border-primary/10 bg-[#F7FAFF] p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Sparkles className="h-4 w-4 text-primary" />
                         <p className="text-xs font-bold text-primary">AI 사전 브리핑</p>
@@ -322,19 +337,16 @@ export const SvVisitLogPage: React.FC = () => {
 
                     {/* Observations */}
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-slate-400" />
-                        <h4 className="text-sm font-bold text-slate-800">현장 점검 상세</h4>
-                      </div>
+                      <label className="text-sm font-bold text-slate-800 px-1">현장 점검 상세</label>
                       {v.isEditing ? (
                         <textarea 
                           value={v.notes}
                           onChange={(e) => updateContent(v.id, "notes", e.target.value)}
                           rows={4}
-                          className="w-full rounded-xl border border-primary/30 bg-white p-3 text-sm font-medium text-slate-700 outline-none focus:border-primary"
+                          className="w-full rounded-xl border border-primary/30 bg-white p-4 text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
                         />
                       ) : (
-                        <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4">
+                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-h-[100px]">
                           <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{v.notes}</p>
                         </div>
                       )}
@@ -342,19 +354,16 @@ export const SvVisitLogPage: React.FC = () => {
 
                     {/* Owner Feedback */}
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-slate-400" />
-                        <h4 className="text-sm font-bold text-slate-800">점주 피드백</h4>
-                      </div>
+                      <label className="text-sm font-bold text-slate-800 px-1">점주 피드백</label>
                       {v.isEditing ? (
                         <textarea 
                           value={v.ownerFeedback}
                           onChange={(e) => updateContent(v.id, "ownerFeedback", e.target.value)}
                           rows={3}
-                          className="w-full rounded-xl border border-primary/30 bg-white p-3 text-sm font-medium text-slate-700 outline-none focus:border-primary"
+                          className="w-full rounded-xl border border-primary/30 bg-white p-4 text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
                         />
                       ) : (
-                        <div className="rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
+                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-h-[80px]">
                           <p className="text-sm font-medium text-slate-600 leading-relaxed">{v.ownerFeedback || "입력된 피드백이 없습니다."}</p>
                         </div>
                       )}
@@ -393,7 +402,7 @@ export const SvVisitLogPage: React.FC = () => {
                           <button 
                             key={item.id} 
                             onClick={() => updateChecklist(v.id, item.id)}
-                            className="flex w-full items-center gap-3 rounded-lg border border-[#DCE4F3] bg-white px-3 py-2 text-sm shadow-sm transition-all hover:border-primary/30 active:scale-[0.98]"
+                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-all hover:border-primary/30 active:scale-[0.98]"
                           >
                             <div className={cn(
                               "h-2 w-2 rounded-full",
@@ -425,7 +434,7 @@ export const SvVisitLogPage: React.FC = () => {
                             onClick={() => toggleFollowup(v.id, f.id)}
                             className={cn(
                               "w-full text-left rounded-xl border p-3.5 shadow-sm transition-all active:scale-[0.98]",
-                              f.done ? "bg-[#F8FAFF] border-emerald-100 opacity-70" : "bg-white border-[#CFE0FF] hover:border-primary/30"
+                              f.done ? "bg-[#F8FAFF] border-emerald-100 opacity-70" : "bg-white border-slate-200 hover:border-primary/30"
                             )}
                           >
                             <div className="flex items-start justify-between gap-3">
@@ -445,15 +454,21 @@ export const SvVisitLogPage: React.FC = () => {
                         ))}
                       </div>
                     </div>
-
-                    {/* Footer Actions */}
-                    <div className="pt-4 flex gap-2">
-                      <button className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#1E5BE9] active:scale-95">
-                        <Send className="h-4 w-4" /> 리포트 점주 전송
-                      </button>
-                    </div>
                   </div>
 
+                </div>
+
+                {/* Full-width Footer Action Area */}
+                <div className="border-t border-border/60 bg-slate-50/50 p-4 px-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    리포트 전송 시 해당 매장 점주 앱으로 실시간 알림이 발송됩니다.
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1E5BE9] active:scale-95">
+                      <Send className="h-4 w-4" /> 리포트 점주 전송
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
