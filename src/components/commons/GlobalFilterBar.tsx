@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const GlobalFilterBar: React.FC = () => {
   return (
-    <div className="fixed left-0 right-0 top-[68px] z-20 border-b border-border/70 bg-white/85 backdrop-blur-sm lg:left-64">
+    <div className="fixed left-0 right-0 top-[68px] z-20 border-b border-border/70 bg-white/92 backdrop-blur-sm lg:left-64">
       <div className="flex h-[52px] items-center gap-3 px-5 md:px-8">
         <Select defaultValue="s001">
           <SelectTrigger className="h-9 w-[190px] bg-card">

@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { GlobalFilterBar } from "./GlobalFilterBar";
 import { Sidebar } from "./Sidebar";
+import { FloatingAiChat } from "./FloatingAiChat";
 
 export const Layout: React.FC = () => {
   return (
@@ -18,6 +19,8 @@ export const Layout: React.FC = () => {
           </div>
         </main>
       </div>
+
+      <FloatingAiChat />
     </div>
   );
 };

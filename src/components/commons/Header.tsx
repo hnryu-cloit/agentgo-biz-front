@@ -10,7 +10,6 @@ const breadcrumbMap: Record<string, Crumb[]> = {
   "/":                        [{ label: "대시보드" }],
   "/overview":                [{ label: "대시보드" }],
   "/owner/dashboard":         [{ label: "점주" }, { label: "점주 홈" }],
-  "/owner/qna":               [{ label: "점주" }, { label: "AI QnA" }],
   "/supervisor/dashboard":    [{ label: "SV" }, { label: "SV 홈" }],
   "/supervisor/analysis":     [{ label: "SV" }, { label: "SV 분석" }],
   "/supervisor/actions":      [{ label: "SV" }, { label: "액션 관리" }],
@@ -65,14 +64,14 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-30 h-[68px] border-b border-border/75 bg-white/90 backdrop-blur-sm lg:left-64">
+    <header className="fixed left-0 right-0 top-0 z-30 h-[68px] border-b border-border bg-white/90 backdrop-blur-sm lg:left-64">
       <div className="flex h-full items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">AgentGo Biz</span>
+          <span className="text-sm font-medium text-slate-400">AgentGo Biz</span>
           {crumbs.map((crumb, i) => (
             <span key={crumb.label} className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px] text-slate-400">chevron_right</span>
-              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-500"}>
+              <span className="material-symbols-outlined text-[16px] text-slate-300">chevron_right</span>
+              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-400"}>
                 {crumb.label}
               </span>
             </span>
