@@ -59,16 +59,16 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7FAFF] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f4f7ff] px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <img src={Logo} alt="AgentGo" className="h-9 w-auto" />
         </div>
 
-        <div className="rounded-2xl border border-[#DCE4F3] bg-white p-7 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">로그인</h1>
-          <p className="mt-1 text-sm text-slate-500">역할을 선택하고 계정 정보를 입력하세요.</p>
+        <div className="rounded-2xl border border-[#d5deec] bg-white p-7 shadow-sm">
+          <h1 className="text-2xl font-bold text-foreground">로그인</h1>
+          <p className="mt-1 text-sm text-muted-foreground">역할을 선택하고 계정 정보를 입력하세요.</p>
 
           {/* Role Select */}
           <div className="mt-5 grid grid-cols-3 gap-2">
@@ -79,31 +79,31 @@ export const LoginPage: React.FC = () => {
                 onClick={() => setRole(r.value)}
                 className={`rounded-xl border px-3 py-2.5 text-center transition-colors ${
                   role === r.value
-                    ? "border-[#BFD4FF] bg-[#EEF4FF] text-primary"
-                    : "border-[#DCE4F3] bg-white text-slate-600 hover:bg-[#F7FAFF]"
+                    ? "border-[#b8ccff] bg-[#eef3ff] text-primary"
+                    : "border-[#d5deec] bg-white text-[#4a5568] hover:bg-[#f4f7ff]"
                 }`}
               >
                 <p className="text-sm font-semibold">{r.label}</p>
-                <p className="mt-0.5 text-[10px] text-slate-400">{r.desc}</p>
+                <p className="mt-0.5 text-[10px] text-[var(--subtle-foreground)]">{r.desc}</p>
               </button>
             ))}
           </div>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">이메일</label>
+              <label className="mb-1 block text-sm font-medium text-[#34415b]">이메일</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="demo@agentgo.biz"
                 disabled={isLocked}
-                className="h-11 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm text-slate-800 placeholder-slate-300 focus:border-primary focus:outline-none disabled:opacity-50"
+                className="h-11 w-full rounded-xl border border-[#d5deec] bg-white px-4 text-sm text-[#1a2138] placeholder-slate-300 focus:border-primary focus:outline-none disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">비밀번호</label>
+              <label className="mb-1 block text-sm font-medium text-[#34415b]">비밀번호</label>
               <div className="relative">
                 <input
                   type={showPw ? "text" : "password"}
@@ -111,12 +111,12 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={isLocked}
-                  className="h-11 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 pr-11 text-sm text-slate-800 placeholder-slate-300 focus:border-primary focus:outline-none disabled:opacity-50"
+                  className="h-11 w-full rounded-xl border border-[#d5deec] bg-white px-4 pr-11 text-sm text-[#1a2138] placeholder-slate-300 focus:border-primary focus:outline-none disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--subtle-foreground)]"
                 >
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -142,16 +142,16 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-4 flex items-center justify-between text-xs text-[var(--subtle-foreground)]">
             <button className="hover:text-primary hover:underline">비밀번호 재설정</button>
             <span>계정 문의: support@agentgo.biz</span>
           </div>
         </div>
 
         {/* 데모 안내 */}
-        <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#BFD4FF] bg-[#EEF4FF] px-4 py-3">
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#b8ccff] bg-[#eef3ff] px-4 py-3">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#4a5568]">
             <span className="font-semibold text-primary">데모 계정:</span>{" "}
             demo@agentgo.biz / password
           </div>

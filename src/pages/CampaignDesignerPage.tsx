@@ -78,16 +78,16 @@ export const CampaignDesignerPage: React.FC = () => {
     <div className="space-y-6">
 
       {/* ── 헤더 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-semibold text-primary">마케팅</p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-900">캠페인 설계</h2>
-            <p className="mt-1 text-base text-slate-500">
+            <h2 className="mt-1 text-2xl font-bold text-foreground">캠페인 설계</h2>
+            <p className="mt-1 text-base text-muted-foreground">
               세그먼트를 선택하고 오퍼를 설계한 뒤 손익분기점을 확인합니다.
             </p>
           </div>
-          <div className="rounded-xl bg-[#EEF4FF] p-3 shadow-sm">
+          <div className="rounded-xl bg-[#eef3ff] p-3 shadow-sm">
             <Megaphone className="h-6 w-6 text-primary" />
           </div>
         </div>
@@ -99,15 +99,15 @@ export const CampaignDesignerPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shadow-sm",
-                  idx < 3 ? "bg-primary text-white" : "border border-[#DCE4F3] bg-white text-slate-400"
+                  idx < 3 ? "bg-primary text-white" : "border border-[#d5deec] bg-card text-[var(--subtle-foreground)]"
                 )}>
                   {idx + 1}
                 </div>
-                <span className={cn("text-xs font-medium", idx < 3 ? "text-primary" : "text-slate-400")}>
+                <span className={cn("text-xs font-medium", idx < 3 ? "text-primary" : "text-[var(--subtle-foreground)]")}>
                   {step}
                 </span>
               </div>
-              {idx < 3 && <div className="mx-3 h-px w-8 bg-[#DCE4F3]" />}
+              {idx < 3 && <div className="mx-3 h-px w-8 bg-[#d5deec]" />}
             </div>
           ))}
         </div>
@@ -117,12 +117,12 @@ export const CampaignDesignerPage: React.FC = () => {
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* Step 1. 세그먼트 선택 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <Users className="h-5 w-5 text-slate-400" />
+        <article className="flex flex-col app-card p-5 md:p-6">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <Users className="h-5 w-5 text-[var(--subtle-foreground)]" />
             Step 1. 세그먼트 선택
           </h3>
-          <p className="mt-1 text-sm text-slate-500">캠페인 대상 고객 그룹을 선택합니다.</p>
+          <p className="mt-1 text-sm text-muted-foreground">캠페인 대상 고객 그룹을 선택합니다.</p>
 
           <div className="mt-4 flex-1 space-y-2">
             {segments.map((seg) => (
@@ -131,35 +131,35 @@ export const CampaignDesignerPage: React.FC = () => {
                 onClick={() => setSelectedSegment(seg.id)}
                 className={cn(
                   "w-full rounded-xl border px-4 py-3 text-left transition-all hover:shadow-sm",
-                  selectedSegment === seg.id ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF] hover:border-[#BFD1ED]"
+                  selectedSegment === seg.id ? "border-[#b8ccff] bg-[#eef3ff]" : "border-[#d5deec] bg-[#f4f7ff] hover:border-[#bac9e3]"
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <p className={cn("font-semibold", selectedSegment === seg.id ? "text-primary" : "text-slate-900")}>
+                  <p className={cn("font-semibold", selectedSegment === seg.id ? "text-primary" : "text-foreground")}>
                     {seg.name}
                   </p>
-                  <span className="text-xs font-medium text-slate-500">{seg.rev}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{seg.rev}</span>
                 </div>
-                <p className="mt-0.5 text-sm text-slate-500">{seg.users} · {seg.desc}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{seg.users} · {seg.desc}</p>
               </button>
             ))}
           </div>
 
-          <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3 shadow-sm">
-            <p className="text-xs text-slate-500">선택된 세그먼트</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-900">
+          <div className="mt-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground">선택된 세그먼트</p>
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
               {selected.name} · {selected.users}
             </p>
           </div>
         </article>
 
         {/* Step 2. 오퍼 설계 */}
-        <article className="flex flex-col rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <Sparkles className="h-5 w-5 text-slate-400" />
+        <article className="flex flex-col app-card p-5 md:p-6">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <Sparkles className="h-5 w-5 text-[var(--subtle-foreground)]" />
             Step 2. 오퍼 설계
           </h3>
-          <p className="mt-1 text-sm text-slate-500">프로모션 대상 메뉴와 할인 조건을 설정합니다.</p>
+          <p className="mt-1 text-sm text-muted-foreground">프로모션 대상 메뉴와 할인 조건을 설정합니다.</p>
 
           {/* AI 추천 오퍼 */}
           <div className="mt-4 space-y-2">
@@ -169,14 +169,14 @@ export const CampaignDesignerPage: React.FC = () => {
                 onClick={() => setSelectedPreset(idx)}
                 className={cn(
                   "w-full rounded-xl border px-4 py-2.5 text-left transition-all hover:shadow-sm",
-                  selectedPreset === idx ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF] hover:border-[#BFD1ED]"
+                  selectedPreset === idx ? "border-[#b8ccff] bg-[#eef3ff]" : "border-[#d5deec] bg-[#f4f7ff] hover:border-[#bac9e3]"
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <p className={cn("text-sm font-medium", selectedPreset === idx ? "text-primary" : "text-slate-700")}>
+                  <p className={cn("text-sm font-medium", selectedPreset === idx ? "text-primary" : "text-[#34415b]")}>
                     {preset.label}
                   </p>
-                  <span className="text-xs text-slate-500">{preset.roi}</span>
+                  <span className="text-xs text-muted-foreground">{preset.roi}</span>
                 </div>
               </button>
             ))}
@@ -184,11 +184,11 @@ export const CampaignDesignerPage: React.FC = () => {
 
           {/* 대상 메뉴 선택 */}
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">대상 메뉴</label>
+            <label className="mb-1 block text-sm font-semibold text-[#34415b]">대상 메뉴</label>
             <select
               value={selectedMenuId}
               onChange={(e) => setSelectedMenuId(e.target.value)}
-              className="h-10 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
+              className="h-10 w-full rounded-lg border border-[#d5deec] bg-card px-3 text-sm text-[#34415b] shadow-sm outline-none focus:border-primary/50"
             >
               {menuOptions.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -201,12 +201,12 @@ export const CampaignDesignerPage: React.FC = () => {
           {/* 할인율 슬라이더 */}
           <div className="mt-4">
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">할인율</label>
+              <label className="text-sm font-medium text-[#34415b]">할인율</label>
               <span className={cn(
                 "rounded border px-2 py-0.5 text-sm font-bold shadow-sm",
                 discountRate >= selectedMenu.marginRate
                   ? "border-red-200 bg-red-50 text-red-600"
-                  : "border-[#CFE0FF] bg-[#EEF4FF] text-primary"
+                  : "border-[#c9d8ff] bg-[#eef3ff] text-primary"
               )}>
                 {discount}%
               </span>
@@ -219,7 +219,7 @@ export const CampaignDesignerPage: React.FC = () => {
               onChange={(e) => setDiscount(Number(e.target.value))}
               className="w-full accent-primary"
             />
-            <div className="mt-0.5 flex justify-between text-xs text-slate-400">
+            <div className="mt-0.5 flex justify-between text-xs text-[var(--subtle-foreground)]">
               <span>5%</span>
               <span className="text-amber-500">마진율 {(selectedMenu.marginRate * 100).toFixed(0)}%</span>
               <span>30%</span>
@@ -228,18 +228,18 @@ export const CampaignDesignerPage: React.FC = () => {
 
           {/* 발송 메시지 */}
           <div className="mt-4 flex-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700">발송 메시지</label>
+            <label className="mb-1 block text-sm font-medium text-[#34415b]">발송 메시지</label>
             <textarea
-              className="h-20 w-full rounded-xl border border-[#D6E0F0] bg-white p-3 text-sm text-slate-700 outline-none transition-colors focus:border-primary/50"
+              className="h-20 w-full rounded-xl border border-[#d5deec] bg-card p-3 text-sm text-[#34415b] outline-none transition-colors focus:border-primary/50"
               defaultValue={`고객님, 오랜만에 방문하시면 ${selectedMenu.name} ${discount}% 할인 혜택을 드립니다. (7일 유효)`}
             />
           </div>
 
           <div className="mt-4 flex gap-2">
-            <button className="flex-1 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F8FAFF]">
+            <button className="flex-1 rounded-lg border border-[#d5deec] bg-card px-3 py-2.5 text-sm font-medium text-[#34415b] transition-colors hover:bg-[#f4f7ff]">
               테스트 발송
             </button>
-            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]">
+            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2356e0]">
               승인 요청
             </button>
           </div>
@@ -247,19 +247,19 @@ export const CampaignDesignerPage: React.FC = () => {
       </section>
 
       {/* ── Step 3. BEP 손익분기 계산 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-          <Calculator className="h-5 w-5 text-slate-400" />
+      <section className="app-card p-5 md:p-6">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+          <Calculator className="h-5 w-5 text-[var(--subtle-foreground)]" />
           Step 3. 손익분기점 (BEP) 확인
         </h3>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           선택 메뉴의 일평균 실적을 기준으로 프로모션이 수익을 내려면 최소 몇 개를 팔아야 하는지 계산합니다.
         </p>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
 
           {/* 왼쪽: 메뉴 기본 현황 */}
-          <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm space-y-3">
+          <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm space-y-3">
             <p className="text-[11px] font-bold uppercase tracking-wider text-primary">메뉴 기본 현황</p>
             <div className="space-y-2">
               {[
@@ -270,27 +270,27 @@ export const CampaignDesignerPage: React.FC = () => {
                 { label: "일평균 매출",   value: `${fmt(selectedMenu.dailyAvgRevenue)}원/일` },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">{row.label}</span>
-                  <span className="font-bold text-slate-800">{row.value}</span>
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="font-bold text-[#1a2138]">{row.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* 가운데: 프로모션 조건 입력 */}
-          <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm space-y-3">
+          <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm space-y-3">
             <p className="text-[11px] font-bold uppercase tracking-wider text-primary">프로모션 조건</p>
             <div className="space-y-3">
               {/* 할인율 (읽기전용 — Step 2에서 연동) */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">할인율 (Step 2 연동)</label>
-                <div className="flex h-9 items-center rounded-lg border border-[#CFE0FF] bg-[#EEF4FF] px-3 text-sm font-bold text-primary">
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">할인율 (Step 2 연동)</label>
+                <div className="flex h-9 items-center rounded-lg border border-[#c9d8ff] bg-[#eef3ff] px-3 text-sm font-bold text-primary">
                   {discount}%
                 </div>
               </div>
               {/* 프로모션 기간 */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">프로모션 기간</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">프로모션 기간</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -298,14 +298,14 @@ export const CampaignDesignerPage: React.FC = () => {
                     max={30}
                     value={promoDays}
                     onChange={(e) => setPromoDays(Math.max(1, Number(e.target.value)))}
-                    className="h-9 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+                    className="h-9 w-full rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-bold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
                   />
-                  <span className="shrink-0 text-sm text-slate-400">일</span>
+                  <span className="shrink-0 text-sm text-[var(--subtle-foreground)]">일</span>
                 </div>
               </div>
               {/* 발송 고정비 */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">발송 고정비 (문자·앱푸시)</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">발송 고정비 (문자·앱푸시)</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -313,23 +313,23 @@ export const CampaignDesignerPage: React.FC = () => {
                     step={10000}
                     value={fixedCost}
                     onChange={(e) => setFixedCost(Math.max(0, Number(e.target.value)))}
-                    className="h-9 w-full rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+                    className="h-9 w-full rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-bold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
                   />
-                  <span className="shrink-0 text-sm text-slate-400">원</span>
+                  <span className="shrink-0 text-sm text-[var(--subtle-foreground)]">원</span>
                 </div>
               </div>
               {/* 개당 공헌이익 */}
-              <div className="rounded-lg border border-[#DCE4F3] bg-white px-3 py-2">
-                <p className="text-[10px] text-slate-400">개당 공헌이익 (할인 후)</p>
+              <div className="rounded-lg border border-[#d5deec] bg-card px-3 py-2">
+                <p className="text-[10px] text-[var(--subtle-foreground)]">개당 공헌이익 (할인 후)</p>
                 <p className={cn(
                   "mt-0.5 text-sm font-black",
-                  bep ? "text-slate-800" : "text-red-500"
+                  bep ? "text-[#1a2138]" : "text-red-500"
                 )}>
                   {bep
                     ? `${bep.contribPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}원`
                     : "음수 (마진 < 할인율)"}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400">
+                <p className="mt-0.5 text-[10px] text-[var(--subtle-foreground)]">
                   {selectedMenu.price.toLocaleString()}원 × ({(selectedMenu.marginRate * 100).toFixed(0)}% − {discount}%)
                 </p>
               </div>
@@ -342,8 +342,8 @@ export const CampaignDesignerPage: React.FC = () => {
             bepJudge.border, bepJudge.bg
           )}>
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">BEP 판정</p>
-              <div className={cn("flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-black", bepJudge.border, "bg-white", bepJudge.color)}>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">BEP 판정</p>
+              <div className={cn("flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-black", bepJudge.border, "bg-card", bepJudge.color)}>
                 {bepJudge.icon}
                 {bepJudge.label}
               </div>
@@ -352,12 +352,12 @@ export const CampaignDesignerPage: React.FC = () => {
             {bep ? (
               <div className="space-y-3">
                 {/* BEP 수량 */}
-                <div className="rounded-xl border border-white bg-white px-4 py-3 shadow-sm text-center">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BEP 최소 판매 수량</p>
+                <div className="rounded-xl border border-white bg-card px-4 py-3 shadow-sm text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">BEP 최소 판매 수량</p>
                   <p className={cn("mt-1 text-4xl font-black", bepJudge.color)}>
                     {bep.bepQty}<span className="ml-1 text-lg font-bold">개</span>
                   </p>
-                  <p className="mt-1 text-xs text-slate-400">기간 {promoDays}일 내 달성해야 손익 0</p>
+                  <p className="mt-1 text-xs text-[var(--subtle-foreground)]">기간 {promoDays}일 내 달성해야 손익 0</p>
                 </div>
 
                 {/* 지표 비교 */}
@@ -367,7 +367,7 @@ export const CampaignDesignerPage: React.FC = () => {
                       label: "기간 내 일평균 예상 판매",
                       value: `${bep.periodExpected}개`,
                       sub: `${selectedMenu.dailyAvgQty}개/일 × ${promoDays}일`,
-                      color: "text-slate-700",
+                      color: "text-[#34415b]",
                     },
                     {
                       label: "BEP 달성 필요 증분",
@@ -381,15 +381,15 @@ export const CampaignDesignerPage: React.FC = () => {
                       label: "발송 고정비 회수 매출",
                       value: `${fmt(bep.bepQty * selectedMenu.price * (1 - discountRate))}원`,
                       sub: "BEP 판매 수량 × 할인 후 단가",
-                      color: "text-slate-700",
+                      color: "text-[#34415b]",
                     },
                   ].map((row) => (
-                    <div key={row.label} className="rounded-lg border border-white bg-white px-3 py-2 shadow-sm">
+                    <div key={row.label} className="rounded-lg border border-white bg-card px-3 py-2 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-slate-500">{row.label}</p>
+                        <p className="text-xs text-muted-foreground">{row.label}</p>
                         <p className={cn("text-sm font-black", row.color)}>{row.value}</p>
                       </div>
-                      <p className="mt-0.5 text-[10px] text-slate-400">{row.sub}</p>
+                      <p className="mt-0.5 text-[10px] text-[var(--subtle-foreground)]">{row.sub}</p>
                     </div>
                   ))}
                 </div>
@@ -397,12 +397,12 @@ export const CampaignDesignerPage: React.FC = () => {
                 {/* 진행 바 */}
                 <div>
                   <div className="mb-1 flex items-center justify-between text-[10px]">
-                    <span className="font-bold text-slate-500">BEP 달성 가능성</span>
+                    <span className="font-bold text-muted-foreground">BEP 달성 가능성</span>
                     <span className={cn("font-black", bepJudge.color)}>
                       {Math.min(100, Math.round((bep.periodExpected / bep.bepQty) * 100))}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-white overflow-hidden border border-slate-100">
+                  <div className="h-2 rounded-full bg-card overflow-hidden border border-[var(--border)]">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
@@ -414,13 +414,13 @@ export const CampaignDesignerPage: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400 leading-relaxed">{bepJudge.sub}</p>
+                <p className="text-[10px] text-[var(--subtle-foreground)] leading-relaxed">{bepJudge.sub}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
                 <XCircle className="h-10 w-10 text-red-300" />
                 <p className="text-sm font-bold text-red-600">BEP 계산 불가</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   할인율({discount}%)이 마진율({(selectedMenu.marginRate * 100).toFixed(0)}%)을 초과하면<br />
                   판매할수록 손실이 발생합니다.
                 </p>
@@ -433,9 +433,9 @@ export const CampaignDesignerPage: React.FC = () => {
         </div>
 
         {/* 계산식 설명 */}
-        <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">BEP 산출 공식</p>
-          <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-slate-500">
+        <div className="mt-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-4 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)] mb-2">BEP 산출 공식</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-muted-foreground">
             <span>개당 공헌이익 = 판매가 × (마진율 − 할인율)</span>
             <span>BEP 수량 = 발송 고정비 ÷ 개당 공헌이익</span>
             <span>달성 가능성 = 기간 내 일평균 예상 ÷ BEP 수량</span>
@@ -444,9 +444,9 @@ export const CampaignDesignerPage: React.FC = () => {
       </section>
 
       {/* ── 예상 성과 요약 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-          <BarChart2 className="h-5 w-5 text-slate-400" />
+      <section className="app-card p-5 md:p-6">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+          <BarChart2 className="h-5 w-5 text-[var(--subtle-foreground)]" />
           예상 성과 요약
         </h3>
         <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -456,15 +456,15 @@ export const CampaignDesignerPage: React.FC = () => {
             { label: "예상 복귀율", value: "24.0%" },
             { label: "예상 ROI",   value: "416%" },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
-              <p className="text-xs text-slate-500">{stat.label}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{stat.value}</p>
+            <div key={stat.label} className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm">
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#CFE0FF] bg-[#EEF4FF] px-4 py-3">
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#c9d8ff] bg-[#eef3ff] px-4 py-3">
           <TrendingUp className="h-4 w-4 shrink-0 text-primary" />
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4a5568]">
             BEP 달성 시 기간 내 추가 수익{" "}
             <span className="font-black text-primary">
               {bep

@@ -158,16 +158,16 @@ export const SvVisitLogPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">현장 코칭</p>
-            <h2 className="text-2xl font-bold text-slate-900">현장 방문 기록부</h2>
-            <p className="mt-1 text-base text-slate-500">가맹점 방문 분석 결과와 SV 지도 사항을 체계적으로 관리합니다.</p>
+            <h2 className="text-2xl font-bold text-foreground">현장 방문 기록부</h2>
+            <p className="mt-1 text-base text-muted-foreground">가맹점 방문 분석 결과와 SV 지도 사항을 체계적으로 관리합니다.</p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1E5BE9]"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2356e0]"
           >
             <Plus className="h-4 w-4" />
             새 방문 일지 작성
@@ -179,8 +179,8 @@ export const SvVisitLogPage: React.FC = () => {
       {showForm && (
         <section className="rounded-2xl border border-border/90 bg-card p-6 shadow-elevated animate-in zoom-in-95 duration-300">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900">새 방문 기록 작성</h3>
-            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <h3 className="text-lg font-bold text-foreground">새 방문 기록 작성</h3>
+            <button onClick={() => setShowForm(false)} className="text-[var(--subtle-foreground)] hover:text-[#4a5568] transition-colors">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -188,63 +188,63 @@ export const SvVisitLogPage: React.FC = () => {
           <div className="space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 px-1">방문 매장</label>
+                <label className="text-sm font-bold text-[#34415b] px-1">방문 매장</label>
                 <select 
                   value={newLog.store}
                   onChange={(e) => setNewLog({ ...newLog, store: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
+                  className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm text-[#34415b] outline-none focus:border-primary/50 transition-all shadow-sm"
                 >
                   {storeNames.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 px-1">방문 일자</label>
+                <label className="text-sm font-bold text-[#34415b] px-1">방문 일자</label>
                 <input 
                   type="date"
                   value={newLog.visitDate}
                   onChange={(e) => setNewLog({ ...newLog, visitDate: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
+                  className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm text-[#34415b] outline-none focus:border-primary/50 transition-all shadow-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 px-1">현장 점검 상세</label>
+              <label className="text-sm font-bold text-[#34415b] px-1">현장 점검 상세</label>
               <textarea 
                 value={newLog.notes}
                 onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
                 placeholder="방문 목적 및 현장 특이사항을 입력하세요..."
                 rows={3}
-                className="w-full rounded-xl border border-[#D6E0F0] bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
+                className="w-full rounded-xl border border-[#d5deec] bg-card px-4 py-3 text-sm text-[#34415b] outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 px-1">점주 피드백</label>
+              <label className="text-sm font-bold text-[#34415b] px-1">점주 피드백</label>
               <textarea 
                 value={newLog.ownerFeedback}
                 onChange={(e) => setNewLog({ ...newLog, ownerFeedback: e.target.value })}
                 placeholder="점주 요청 사항이나 면담 내용을 입력하세요..."
                 rows={2}
-                className="w-full rounded-xl border border-[#D6E0F0] bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
+                className="w-full rounded-xl border border-[#d5deec] bg-card px-4 py-3 text-sm text-[#34415b] outline-none focus:border-primary/50 resize-none transition-all shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 px-1">주요 후속 조치 (Follow-up)</label>
+              <label className="text-sm font-bold text-[#34415b] px-1">주요 후속 조치 (Follow-up)</label>
               <input 
                 type="text"
                 value={newLog.followup}
                 onChange={(e) => setNewLog({ ...newLog, followup: e.target.value })}
                 placeholder="예) 차주 인력 충원 여부 확인"
-                className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm"
+                className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-4 text-sm text-[#34415b] outline-none focus:border-primary/50 transition-all shadow-sm"
               />
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-2 border-t border-slate-100 pt-6">
-            <button onClick={() => setShowForm(false)} className="rounded-lg border border-[#D6E0F0] bg-white px-6 py-2 text-sm font-medium text-slate-600 hover:bg-[#F8FAFF] transition-colors">취소</button>
-            <button onClick={handleCreate} className="rounded-lg bg-primary px-8 py-2 text-sm font-bold text-white shadow-md hover:bg-[#1E5BE9] transition-all active:scale-95">방문 일지 저장하기</button>
+          <div className="mt-8 flex justify-end gap-2 border-t border-[var(--border)] pt-6">
+            <button onClick={() => setShowForm(false)} className="rounded-lg border border-[#d5deec] bg-card px-6 py-2 text-sm font-medium text-[#4a5568] hover:bg-[#f4f7ff] transition-colors">취소</button>
+            <button onClick={handleCreate} className="rounded-lg bg-primary px-8 py-2 text-sm font-bold text-white shadow-md hover:bg-[#2356e0] transition-all active:scale-95">방문 일지 저장하기</button>
           </div>
         </section>
       )}
@@ -254,7 +254,7 @@ export const SvVisitLogPage: React.FC = () => {
         {visits.map((v) => (
           <article key={v.id} className={cn(
             "rounded-2xl border transition-all duration-300 shadow-sm",
-            v.expanded ? "border-border bg-white ring-1 ring-primary/5 shadow-elevated" : "border-border/90 bg-card hover:border-[#DCE4F3]"
+            v.expanded ? "border-border bg-card ring-1 ring-primary/5 shadow-elevated" : "border-border/90 bg-card hover:border-[#d5deec]"
           )}>
             {/* Summary Row */}
             <div className="flex w-full items-center justify-between p-5">
@@ -264,17 +264,17 @@ export const SvVisitLogPage: React.FC = () => {
               >
                 <div className={cn(
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-sm",
-                  v.expanded ? "bg-primary text-white" : "bg-[#EEF4FF] text-primary"
+                  v.expanded ? "bg-primary text-white" : "bg-[#eef3ff] text-primary"
                 )}>
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-lg font-bold text-slate-900">{v.store}</p>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">SV {v.supervisor.split(" ")[0]}</span>
+                    <p className="text-lg font-bold text-foreground">{v.store}</p>
+                    <span className="rounded-full bg-[var(--muted)] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">SV {v.supervisor.split(" ")[0]}</span>
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1 text-xs font-medium text-slate-400">
+                    <span className="flex items-center gap-1 text-xs font-medium text-[var(--subtle-foreground)]">
                       <Calendar className="h-3.5 w-3.5" /> {v.visitDate}
                     </span>
                     <div className="flex gap-1.5">
@@ -301,7 +301,7 @@ export const SvVisitLogPage: React.FC = () => {
                   title={v.isEditing ? "저장" : "편집"}
                   className={cn(
                     "p-2 rounded-lg transition-colors",
-                    v.isEditing ? "bg-emerald-50 text-emerald-600 shadow-sm" : "text-slate-400 hover:bg-slate-50"
+                    v.isEditing ? "bg-emerald-50 text-emerald-600 shadow-sm" : "text-[var(--subtle-foreground)] hover:bg-[var(--panel-soft)]"
                   )}
                 >
                   {v.isEditing ? <Save className="h-4.5 w-4.5" /> : <Edit3 className="h-4.5 w-4.5" />}
@@ -309,11 +309,11 @@ export const SvVisitLogPage: React.FC = () => {
                 <button 
                   onClick={() => deleteRecord(v.id)}
                   title="삭제"
-                  className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  className="p-2 rounded-lg text-[var(--subtle-foreground)] hover:bg-red-50 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="h-4.5 w-4.5" />
                 </button>
-                <button onClick={() => toggleExpand(v.id)} className="p-1.5 text-slate-300">
+                <button onClick={() => toggleExpand(v.id)} className="p-1.5 text-[#b0bdd4]">
                   <ChevronDown className={cn("h-5 w-5 transition-transform", v.expanded && "rotate-180")} />
                 </button>
               </div>
@@ -321,50 +321,50 @@ export const SvVisitLogPage: React.FC = () => {
 
             {/* Detailed Content */}
             {v.expanded && (
-              <div className="border-t border-border/60 bg-white animate-in slide-in-from-top-2 duration-300">
+              <div className="border-t border-border/60 bg-card animate-in slide-in-from-top-2 duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   
                   {/* Left Column */}
                   <div className="lg:col-span-7 p-6 border-r border-border/60 space-y-6">
                     {/* AI Briefing */}
-                    <div className="rounded-xl border border-primary/10 bg-[#F7FAFF] p-4">
+                    <div className="rounded-xl border border-primary/10 bg-[#f4f7ff] p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Sparkles className="h-4 w-4 text-primary" />
                         <p className="text-xs font-bold text-primary">AI 사전 브리핑</p>
                       </div>
-                      <p className="text-sm font-medium text-slate-600 leading-relaxed italic">"{v.aiBriefing}"</p>
+                      <p className="text-sm font-medium text-[#4a5568] leading-relaxed italic">"{v.aiBriefing}"</p>
                     </div>
 
                     {/* Observations */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-800 px-1">현장 점검 상세</label>
+                      <label className="text-sm font-bold text-[#1a2138] px-1">현장 점검 상세</label>
                       {v.isEditing ? (
                         <textarea 
                           value={v.notes}
                           onChange={(e) => updateContent(v.id, "notes", e.target.value)}
                           rows={4}
-                          className="w-full rounded-xl border border-primary/30 bg-white p-4 text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
+                          className="w-full rounded-xl border border-primary/30 bg-card p-4 text-sm text-[#34415b] outline-none focus:border-primary shadow-sm"
                         />
                       ) : (
-                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-h-[100px]">
-                          <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{v.notes}</p>
+                        <div className="rounded-xl border border-[var(--border)] bg-card p-4 shadow-sm min-h-[100px]">
+                          <p className="text-sm font-medium text-[#4a5568] leading-relaxed whitespace-pre-wrap">{v.notes}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Owner Feedback */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-800 px-1">점주 피드백</label>
+                      <label className="text-sm font-bold text-[#1a2138] px-1">점주 피드백</label>
                       {v.isEditing ? (
                         <textarea 
                           value={v.ownerFeedback}
                           onChange={(e) => updateContent(v.id, "ownerFeedback", e.target.value)}
                           rows={3}
-                          className="w-full rounded-xl border border-primary/30 bg-white p-4 text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
+                          className="w-full rounded-xl border border-primary/30 bg-card p-4 text-sm text-[#34415b] outline-none focus:border-primary shadow-sm"
                         />
                       ) : (
-                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-h-[80px]">
-                          <p className="text-sm font-medium text-slate-600 leading-relaxed">{v.ownerFeedback || "입력된 피드백이 없습니다."}</p>
+                        <div className="rounded-xl border border-[var(--border)] bg-card p-4 shadow-sm min-h-[80px]">
+                          <p className="text-sm font-medium text-[#4a5568] leading-relaxed">{v.ownerFeedback || "입력된 피드백이 없습니다."}</p>
                         </div>
                       )}
                     </div>
@@ -372,12 +372,12 @@ export const SvVisitLogPage: React.FC = () => {
                     {/* Photos */}
                     <div className="grid grid-cols-3 gap-3">
                       {v.photos?.map((p, i) => (
-                        <div key={i} className="aspect-square rounded-xl bg-slate-50 border border-border flex flex-col items-center justify-center gap-2 hover:bg-slate-100 transition-colors cursor-pointer group">
-                          <Camera className="h-5 w-5 text-slate-400" />
-                          <span className="text-[10px] font-medium text-slate-500 px-2 truncate w-full text-center">{p}</span>
+                        <div key={i} className="aspect-square rounded-xl bg-[var(--panel-soft)] border border-border flex flex-col items-center justify-center gap-2 hover:bg-[var(--muted)] transition-colors cursor-pointer group">
+                          <Camera className="h-5 w-5 text-[var(--subtle-foreground)]" />
+                          <span className="text-[10px] font-medium text-muted-foreground px-2 truncate w-full text-center">{p}</span>
                         </div>
                       ))}
-                      <div className="aspect-square rounded-xl border-2 border-dashed border-[#DCE4F3] bg-white flex flex-col items-center justify-center gap-1 text-slate-400 hover:border-primary/30 hover:text-primary transition-all cursor-pointer">
+                      <div className="aspect-square rounded-xl border-2 border-dashed border-[#d5deec] bg-card flex flex-col items-center justify-center gap-1 text-[var(--subtle-foreground)] hover:border-primary/30 hover:text-primary transition-all cursor-pointer">
                         <Plus className="h-5 w-5" />
                         <span className="text-[10px] font-bold">사진 추가</span>
                       </div>
@@ -385,15 +385,15 @@ export const SvVisitLogPage: React.FC = () => {
                   </div>
 
                   {/* Right Column */}
-                  <div className="lg:col-span-5 p-6 bg-[#F7FAFF]/50 space-y-6">
+                  <div className="lg:col-span-5 p-6 bg-[#f4f7ff]/50 space-y-6">
                     {/* Checklist */}
                     <div>
                       <div className="flex items-center justify-between mb-4 px-1">
                         <div className="flex items-center gap-2">
                           <ClipboardCheck className="h-4 w-4 text-primary" />
-                          <h4 className="text-sm font-bold text-slate-800">점검 항목</h4>
+                          <h4 className="text-sm font-bold text-[#1a2138]">점검 항목</h4>
                         </div>
-                        <span className="text-xs font-bold text-primary bg-[#EEF4FF] px-2 py-0.5 rounded-full border border-[#CFE0FF] shadow-sm">
+                        <span className="text-xs font-bold text-primary bg-[#eef3ff] px-2 py-0.5 rounded-full border border-[#c9d8ff] shadow-sm">
                           SCORE {Math.round((v.checklist.filter(c => c.status === "pass").length / v.checklist.length) * 100)}%
                         </span>
                       </div>
@@ -402,15 +402,15 @@ export const SvVisitLogPage: React.FC = () => {
                           <button 
                             key={item.id} 
                             onClick={() => updateChecklist(v.id, item.id)}
-                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-all hover:border-primary/30 active:scale-[0.98]"
+                            className="flex w-full items-center gap-3 rounded-lg border border-[var(--border)] bg-card px-3 py-2 text-sm shadow-sm transition-all hover:border-primary/30 active:scale-[0.98]"
                           >
                             <div className={cn(
                               "h-2 w-2 rounded-full",
                               item.status === "pass" ? "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.5)]" :
                               item.status === "warn" ? "bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "bg-red-400 shadow-[0_0_4px_rgba(248,113,113,0.5)]"
                             )} />
-                            <span className="text-[11px] font-bold text-slate-400 w-10 shrink-0 text-left">{item.category}</span>
-                            <span className="text-sm font-medium text-slate-700 flex-1 truncate text-left">{item.task}</span>
+                            <span className="text-[11px] font-bold text-[var(--subtle-foreground)] w-10 shrink-0 text-left">{item.category}</span>
+                            <span className="text-sm font-medium text-[#34415b] flex-1 truncate text-left">{item.task}</span>
                             <span className={cn(
                               "text-[10px] font-bold uppercase",
                               item.status === "pass" ? "text-emerald-500" :
@@ -425,7 +425,7 @@ export const SvVisitLogPage: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-4 px-1">
                         <LayoutGrid className="h-4 w-4 text-primary" />
-                        <h4 className="text-sm font-bold text-slate-800">후속 조치 계획</h4>
+                        <h4 className="text-sm font-bold text-[#1a2138]">후속 조치 계획</h4>
                       </div>
                       <div className="space-y-2.5">
                         {v.followups.map((f) => (
@@ -434,19 +434,19 @@ export const SvVisitLogPage: React.FC = () => {
                             onClick={() => toggleFollowup(v.id, f.id)}
                             className={cn(
                               "w-full text-left rounded-xl border p-3.5 shadow-sm transition-all active:scale-[0.98]",
-                              f.done ? "bg-[#F8FAFF] border-emerald-100 opacity-70" : "bg-white border-slate-200 hover:border-primary/30"
+                              f.done ? "bg-[#f4f7ff] border-emerald-100 opacity-70" : "bg-card border-[var(--border)] hover:border-primary/30"
                             )}
                           >
                             <div className="flex items-start justify-between gap-3">
-                              <p className={cn("text-sm font-bold", f.done ? "text-slate-400 line-through" : "text-[#2454C8]")}>{f.task}</p>
+                              <p className={cn("text-sm font-bold", f.done ? "text-[var(--subtle-foreground)] line-through" : "text-[#2f66ff]")}>{f.task}</p>
                               <div className={cn(
                                 "h-5 w-5 shrink-0 rounded border flex items-center justify-center transition-colors",
-                                f.done ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white border-slate-200"
+                                f.done ? "bg-emerald-500 border-emerald-500 text-white" : "bg-card border-[var(--border)]"
                               )}>
                                 {f.done && <CheckCircle2 className="h-3.5 w-3.5" />}
                               </div>
                             </div>
-                            <div className="mt-2.5 flex items-center justify-between text-[10px] font-bold text-slate-400">
+                            <div className="mt-2.5 flex items-center justify-between text-[10px] font-bold text-[var(--subtle-foreground)]">
                               <span className="uppercase">Due: {f.deadline}</span>
                               <span className={f.done ? "text-emerald-600" : "text-amber-600"}>{f.done ? "COMPLETED" : "PENDING"}</span>
                             </div>
@@ -459,13 +459,13 @@ export const SvVisitLogPage: React.FC = () => {
                 </div>
 
                 {/* Full-width Footer Action Area */}
-                <div className="border-t border-border/60 bg-slate-50/50 p-4 px-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                <div className="border-t border-border/60 bg-[var(--panel-soft)]/50 p-4 px-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-[var(--subtle-foreground)] font-medium">
                     <AlertCircle className="h-3.5 w-3.5" />
                     리포트 전송 시 해당 매장 점주 앱으로 실시간 알림이 발송됩니다.
                   </div>
                   <div className="flex gap-2">
-                    <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1E5BE9] active:scale-95">
+                    <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-10 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#2356e0] active:scale-95">
                       <Send className="h-4 w-4" /> 리포트 점주 전송
                     </button>
                   </div>

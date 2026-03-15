@@ -49,14 +49,14 @@ export const SvAnalysisPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">구역 분석</p>
-            <h2 className="text-2xl font-bold text-slate-900">담당 매장 심층 분석</h2>
-            <p className="mt-1 text-base text-slate-500">담당 구역 내 매장별 핵심 지표 비교 및 성과 랭킹을 모니터링합니다.</p>
+            <h2 className="text-2xl font-bold text-foreground">담당 매장 심층 분석</h2>
+            <p className="mt-1 text-base text-muted-foreground">담당 구역 내 매장별 핵심 지표 비교 및 성과 랭킹을 모니터링합니다.</p>
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-1 shadow-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-1 shadow-sm">
             {(["이번주", "이번달", "전달"] as Period[]).map((p) => (
               <button
                 key={p}
@@ -64,8 +64,8 @@ export const SvAnalysisPage: React.FC = () => {
                 className={cn(
                   "rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
                   period === p
-                    ? "bg-white text-[#2454C8] shadow-sm"
-                    : "text-slate-400 hover:text-slate-600"
+                    ? "bg-card text-[#2f66ff] shadow-sm"
+                    : "text-[var(--subtle-foreground)] hover:text-[#4a5568]"
                 )}
               >
                 {p}
@@ -76,20 +76,20 @@ export const SvAnalysisPage: React.FC = () => {
       </section>
 
       {/* KPI Comparison */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-slate-100 p-1.5 shadow-sm">
-              <BarChart2 className="h-5 w-5 text-slate-500" />
+            <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
+              <BarChart2 className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">매장별 KPI 랭킹</h3>
+            <h3 className="text-lg font-bold text-foreground">매장별 KPI 랭킹</h3>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Metric</span>
+            <span className="text-xs font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">Select Metric</span>
             <select
               value={selectedKpi}
               onChange={(e) => setSelectedKpi(e.target.value as KpiMetric)}
-              className="h-10 rounded-xl border border-[#D6E0F0] bg-white px-4 text-sm font-bold text-slate-700 shadow-sm outline-none focus:border-primary/50 transition-all"
+              className="h-10 rounded-xl border border-[#d5deec] bg-card px-4 text-sm font-bold text-[#34415b] shadow-sm outline-none focus:border-primary/50 transition-all"
             >
               {kpiOptions.map((o) => (
                 <option key={o.value} value={o.value}>{o.label} ({o.unit})</option>
@@ -105,13 +105,13 @@ export const SvAnalysisPage: React.FC = () => {
                 "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black shadow-sm border",
                 idx === 0 ? "bg-primary border-primary text-white" : 
                 idx === ranked.length - 1 ? "bg-red-50 border-red-100 text-red-600" : 
-                "bg-white border-slate-200 text-slate-400"
+                "bg-card border-[var(--border)] text-[var(--subtle-foreground)]"
               )}>
                 {idx + 1}
               </span>
-              <span className="w-20 shrink-0 text-sm font-bold text-slate-700">{row.name}</span>
+              <span className="w-20 shrink-0 text-sm font-bold text-[#34415b]">{row.name}</span>
               <div className="flex-1">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted)] shadow-inner">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-1000 shadow-sm",
@@ -122,12 +122,12 @@ export const SvAnalysisPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex w-36 shrink-0 items-center justify-end gap-4">
-                <span className="text-sm font-black text-slate-900 font-mono">
-                  {row.val.toLocaleString()} <span className="text-[10px] text-slate-400 font-bold ml-0.5">{kpiOpt.unit}</span>
+                <span className="text-sm font-black text-foreground font-mono">
+                  {row.val.toLocaleString()} <span className="text-[10px] text-[var(--subtle-foreground)] font-bold ml-0.5">{kpiOpt.unit}</span>
                 </span>
                 <span className={cn(
                   "flex w-10 shrink-0 items-center justify-end gap-0.5 text-xs font-black font-mono",
-                  row.delta > 0 ? "text-emerald-600" : row.delta < 0 ? "text-red-500" : "text-slate-300"
+                  row.delta > 0 ? "text-emerald-600" : row.delta < 0 ? "text-red-500" : "text-[#b0bdd4]"
                 )}>
                   {row.delta > 0 ? <ArrowUp className="h-3.5 w-3.5" /> : row.delta < 0 ? <ArrowDown className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
                   {Math.abs(row.delta) > 0 ? Math.abs(row.delta) : ""}
@@ -139,9 +139,9 @@ export const SvAnalysisPage: React.FC = () => {
       </section>
 
       {/* Gap Analysis */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <h3 className="text-lg font-bold text-slate-900">매장 성과 격차 분석 (Top vs Bottom)</h3>
-        <p className="mt-1 text-sm text-slate-500 mb-6">주요 지표별 최상위 매장과 최하위 매장의 실질적인 성과 차이입니다.</p>
+      <section className="app-card p-5 md:p-6">
+        <h3 className="text-lg font-bold text-foreground">매장 성과 격차 분석 (Top vs Bottom)</h3>
+        <p className="mt-1 text-sm text-muted-foreground mb-6">주요 지표별 최상위 매장과 최하위 매장의 실질적인 성과 차이입니다.</p>
 
         <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
           {kpiOptions.map((opt) => {
@@ -150,9 +150,9 @@ export const SvAnalysisPage: React.FC = () => {
             const g = sorted[0] - sorted[sorted.length - 1];
             const gp = Math.round((g / sorted[sorted.length - 1]) * 100);
             return (
-              <div key={opt.value} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{opt.label} GAP</p>
-                <p className="mt-2 text-xl font-black text-slate-900 leading-none">
+              <div key={opt.value} className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm transition-all hover:shadow-md">
+                <p className="text-[10px] font-black text-[var(--subtle-foreground)] uppercase tracking-widest">{opt.label} GAP</p>
+                <p className="mt-2 text-xl font-black text-foreground leading-none">
                   {g.toLocaleString()}<span className="text-xs ml-0.5 opacity-40">{opt.unit}</span>
                 </p>
                 <div className="mt-2 flex items-center gap-1 text-[11px] font-black text-red-600">
@@ -187,14 +187,14 @@ export const SvAnalysisPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-[#c9d8ff] bg-[#f4f7ff] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <span className="rounded-lg bg-[#2454C8] px-2 py-0.5 text-[10px] font-black text-white shadow-sm">AI INSIGHT</span>
-            <p className="text-sm font-bold text-[#2454C8]">원인 해석 및 제언</p>
+            <span className="rounded-lg bg-[#2f66ff] px-2 py-0.5 text-[10px] font-black text-white shadow-sm">AI INSIGHT</span>
+            <p className="text-sm font-bold text-[#2f66ff]">원인 해석 및 제언</p>
           </div>
-          <p className="text-sm font-medium text-slate-600 leading-relaxed">
-            현재 {kpiOpt.label} 기준 상위-하위 격차는 <strong className="text-slate-900">{gap.toLocaleString()}{kpiOpt.unit}</strong> (+{gapPct}%)입니다. 
-            주요 분석 결과, <span className="font-bold text-slate-800 underline underline-offset-4 decoration-[#CFE0FF] decoration-2">직원 서비스 품질 지수</span>가 매출 격차의 42%를 설명하고 있습니다.
+          <p className="text-sm font-medium text-[#4a5568] leading-relaxed">
+            현재 {kpiOpt.label} 기준 상위-하위 격차는 <strong className="text-foreground">{gap.toLocaleString()}{kpiOpt.unit}</strong> (+{gapPct}%)입니다. 
+            주요 분석 결과, <span className="font-bold text-[#1a2138] underline underline-offset-4 decoration-[#c9d8ff] decoration-2">직원 서비스 품질 지수</span>가 매출 격차의 42%를 설명하고 있습니다.
           </p>
           <button className="mt-5 rounded-xl bg-primary px-6 py-2.5 text-sm font-black text-white shadow-md transition-all hover:scale-105 active:scale-95">
             개선 액션 가이드 확인하기

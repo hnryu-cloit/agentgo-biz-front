@@ -38,7 +38,7 @@ type EscalationForm = {
 const statusIcon: Record<ActionStatus, React.ReactNode> = {
   completed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
   pending: <Clock className="h-4 w-4 text-amber-500" />,
-  ignored: <XCircle className="h-4 w-4 text-slate-300" />,
+  ignored: <XCircle className="h-4 w-4 text-[#b0bdd4]" />,
 };
 
 const statusLabel: Record<ActionStatus, string> = {
@@ -50,7 +50,7 @@ const statusLabel: Record<ActionStatus, string> = {
 const statusClass: Record<ActionStatus, string> = {
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
   pending: "border-amber-200 bg-amber-50 text-amber-700",
-  ignored: "border-[#DCE4F3] bg-white text-slate-400",
+  ignored: "border-[#d5deec] bg-card text-[var(--subtle-foreground)]",
 };
 
 export const SvActionsPage: React.FC = () => {
@@ -93,12 +93,12 @@ export const SvActionsPage: React.FC = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <section className="app-card p-5 md:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-primary">현장 코칭</p>
-              <h2 className="text-2xl font-bold text-slate-900">운영 액션 관리</h2>
-              <p className="mt-1 text-base text-slate-500">점주에게 제안된 AI 액션의 이행 현황을 모니터링하고 이슈를 보고합니다.</p>
+              <h2 className="text-2xl font-bold text-foreground">운영 액션 관리</h2>
+              <p className="mt-1 text-base text-muted-foreground">점주에게 제안된 AI 액션의 이행 현황을 모니터링하고 이슈를 보고합니다.</p>
             </div>
             <button
               onClick={() => setShowEscModal(true)}
@@ -111,20 +111,20 @@ export const SvActionsPage: React.FC = () => {
         </section>
 
         {/* 이행률 Summary */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <section className="app-card p-5 md:p-6">
           <div className="flex items-center gap-2 mb-6">
-            <div className="rounded-lg bg-slate-100 p-1.5 shadow-sm">
-              <CheckCircle2 className="h-5 w-5 text-slate-500" />
+            <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
+              <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">매장별 가이드 이행률</h3>
+            <h3 className="text-lg font-bold text-foreground">매장별 가이드 이행률</h3>
           </div>
           
           <div className="space-y-5">
             {rateByStore.map((r) => (
               <div key={r.name} className="group flex items-center gap-4">
-                <span className="w-20 shrink-0 text-sm font-bold text-slate-700">{r.name}</span>
+                <span className="w-20 shrink-0 text-sm font-bold text-[#34415b]">{r.name}</span>
                 <div className="flex-1">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted)] shadow-inner">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-1000 shadow-sm",
@@ -135,10 +135,10 @@ export const SvActionsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex w-32 shrink-0 items-center justify-end gap-3">
-                  <span className="text-[11px] font-bold text-slate-400 font-mono">{r.done}/{r.total} <span className="opacity-60">ACTS</span></span>
+                  <span className="text-[11px] font-bold text-[var(--subtle-foreground)] font-mono">{r.done}/{r.total} <span className="opacity-60">ACTS</span></span>
                   <span className={cn(
                     "w-12 text-right text-sm font-black",
-                    r.rate === 100 ? "text-emerald-600" : r.rate >= 50 ? "text-[#2454C8]" : "text-red-600"
+                    r.rate === 100 ? "text-emerald-600" : r.rate >= 50 ? "text-[#2f66ff]" : "text-red-600"
                   )}>{r.rate}%</span>
                   {r.rate < 50 && (
                     <span className="rounded bg-red-50 px-1.5 py-0.5 text-[9px] font-black text-red-600 border border-red-100 shadow-sm animate-pulse">
@@ -152,24 +152,24 @@ export const SvActionsPage: React.FC = () => {
         </section>
 
         {/* Action List */}
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+        <section className="app-card p-5 md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-[#EEF4FF] p-1.5 shadow-sm">
+              <div className="rounded-lg bg-[#eef3ff] p-1.5 shadow-sm">
                 <Clock className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">전체 액션 히스토리</h3>
+              <h3 className="text-lg font-bold text-foreground">전체 액션 히스토리</h3>
             </div>
-            <div className="flex flex-wrap gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-1.5 shadow-sm">
+            <div className="flex flex-wrap gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-1.5 shadow-sm">
               <select
                 value={filterStore}
                 onChange={(e) => setFilterStore(e.target.value)}
-                className="h-8 rounded-lg bg-white px-3 text-[11px] font-bold text-slate-600 shadow-sm outline-none border border-slate-200"
+                className="h-8 rounded-lg bg-card px-3 text-[11px] font-bold text-[#4a5568] shadow-sm outline-none border border-[var(--border)]"
               >
                 <option value="전체">전체 매장</option>
                 {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
-              <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block" />
+              <div className="w-px h-8 bg-[var(--border)] mx-1 hidden sm:block" />
               {(["전체", "completed", "pending", "ignored"] as const).map((s) => (
                 <button
                   key={s}
@@ -177,8 +177,8 @@ export const SvActionsPage: React.FC = () => {
                   className={cn(
                     "rounded-lg px-3 py-1 text-[11px] font-black transition-all",
                     filterStatus === s
-                      ? "bg-white text-[#2454C8] shadow-sm"
-                      : "text-slate-400 hover:text-slate-600"
+                      ? "bg-card text-[#2f66ff] shadow-sm"
+                      : "text-[var(--subtle-foreground)] hover:text-[#4a5568]"
                   )}
                 >
                   {s === "전체" ? "ALL" : statusLabel[s].toUpperCase()}
@@ -189,7 +189,7 @@ export const SvActionsPage: React.FC = () => {
 
           <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="bg-[#F7FAFF] text-slate-600">
+              <thead className="bg-[#f4f7ff] text-[#4a5568]">
                 <tr>
                   <th className="px-4 py-3 font-bold">매장명</th>
                   <th className="px-4 py-3 font-bold">액션 타이틀</th>
@@ -201,9 +201,9 @@ export const SvActionsPage: React.FC = () => {
               </thead>
               <tbody>
                 {filtered.map((a) => (
-                  <tr key={a.id} className="border-t border-border transition-colors hover:bg-slate-50/50 font-medium">
-                    <td className="px-4 py-4 font-bold text-slate-800">{a.store}</td>
-                    <td className="px-4 py-4 text-slate-600 text-[13px]">{a.title}</td>
+                  <tr key={a.id} className="border-t border-border transition-colors hover:bg-[var(--panel-soft)]/50 font-medium">
+                    <td className="px-4 py-4 font-bold text-[#1a2138]">{a.store}</td>
+                    <td className="px-4 py-4 text-[#4a5568] text-[13px]">{a.title}</td>
                     <td className="px-4 py-4 text-center">
                       <span className={cn(
                         "rounded px-2 py-0.5 text-[10px] font-black text-white shadow-sm",
@@ -212,8 +212,8 @@ export const SvActionsPage: React.FC = () => {
                         {a.level}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-center text-slate-400 font-mono text-xs">{a.proposedAt}</td>
-                    <td className="px-4 py-4 text-center text-slate-400 font-mono text-xs">{a.completedAt ?? "-"}</td>
+                    <td className="px-4 py-4 text-center text-[var(--subtle-foreground)] font-mono text-xs">{a.proposedAt}</td>
+                    <td className="px-4 py-4 text-center text-[var(--subtle-foreground)] font-mono text-xs">{a.completedAt ?? "-"}</td>
                     <td className="px-4 py-4 text-right">
                       <div className="flex justify-end">
                         <span className={cn(
@@ -236,30 +236,30 @@ export const SvActionsPage: React.FC = () => {
       {/* Escalation Modal */}
       {showEscModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/45 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-white p-5 shadow-xl">
-            <h4 className="text-lg font-bold text-slate-900">본사 에스컬레이션</h4>
-            <p className="mt-1 text-sm text-slate-500">심각한 이슈를 본사 담당자에게 보고합니다.</p>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl">
+            <h4 className="text-lg font-bold text-foreground">본사 에스컬레이션</h4>
+            <p className="mt-1 text-sm text-muted-foreground">심각한 이슈를 본사 담당자에게 보고합니다.</p>
 
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">대상 매장</label>
+                <label className="mb-1 block text-sm font-medium text-[#34415b]">대상 매장</label>
                 <select
                   value={escForm.store}
                   onChange={(e) => setEscForm((f) => ({ ...f, store: e.target.value }))}
-                  className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm"
+                  className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm"
                 >
                   {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">긴급도</label>
+                <label className="mb-1 block text-sm font-medium text-[#34415b]">긴급도</label>
                 <div className="flex gap-2">
                   {(["P0", "P1"] as const).map((l) => (
                     <button
                       key={l}
                       onClick={() => setEscForm((f) => ({ ...f, level: l }))}
                       className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                        escForm.level === l ? "border-red-300 bg-red-500 text-white" : "border-[#DCE4F3] bg-white text-slate-600"
+                        escForm.level === l ? "border-red-300 bg-red-500 text-white" : "border-[#d5deec] bg-card text-[#4a5568]"
                       }`}
                     >
                       {l}
@@ -268,13 +268,13 @@ export const SvActionsPage: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">보고 내용</label>
+                <label className="mb-1 block text-sm font-medium text-[#34415b]">보고 내용</label>
                 <textarea
                   value={escForm.content}
                   onChange={(e) => setEscForm((f) => ({ ...f, content: e.target.value }))}
                   placeholder="이슈 내용을 상세히 입력하세요..."
                   rows={4}
-                  className="w-full rounded-xl border border-[#D6E0F0] bg-white px-3 py-2 text-sm resize-none focus:outline-none"
+                  className="w-full rounded-xl border border-[#d5deec] bg-card px-3 py-2 text-sm resize-none focus:outline-none"
                 />
               </div>
             </div>
@@ -289,7 +289,7 @@ export const SvActionsPage: React.FC = () => {
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setShowEscModal(false)}
-                className="rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-700"
+                className="rounded-lg border border-[#d5deec] bg-card px-3 py-2 text-sm text-[#34415b]"
               >
                 취소
               </button>

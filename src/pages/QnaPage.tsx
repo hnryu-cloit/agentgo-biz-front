@@ -132,14 +132,14 @@ export const QnaPage: React.FC = () => {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">AI QnA</h2>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <h2 className="text-2xl font-bold text-foreground">AI QnA</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             AgentGo Biz에게 자유롭게 질문하세요. 근거 데이터와 함께 답변드립니다.
           </p>
         </div>
         <button
           onClick={resetSession}
-          className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm text-slate-600 hover:bg-[#F8FAFF]"
+          className="flex items-center gap-1.5 rounded-lg border border-[#d5deec] bg-card px-3 py-2 text-sm text-[#4a5568] hover:bg-[#f4f7ff]"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           새 세션
@@ -157,13 +157,13 @@ export const QnaPage: React.FC = () => {
               {/* Avatar */}
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  msg.role === "assistant" ? "bg-[#EEF4FF]" : "bg-slate-100"
+                  msg.role === "assistant" ? "bg-[#eef3ff]" : "bg-[var(--muted)]"
                 }`}
               >
                 {msg.role === "assistant" ? (
                   <Bot className="h-4 w-4 text-primary" />
                 ) : (
-                  <User className="h-4 w-4 text-slate-500" />
+                  <User className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
 
@@ -173,7 +173,7 @@ export const QnaPage: React.FC = () => {
                   className={`rounded-2xl px-4 py-3 ${
                     msg.role === "user"
                       ? "rounded-tr-sm bg-primary text-white"
-                      : "rounded-tl-sm border border-[#DCE4F3] bg-[#F7FAFF] text-slate-800"
+                      : "rounded-tl-sm border border-[#d5deec] bg-[#f4f7ff] text-[#1a2138]"
                   }`}
                 >
                   <p className="text-sm leading-relaxed">{msg.content}</p>
@@ -181,27 +181,27 @@ export const QnaPage: React.FC = () => {
 
                 {/* Evidence */}
                 {msg.evidence && (
-                  <div className="w-full rounded-xl border border-[#DCE4F3] bg-white p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  <div className="w-full rounded-xl border border-[#d5deec] bg-card p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--subtle-foreground)]">
                       근거 데이터
                     </p>
                     <div className="space-y-1.5">
                       {msg.evidence.map((ev) => (
                         <div key={ev.label} className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">{ev.label}</span>
-                          <span className="font-medium text-slate-700">{ev.value}</span>
+                          <span className="text-muted-foreground">{ev.label}</span>
+                          <span className="font-medium text-[#34415b]">{ev.value}</span>
                         </div>
                       ))}
                     </div>
                     {msg.confidence !== undefined && (
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#DCE4F3]">
+                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#d5deec]">
                           <div
                             className="h-full rounded-full bg-emerald-400"
                             style={{ width: `${msg.confidence}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-slate-500">신뢰도 {msg.confidence}%</span>
+                        <span className="text-[10px] text-muted-foreground">신뢰도 {msg.confidence}%</span>
                       </div>
                     )}
                   </div>
@@ -212,21 +212,21 @@ export const QnaPage: React.FC = () => {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => copyText(msg.id, msg.content)}
-                      className="flex items-center gap-1 rounded border border-[#DCE4F3] bg-white px-2 py-1 text-[10px] text-slate-500 hover:bg-[#F8FAFF]"
+                      className="flex items-center gap-1 rounded border border-[#d5deec] bg-card px-2 py-1 text-[10px] text-muted-foreground hover:bg-[#f4f7ff]"
                     >
                       <Copy className="h-3 w-3" />
                       {copiedId === msg.id ? "복사됨" : "복사"}
                     </button>
-                    <button className="flex h-6 w-6 items-center justify-center rounded border border-[#DCE4F3] bg-white text-slate-400 hover:bg-[#F8FAFF]">
+                    <button className="flex h-6 w-6 items-center justify-center rounded border border-[#d5deec] bg-card text-[var(--subtle-foreground)] hover:bg-[#f4f7ff]">
                       <ThumbsUp className="h-3 w-3" />
                     </button>
-                    <button className="flex h-6 w-6 items-center justify-center rounded border border-[#DCE4F3] bg-white text-slate-400 hover:bg-[#F8FAFF]">
+                    <button className="flex h-6 w-6 items-center justify-center rounded border border-[#d5deec] bg-card text-[var(--subtle-foreground)] hover:bg-[#f4f7ff]">
                       <ThumbsDown className="h-3 w-3" />
                     </button>
                   </div>
                 )}
 
-                <span className="text-[10px] text-slate-300">{msg.timestamp}</span>
+                <span className="text-[10px] text-[#b0bdd4]">{msg.timestamp}</span>
               </div>
             </div>
           ))}
@@ -234,10 +234,10 @@ export const QnaPage: React.FC = () => {
           {/* Loading */}
           {loading && (
             <div className="flex gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef3ff]">
                 <Bot className="h-4 w-4 text-primary" />
               </div>
-              <div className="rounded-2xl rounded-tl-sm border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
+              <div className="rounded-2xl rounded-tl-sm border border-[#d5deec] bg-[#f4f7ff] px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   {[0, 1, 2].map((i) => (
                     <span
@@ -255,7 +255,7 @@ export const QnaPage: React.FC = () => {
       </div>
 
       {/* Input Bar */}
-      <div className="mt-3 rounded-2xl border border-[#DCE4F3] bg-white p-3">
+      <div className="mt-3 rounded-2xl border border-[#d5deec] bg-card p-3">
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <textarea
@@ -264,9 +264,9 @@ export const QnaPage: React.FC = () => {
               onKeyDown={handleKeyDown}
               placeholder="질문을 입력하세요 (Enter로 전송, Shift+Enter 줄바꿈)"
               rows={2}
-              className="w-full resize-none text-sm text-slate-800 placeholder-slate-300 focus:outline-none"
+              className="w-full resize-none text-sm text-[#1a2138] placeholder-slate-300 focus:outline-none"
             />
-            <div className="mt-1 text-right text-[10px] text-slate-300">
+            <div className="mt-1 text-right text-[10px] text-[#b0bdd4]">
               {input.length}/{MAX_CHARS}
             </div>
           </div>
@@ -285,7 +285,7 @@ export const QnaPage: React.FC = () => {
             <button
               key={q}
               onClick={() => setInput(q)}
-              className="rounded-full border border-[#DCE4F3] bg-[#F7FAFF] px-3 py-1 text-xs text-slate-600 hover:border-[#BFD4FF] hover:text-primary"
+              className="rounded-full border border-[#d5deec] bg-[#f4f7ff] px-3 py-1 text-xs text-[#4a5568] hover:border-[#b8ccff] hover:text-primary"
             >
               {q}
             </button>

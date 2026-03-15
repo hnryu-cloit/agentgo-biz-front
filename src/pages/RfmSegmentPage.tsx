@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState } from "react";
-import { Users, TrendingDown, Crown, AlertCircle, Filter, Send } from "lucide-react";
+import { Users, TrendingDown, Crown, AlertCircle, Filter, Send, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SegmentKey = "vip" | "loyal" | "at_risk" | "churned";
@@ -41,7 +41,7 @@ const segments: Segment[] = [
     salesShare: 32,
     avgVisit: 3.1,
     color: "text-primary",
-    borderColor: "border-[#BFD4FF] bg-[#EEF4FF]",
+    borderColor: "border-[#b8ccff] bg-[#eef3ff]",
     description: "꾸준한 방문 패턴, 브랜드 충성도 높음",
   },
   {
@@ -101,9 +101,9 @@ export const RfmSegmentPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
-        <h2 className="text-2xl font-bold text-slate-900">고객 세그먼트 (RFM)</h2>
-        <p className="mt-1 text-base text-slate-500">
+      <section className="app-card p-5 md:p-6">
+        <h2 className="text-2xl font-bold text-foreground">고객 세그먼트 (RFM)</h2>
+        <p className="mt-1 text-base text-muted-foreground">
           최근성·빈도·금액 기준으로 고객을 분류하고 AI 기반 이탈 위험군을 정밀 관리합니다.
         </p>
       </section>
@@ -120,26 +120,26 @@ export const RfmSegmentPage: React.FC = () => {
                 "cursor-pointer rounded-2xl border p-5 transition-all shadow-elevated hover:shadow-md",
                 isActive
                   ? cn(seg.borderColor, "ring-2 ring-offset-2 ring-primary/40 scale-[1.02]")
-                  : "border-border/90 bg-card hover:border-[#DCE4F3]"
+                  : "border-border/90 bg-card hover:border-[#d5deec]"
               )}
             >
               <div className="flex items-center justify-between">
-                <p className={cn("text-sm font-bold uppercase tracking-wider", isActive ? seg.color : "text-slate-500")}>
+                <p className={cn("text-sm font-bold uppercase tracking-wider", isActive ? seg.color : "text-muted-foreground")}>
                   {seg.label}
                 </p>
-                <div className={cn("rounded-lg p-1.5 shadow-sm bg-white/50", isActive ? "" : "bg-slate-50")}>
+                <div className={cn("rounded-lg p-1.5 shadow-sm bg-white/50", isActive ? "" : "bg-[var(--panel-soft)]")}>
                   {segmentIcons[seg.key]}
                 </div>
               </div>
-              <p className="mt-4 text-3xl font-black text-slate-900 leading-none">
-                {seg.count.toLocaleString()}<span className="text-sm ml-1 font-bold text-slate-400">명</span>
+              <p className="mt-4 text-3xl font-black text-foreground leading-none">
+                {seg.count.toLocaleString()}<span className="text-sm ml-1 font-bold text-[var(--subtle-foreground)]">명</span>
               </p>
-              <div className="mt-4 flex flex-col gap-1.5 border-t border-slate-100 pt-3">
+              <div className="mt-4 flex flex-col gap-1.5 border-t border-[var(--border)] pt-3">
                 <div className="flex items-center justify-between text-[11px] font-bold">
-                  <span className="text-slate-400">매출 기여도</span>
-                  <span className="text-slate-700">{seg.salesShare}%</span>
+                  <span className="text-[var(--subtle-foreground)]">매출 기여도</span>
+                  <span className="text-[#34415b]">{seg.salesShare}%</span>
                 </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--muted)]">
                   <div className="h-full bg-primary/60" style={{ width: `${seg.salesShare}%` }} />
                 </div>
               </div>
@@ -150,45 +150,45 @@ export const RfmSegmentPage: React.FC = () => {
 
       {/* Segment Detail */}
       {activeSegment && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated animate-in fade-in zoom-in-95 duration-300">
+        <section className="app-card p-5 md:p-6 animate-in fade-in zoom-in-95 duration-300">
           <div className="flex items-center gap-2 mb-4">
-            <div className={cn("rounded-lg p-1.5 shadow-sm bg-white border border-slate-100")}>
+            <div className={cn("rounded-lg p-1.5 shadow-sm bg-card border border-[var(--border)]")}>
               {segmentIcons[activeSegment.key]}
             </div>
-            <h3 className="text-lg font-bold text-slate-900">{activeSegment.label} 분석 상세</h3>
+            <h3 className="text-lg font-bold text-foreground">{activeSegment.label} 분석 상세</h3>
           </div>
-          <p className="text-sm font-medium text-slate-500 leading-relaxed">{activeSegment.description}</p>
+          <p className="text-sm font-medium text-muted-foreground leading-relaxed">{activeSegment.description}</p>
           
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Customers</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.count.toLocaleString()}명</p>
+            <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-[var(--subtle-foreground)] uppercase tracking-widest">Active Customers</p>
+              <p className="mt-1 text-2xl font-black text-foreground">{activeSegment.count.toLocaleString()}명</p>
             </div>
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue Share</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.salesShare}%</p>
+            <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-[var(--subtle-foreground)] uppercase tracking-widest">Revenue Share</p>
+              <p className="mt-1 text-2xl font-black text-foreground">{activeSegment.salesShare}%</p>
             </div>
-            <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. Frequency</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">{activeSegment.avgVisit}회<span className="text-xs ml-1">/월</span></p>
+            <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm">
+              <p className="text-[10px] font-black text-[var(--subtle-foreground)] uppercase tracking-widest">Avg. Frequency</p>
+              <p className="mt-1 text-2xl font-black text-foreground">{activeSegment.avgVisit}회<span className="text-xs ml-1">/월</span></p>
             </div>
           </div>
         </section>
       )}
 
       {/* Churn Risk List */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-red-50 p-1.5 shadow-sm">
               <TrendingDown className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">이탈 위험군 집중 관리</h3>
-              <p className="text-xs font-medium text-slate-400">방문 지연 기간 및 위험 점수 기반 정렬</p>
+              <h3 className="text-lg font-bold text-foreground">이탈 위험군 집중 관리</h3>
+              <p className="text-xs font-medium text-[var(--subtle-foreground)]">방문 지연 기간 및 위험 점수 기반 정렬</p>
             </div>
           </div>
-          <button className="flex items-center gap-1.5 rounded-lg border border-[#D6E0F0] bg-white px-3 py-2 text-sm font-bold text-slate-600 hover:bg-[#F8FAFF] shadow-sm transition-colors">
+          <button className="flex items-center gap-1.5 rounded-lg border border-[#d5deec] bg-card px-3 py-2 text-sm font-bold text-[#4a5568] hover:bg-[#f4f7ff] shadow-sm transition-colors">
             <Filter className="h-3.5 w-3.5" />
             데이터 필터
           </button>
@@ -196,7 +196,7 @@ export const RfmSegmentPage: React.FC = () => {
 
         <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-[#F7FAFF] text-slate-600">
+            <thead className="bg-[#f4f7ff] text-[#4a5568]">
               <tr>
                 <th className="px-4 py-3 font-bold">고객 ID</th>
                 <th className="px-4 py-3 font-bold text-center">현재 등급</th>
@@ -211,17 +211,17 @@ export const RfmSegmentPage: React.FC = () => {
                 <tr
                   key={c.id}
                   className={cn(
-                    "border-t border-border transition-all hover:bg-slate-50/50 font-medium",
+                    "border-t border-border transition-all hover:bg-[var(--panel-soft)]/50 font-medium",
                     c.excluded ? "opacity-40 grayscale" : ""
                   )}
                 >
-                  <td className="px-4 py-3 font-mono text-xs font-bold text-[#2454C8]">{c.id}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-bold text-[#2f66ff]">{c.id}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={cn(
                       "rounded-full px-2.5 py-0.5 text-[11px] font-black shadow-sm border",
                       c.grade === "VIP" 
                         ? "border-purple-200 bg-purple-50 text-purple-700" 
-                        : "border-[#DCE4F3] bg-white text-slate-500"
+                        : "border-[#d5deec] bg-card text-muted-foreground"
                     )}>
                       {c.grade}
                     </span>
@@ -236,7 +236,7 @@ export const RfmSegmentPage: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[var(--muted)] shadow-inner">
                         <div
                           className={cn(
                             "h-full rounded-full shadow-sm transition-all duration-700",
@@ -245,18 +245,18 @@ export const RfmSegmentPage: React.FC = () => {
                           style={{ width: `${c.riskScore}%` }}
                         />
                       </div>
-                      <span className="text-xs font-black text-slate-700 font-mono">{c.riskScore}</span>
+                      <span className="text-xs font-black text-[#34415b] font-mono">{c.riskScore}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-700 font-bold font-mono">{c.predictedLtv.toLocaleString()}원</td>
+                  <td className="px-4 py-3 text-[#34415b] font-bold font-mono">{c.predictedLtv.toLocaleString()}원</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => toggleExclude(c.id)}
                       className={cn(
                         "rounded-lg border px-3 py-1.5 text-xs font-black transition-all shadow-sm",
                         c.excluded
-                          ? "border-[#D6E0F0] bg-white text-slate-400"
-                          : "border-red-200 bg-white text-red-600 hover:bg-red-50"
+                          ? "border-[#d5deec] bg-card text-[var(--subtle-foreground)]"
+                          : "border-red-200 bg-card text-red-600 hover:bg-red-50"
                       )}
                     >
                       {c.excluded ? "포함시키기" : "제외하기"}
@@ -269,13 +269,13 @@ export const RfmSegmentPage: React.FC = () => {
         </div>
 
         {/* Send Offer Panel */}
-        <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] px-6 py-4 shadow-sm">
+        <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between rounded-2xl border border-[#c9d8ff] bg-[#f4f7ff] px-6 py-4 shadow-sm">
           <div className="flex items-center gap-3 mb-3 md:mb-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-[#CFE0FF]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-sm border border-[#c9d8ff]">
               <Users className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-sm font-bold text-slate-700">
-              최종 타겟팅 대상 <strong className="text-[#2454C8] text-lg mx-0.5">{targetCount}명</strong>
+            <p className="text-sm font-bold text-[#34415b]">
+              최종 타겟팅 대상 <strong className="text-[#2f66ff] text-lg mx-0.5">{targetCount}명</strong>
             </p>
           </div>
           {sentOffer ? (

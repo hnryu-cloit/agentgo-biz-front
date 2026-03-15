@@ -79,8 +79,8 @@ const roleBadgeStyle: Record<Staff["role"], string> = {
 const statusStyle: Record<ShiftStatus, string> = {
   근무중: "border-emerald-100 bg-emerald-50 text-emerald-700",
   대기:   "border-amber-100 bg-amber-50 text-amber-700",
-  미출근: "border-slate-100 bg-slate-50 text-slate-400",
-  퇴근:   "border-slate-100 bg-white text-slate-300",
+  미출근: "border-[var(--border)] bg-[var(--panel-soft)] text-[var(--subtle-foreground)]",
+  퇴근:   "border-[var(--border)] bg-card text-[#b0bdd4]",
 };
 
 function fmt(n: number) {
@@ -105,9 +105,9 @@ export const LaborOptimizationPage = () => {
       value: totalManHours.toFixed(1),
       unit: "h",
       icon: <Clock className="h-5 w-5" />,
-      color: "text-slate-700",
-      bg: "bg-slate-50",
-      border: "border-slate-200",
+      color: "text-[#34415b]",
+      bg: "bg-[var(--panel-soft)]",
+      border: "border-[var(--border)]",
       sub: `투입 인원 ${staffList.filter(s => s.status !== "미출근").length}명`,
     },
     {
@@ -145,11 +145,11 @@ export const LaborOptimizationPage = () => {
   return (
     <div className="space-y-6 pb-10">
       {/* ── 헤더 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">인력 리소스 최적화</h2>
-            <p className="mt-1 text-base text-slate-500">
+            <h2 className="text-2xl font-bold text-foreground">인력 리소스 최적화</h2>
+            <p className="mt-1 text-base text-muted-foreground">
               시간대별 POS 매출과 직원 투입을 비교해 인시당 매출과 최적 인력을 관리합니다.
             </p>
           </div>
@@ -157,7 +157,7 @@ export const LaborOptimizationPage = () => {
             <select
               value={selectedStore}
               onChange={(e) => setSelectedStore(e.target.value)}
-              className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+              className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-semibold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
             >
               {storeNames.map((name) => (
                 <option key={name} value={name}>{name}</option>
@@ -167,7 +167,7 @@ export const LaborOptimizationPage = () => {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+              className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-semibold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
             />
           </div>
         </div>
@@ -180,27 +180,27 @@ export const LaborOptimizationPage = () => {
             key={card.label}
             className={cn("rounded-2xl border p-5 shadow-elevated", card.border, card.bg)}
           >
-            <div className={cn("mb-3 flex h-9 w-9 items-center justify-center rounded-xl border bg-white", card.border, card.color)}>
+            <div className={cn("mb-3 flex h-9 w-9 items-center justify-center rounded-xl border bg-card", card.border, card.color)}>
               {card.icon}
             </div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{card.label}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">{card.label}</p>
             <p className={cn("mt-1 text-3xl font-black", card.color)}>
               {card.value}
               <span className="ml-1 text-base font-bold">{card.unit}</span>
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">{card.sub}</p>
+            <p className="mt-1 text-[11px] text-[var(--subtle-foreground)]">{card.sub}</p>
           </div>
         ))}
       </div>
 
       {/* ── AI 최적화 권고 ── */}
-      <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated">
+      <section className="rounded-2xl border border-[#c9d8ff] bg-[#f4f7ff] p-5 shadow-elevated">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EEF4FF] border border-[#CFE0FF]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#eef3ff] border border-[#c9d8ff]">
             <Bot className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-sm font-bold text-slate-800">AI 인력 최적화 권고</span>
-          <span className="ml-auto rounded-full border border-[#CFE0FF] bg-white px-2 py-0.5 text-[10px] font-black text-primary">
+          <span className="text-sm font-bold text-[#1a2138]">AI 인력 최적화 권고</span>
+          <span className="ml-auto rounded-full border border-[#c9d8ff] bg-card px-2 py-0.5 text-[10px] font-black text-primary">
             {aiRecommendations.length}건
           </span>
         </div>
@@ -209,44 +209,44 @@ export const LaborOptimizationPage = () => {
             <div
               key={i}
               className={cn(
-                "flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm bg-white",
-                rec.level === "warning" ? "border-amber-100" : "border-[#CFE0FF]"
+                "flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm bg-card",
+                rec.level === "warning" ? "border-amber-100" : "border-[#c9d8ff]"
               )}
             >
               <div className={cn(
                 "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
-                rec.level === "warning" ? "bg-amber-50 border border-amber-100" : "bg-[#EEF4FF] border border-[#CFE0FF]"
+                rec.level === "warning" ? "bg-amber-50 border border-amber-100" : "bg-[#eef3ff] border border-[#c9d8ff]"
               )}>
                 {rec.level === "warning"
                   ? <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                   : <Zap className="h-3.5 w-3.5 text-primary" />}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-800">{rec.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{rec.desc}</p>
+                <p className="text-sm font-bold text-[#1a2138]">{rec.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{rec.desc}</p>
               </div>
-              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300" />
+              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#b0bdd4]" />
             </div>
           ))}
         </div>
       </section>
 
       {/* ── 시간대별 인력/매출 현황 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">시간대별 인력 · 인시당 매출</h3>
-          <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Hourly Breakdown</span>
+      <section className="app-card overflow-hidden">
+        <div className="app-section-header">
+          <h3 className="text-lg font-bold text-foreground">시간대별 인력 · 인시당 매출</h3>
+          <span className="text-[11px] font-black text-[#b0bdd4] uppercase tracking-widest">Hourly Breakdown</span>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#F7FAFF] text-slate-500 border-b border-border">
+            <thead className="bg-[var(--panel-soft)] text-muted-foreground border-b border-border">
               <tr>
-                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 w-20">시간대</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-32">시간대 매출</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-28">투입 / 권장</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">인력 상태</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-36">인시당 매출</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 w-20">시간대</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-32">시간대 매출</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-28">투입 / 권장</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">인력 상태</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-36">인시당 매출</th>
                 <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider">목표 대비</th>
               </tr>
             </thead>
@@ -255,24 +255,24 @@ export const LaborOptimizationPage = () => {
                 const diff = slot.staffCount - slot.recommended;
                 const vsTarget = ((slot.manHourRevenue / targetManHourRevenue) - 1) * 100;
                 return (
-                  <tr key={slot.hour} className="group transition-all hover:bg-slate-50/80 font-medium">
-                    <td className="pl-8 pr-4 py-3 border-r border-slate-100/50 font-mono font-bold text-slate-700">
+                  <tr key={slot.hour} className="group transition-all hover:bg-[var(--surface-hover)]/70 font-medium">
+                    <td className="pl-8 pr-4 py-3 border-r border-[var(--border)]/40 font-mono font-bold text-[#34415b]">
                       {slot.hour}
                     </td>
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-right font-mono text-[#34415b]">
                       {fmt(slot.revenue)}원
                     </td>
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-center">
                       <span className={cn(
                         "font-mono font-black text-sm",
-                        diff < 0 ? "text-red-600" : diff > 0 ? "text-blue-600" : "text-slate-700"
+                        diff < 0 ? "text-red-600" : diff > 0 ? "text-blue-600" : "text-[#34415b]"
                       )}>
                         {slot.staffCount}명
                       </span>
-                      <span className="text-slate-300"> / </span>
-                      <span className="text-xs text-slate-400">{slot.recommended}명</span>
+                      <span className="text-[#b0bdd4]"> / </span>
+                      <span className="text-xs text-[var(--subtle-foreground)]">{slot.recommended}명</span>
                     </td>
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-center">
                       {diff === 0 ? (
                         <span className="inline-block rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black text-emerald-600">적정</span>
                       ) : diff < 0 ? (
@@ -285,13 +285,13 @@ export const LaborOptimizationPage = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-right font-mono font-bold text-slate-800">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-right font-mono font-bold text-[#1a2138]">
                       {fmt(slot.manHourRevenue)}원
                     </td>
                     <td className="pl-4 pr-8 py-3">
                       <div className="flex items-center gap-2">
                         {/* 바 */}
-                        <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="flex-1 h-1.5 rounded-full bg-[var(--muted)] overflow-hidden">
                           <div
                             className={cn(
                               "h-full rounded-full transition-all",
@@ -315,30 +315,30 @@ export const LaborOptimizationPage = () => {
           </table>
         </div>
 
-        <div className="px-8 py-3 bg-[#F7FAFF] border-t border-slate-100">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="px-8 py-3 bg-[var(--panel-soft)] border-t border-[var(--border)]">
+          <p className="text-[11px] font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">
             목표 인시당 매출 {(targetManHourRevenue / 10000).toFixed(1)}만원 기준 · 부족 = 매출 기회 손실 / 초과 = 인건비 낭비
           </p>
         </div>
       </section>
 
       {/* ── 직원 시간표 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">직원 시간표 · 기여 현황</h3>
-          <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Today's Roster</span>
+      <section className="app-card overflow-hidden">
+        <div className="app-section-header">
+          <h3 className="text-lg font-bold text-foreground">직원 시간표 · 기여 현황</h3>
+          <span className="text-[11px] font-black text-[#b0bdd4] uppercase tracking-widest">Today's Roster</span>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#F7FAFF] text-slate-500 border-b border-border">
+            <thead className="bg-[var(--panel-soft)] text-muted-foreground border-b border-border">
               <tr>
-                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50">직원명</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">역할</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-32">근무 시간</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">상태</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-28">누적 근무</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-36">담당 매출 기여</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40">직원명</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">역할</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-32">근무 시간</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">상태</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-28">누적 근무</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-36">담당 매출 기여</th>
                 <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider text-right w-36">인시당 매출</th>
               </tr>
             </thead>
@@ -349,13 +349,13 @@ export const LaborOptimizationPage = () => {
                   : null;
                 return (
                   <tr key={staff.id} className={cn(
-                    "group transition-all hover:bg-slate-50/80 font-medium",
+                    "group transition-all hover:bg-[var(--surface-hover)]/70 font-medium",
                     staff.status === "퇴근" && "opacity-50"
                   )}>
-                    <td className="pl-8 pr-4 py-4 border-r border-slate-100/50 font-bold text-slate-800">
+                    <td className="pl-8 pr-4 py-4 border-r border-[var(--border)]/40 font-bold text-[#1a2138]">
                       {staff.name}
                     </td>
-                    <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                       <span className={cn(
                         "inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-black",
                         roleBadgeStyle[staff.role]
@@ -363,10 +363,10 @@ export const LaborOptimizationPage = () => {
                         {staff.role}
                       </span>
                     </td>
-                    <td className="px-4 py-4 border-r border-slate-100/50 text-center font-mono text-xs text-slate-600">
+                    <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center font-mono text-xs text-[#4a5568]">
                       {staff.startTime} ~ {staff.endTime}
                     </td>
-                    <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                       <span className={cn(
                         "inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-black",
                         statusStyle[staff.status]
@@ -374,11 +374,11 @@ export const LaborOptimizationPage = () => {
                         {staff.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 border-r border-slate-100/50 text-right font-mono text-slate-700">
-                      {staff.hoursWorked > 0 ? `${staff.hoursWorked.toFixed(1)}h` : <span className="text-slate-300">—</span>}
+                    <td className="px-4 py-4 border-r border-[var(--border)]/40 text-right font-mono text-[#34415b]">
+                      {staff.hoursWorked > 0 ? `${staff.hoursWorked.toFixed(1)}h` : <span className="text-[#b0bdd4]">—</span>}
                     </td>
-                    <td className="px-4 py-4 border-r border-slate-100/50 text-right font-mono text-slate-700">
-                      {staff.revenueContrib > 0 ? `${fmt(staff.revenueContrib)}원` : <span className="text-slate-300">—</span>}
+                    <td className="px-4 py-4 border-r border-[var(--border)]/40 text-right font-mono text-[#34415b]">
+                      {staff.revenueContrib > 0 ? `${fmt(staff.revenueContrib)}원` : <span className="text-[#b0bdd4]">—</span>}
                     </td>
                     <td className="pl-4 pr-8 py-4 text-right">
                       {perHour !== null ? (
@@ -389,7 +389,7 @@ export const LaborOptimizationPage = () => {
                           {fmt(perHour)}원/h
                         </span>
                       ) : (
-                        <span className="text-slate-300 text-xs">미출근</span>
+                        <span className="text-[#b0bdd4] text-xs">미출근</span>
                       )}
                     </td>
                   </tr>
@@ -400,20 +400,20 @@ export const LaborOptimizationPage = () => {
         </div>
 
         {/* 하단 요약 */}
-        <div className="px-8 py-4 bg-white border-t border-slate-100 flex flex-wrap items-center gap-6">
+        <div className="px-8 py-4 bg-card border-t border-[var(--border)] flex flex-wrap items-center gap-6">
           <div className="text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">총 인시</p>
-            <p className="text-lg font-black text-slate-800">{totalManHours.toFixed(1)}<span className="text-xs font-bold ml-0.5">h</span></p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">총 인시</p>
+            <p className="text-lg font-black text-[#1a2138]">{totalManHours.toFixed(1)}<span className="text-xs font-bold ml-0.5">h</span></p>
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">평균 인시당 매출</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">평균 인시당 매출</p>
             <p className={cn("text-lg font-black", avgManHourRevenue >= targetManHourRevenue ? "text-emerald-600" : "text-red-600")}>
               {fmt(avgManHourRevenue)}<span className="text-xs font-bold ml-0.5">원/h</span>
             </p>
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">목표 인시당 매출</p>
-            <p className="text-lg font-black text-slate-400">{fmt(targetManHourRevenue)}<span className="text-xs font-bold ml-0.5">원/h</span></p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">목표 인시당 매출</p>
+            <p className="text-lg font-black text-[var(--subtle-foreground)]">{fmt(targetManHourRevenue)}<span className="text-xs font-bold ml-0.5">원/h</span></p>
           </div>
           <div className="ml-auto flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-2">
             <TrendingDown className="h-4 w-4 text-amber-500" />

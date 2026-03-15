@@ -140,9 +140,9 @@ export const StockTakePage = () => {
       value: items.length,
       unit: "개",
       icon: <Package className="h-5 w-5" />,
-      color: "text-slate-600",
-      bg: "bg-slate-50",
-      border: "border-slate-200",
+      color: "text-[#4a5568]",
+      bg: "bg-[var(--panel-soft)]",
+      border: "border-[var(--border)]",
     },
     {
       label: "정상",
@@ -184,11 +184,11 @@ export const StockTakePage = () => {
       )}
 
       {/* ── 헤더 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">월말 재고 실사</h2>
-            <p className="mt-1 text-base text-slate-500">
+            <h2 className="text-2xl font-bold text-foreground">월말 재고 실사</h2>
+            <p className="mt-1 text-base text-muted-foreground">
               식자재 이론재고와 실재고를 비교하고 손실·과잉을 기록합니다.
             </p>
           </div>
@@ -197,7 +197,7 @@ export const StockTakePage = () => {
             <select
               value={selectedStore}
               onChange={(e) => setSelectedStore(e.target.value)}
-              className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+              className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-semibold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
             >
               {storeNames.map((name) => (
                 <option key={name} value={name}>{name}</option>
@@ -208,7 +208,7 @@ export const StockTakePage = () => {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-primary/50"
+              className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm font-semibold text-[#34415b] shadow-sm outline-none focus:border-primary/50"
             />
             {/* 저장 */}
             <button
@@ -233,10 +233,10 @@ export const StockTakePage = () => {
               card.bg
             )}
           >
-            <div className={cn("mb-3 flex h-9 w-9 items-center justify-center rounded-xl border", card.border, "bg-white", card.color)}>
+            <div className={cn("mb-3 flex h-9 w-9 items-center justify-center rounded-xl border", card.border, "bg-card", card.color)}>
               {card.icon}
             </div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{card.label}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">{card.label}</p>
             <p className={cn("mt-1 text-3xl font-black", card.color)}>
               {card.value}
               <span className="ml-1 text-base font-bold">{card.unit}</span>
@@ -253,7 +253,7 @@ export const StockTakePage = () => {
               <Bot className="h-4 w-4 text-amber-600" />
             </div>
             <span className="text-sm font-bold text-amber-800">AI 재고 이상 감지</span>
-            <span className="ml-auto rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-black text-amber-600">
+            <span className="ml-auto rounded-full border border-amber-200 bg-card px-2 py-0.5 text-[10px] font-black text-amber-600">
               {anomalies.length}건 주의
             </span>
           </div>
@@ -263,16 +263,16 @@ export const StockTakePage = () => {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-1 rounded-xl border border-amber-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center md:gap-4"
+                  className="flex flex-col gap-1 rounded-xl border border-amber-200 bg-card px-4 py-3 shadow-sm md:flex-row md:items-center md:gap-4"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
-                    <span className="font-bold text-slate-800">{item.name}</span>
-                    <span className="text-xs text-slate-400">({item.category})</span>
+                    <span className="font-bold text-[#1a2138]">{item.name}</span>
+                    <span className="text-xs text-[var(--subtle-foreground)]">({item.category})</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs ml-6 md:ml-auto">
-                    <span className="text-slate-500">
-                      이론 <span className="font-mono font-bold text-slate-700">{item.theoretical}{item.unit}</span>
+                    <span className="text-muted-foreground">
+                      이론 <span className="font-mono font-bold text-[#34415b]">{item.theoretical}{item.unit}</span>
                       {" → "}
                       실재고 <span className="font-mono font-bold text-red-600">{item.actual}{item.unit}</span>
                     </span>
@@ -293,10 +293,10 @@ export const StockTakePage = () => {
       )}
 
       {/* ── 실사 입력 테이블 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-white">
+      <section className="app-card overflow-hidden">
+        <div className="p-6 border-b border-[var(--border)] bg-card">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h3 className="text-lg font-bold text-slate-900">실재고 입력</h3>
+            <h3 className="text-lg font-bold text-foreground">실재고 입력</h3>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -305,8 +305,8 @@ export const StockTakePage = () => {
                   className={cn(
                     "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all shadow-sm",
                     activeCategory === cat
-                      ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
-                      : "border-[#D6E0F0] bg-white text-slate-500 hover:bg-[#F8FAFF]"
+                      ? "border-[#c9d8ff] bg-[#eef3ff] text-[#2f66ff]"
+                      : "border-[#d5deec] bg-card text-muted-foreground hover:bg-[#f4f7ff]"
                   )}
                 >
                   {cat}
@@ -318,16 +318,16 @@ export const StockTakePage = () => {
 
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#F7FAFF] text-slate-500 border-b border-border">
+            <thead className="bg-[var(--panel-soft)] text-muted-foreground border-b border-border">
               <tr>
-                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 w-40">카테고리</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50">품목명</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-20">단위</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-28">이론재고</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-32">실재고 입력</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-right w-28">차이</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">차이율</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">상태</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 w-40">카테고리</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40">품목명</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-20">단위</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-28">이론재고</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-32">실재고 입력</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-right w-28">차이</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">차이율</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">상태</th>
                 <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider w-44">비고</th>
               </tr>
             </thead>
@@ -339,25 +339,25 @@ export const StockTakePage = () => {
                 const status = statusOf(rate);
 
                 return (
-                  <tr key={item.id} className="group transition-all hover:bg-slate-50/80 font-medium">
+                  <tr key={item.id} className="group transition-all hover:bg-[var(--surface-hover)]/70 font-medium">
                     {/* 카테고리 */}
-                    <td className="pl-8 pr-4 py-3 border-r border-slate-100/50">
-                      <span className="text-xs font-semibold text-slate-400">{item.category}</span>
+                    <td className="pl-8 pr-4 py-3 border-r border-[var(--border)]/40">
+                      <span className="text-xs font-semibold text-[var(--subtle-foreground)]">{item.category}</span>
                     </td>
                     {/* 품목명 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 font-bold text-slate-800">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 font-bold text-[#1a2138]">
                       {item.name}
                     </td>
                     {/* 단위 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-center text-xs text-slate-500">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-center text-xs text-muted-foreground">
                       {item.unit}
                     </td>
                     {/* 이론재고 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-right font-mono text-[#34415b]">
                       {item.theoretical.toLocaleString()}
                     </td>
                     {/* 실재고 입력 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40">
                       <input
                         type="number"
                         step="0.1"
@@ -368,26 +368,26 @@ export const StockTakePage = () => {
                         className={cn(
                           "h-8 w-full rounded-lg border px-2 text-right font-mono text-sm shadow-sm outline-none transition-colors",
                           actual === null
-                            ? "border-slate-200 bg-slate-50 text-slate-400 focus:border-primary/50 focus:bg-white"
-                            : "border-[#CFE0FF] bg-[#F7FAFF] text-slate-800 focus:border-primary/50"
+                            ? "border-[var(--border)] bg-[var(--panel-soft)] text-[var(--subtle-foreground)] focus:border-primary/50 focus:bg-card"
+                            : "border-[#c9d8ff] bg-[#f4f7ff] text-[#1a2138] focus:border-primary/50"
                         )}
                       />
                     </td>
                     {/* 차이 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-right font-mono">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-right font-mono">
                       {diff !== null ? (
                         <span className={cn(
                           "font-bold",
-                          diff > 0 ? "text-blue-600" : diff < 0 ? "text-red-600" : "text-slate-400"
+                          diff > 0 ? "text-blue-600" : diff < 0 ? "text-red-600" : "text-[var(--subtle-foreground)]"
                         )}>
                           {diff > 0 ? "+" : ""}{diff.toFixed(1)}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-[#b0bdd4]">—</span>
                       )}
                     </td>
                     {/* 차이율 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-center">
                       {rate !== null ? (
                         <span className={cn(
                           "font-mono text-xs font-black",
@@ -396,13 +396,13 @@ export const StockTakePage = () => {
                           {rate > 0 ? "+" : ""}{rate.toFixed(1)}%
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-[#b0bdd4]">—</span>
                       )}
                     </td>
                     {/* 상태 */}
-                    <td className="px-4 py-3 border-r border-slate-100/50 text-center">
+                    <td className="px-4 py-3 border-r border-[var(--border)]/40 text-center">
                       {status === "미입력" ? (
-                        <span className="inline-block rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-black text-slate-400">
+                        <span className="inline-block rounded-full border border-[var(--border)] bg-[var(--panel-soft)] px-2.5 py-0.5 text-[10px] font-black text-[var(--subtle-foreground)]">
                           미입력
                         </span>
                       ) : status === "정상" ? (
@@ -426,7 +426,7 @@ export const StockTakePage = () => {
                         value={item.note}
                         onChange={(e) => handleNoteChange(item.id, e.target.value)}
                         placeholder="특이사항 입력"
-                        className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-600 shadow-sm outline-none focus:border-primary/50 placeholder:text-slate-300"
+                        className="h-8 w-full rounded-lg border border-[var(--border)] bg-card px-2 text-xs text-[#4a5568] shadow-sm outline-none focus:border-primary/50 placeholder:text-[#b0bdd4]"
                       />
                     </td>
                   </tr>
@@ -437,8 +437,8 @@ export const StockTakePage = () => {
         </div>
 
         {/* 하단 안내 */}
-        <div className="px-8 py-4 bg-[#F7FAFF] border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="px-8 py-4 bg-[var(--panel-soft)] border-t border-[var(--border)] flex items-center justify-between">
+          <p className="text-[11px] font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">
             {filteredItems.length}개 품목 · 차이율 ±5% 이내 정상 / -10% 미만 부족
           </p>
           <button
@@ -452,45 +452,45 @@ export const StockTakePage = () => {
       </section>
 
       {/* ── 실사 이력 ── */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
+      <section className="app-card overflow-hidden">
+        <div className="app-section-header">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-slate-400" />
-            <h3 className="text-lg font-bold text-slate-900">실사 이력</h3>
+            <History className="h-5 w-5 text-[var(--subtle-foreground)]" />
+            <h3 className="text-lg font-bold text-foreground">실사 이력</h3>
           </div>
-          <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Recent 6 Months</span>
+          <span className="text-[11px] font-black text-[#b0bdd4] uppercase tracking-widest">Recent 6 Months</span>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#F7FAFF] text-slate-500 border-b border-border">
+            <thead className="bg-[var(--panel-soft)] text-muted-foreground border-b border-border">
               <tr>
-                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 w-32">실사 월</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 w-32">매장</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">총 품목</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-20">정상</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">부족</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-24">과잉</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center w-28">평균 손실율</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 w-32">실사 월</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 w-32">매장</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">총 품목</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-20">정상</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">부족</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-24">과잉</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center w-28">평균 손실율</th>
                 <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider w-44">제출 일시</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {historyData.map((row) => (
-                <tr key={row.id} className="group transition-all hover:bg-slate-50/80 font-medium cursor-pointer">
-                  <td className="pl-8 pr-4 py-4 border-r border-slate-100/50 font-mono font-bold text-slate-800">
+                <tr key={row.id} className="group transition-all hover:bg-[var(--surface-hover)]/70 font-medium cursor-pointer">
+                  <td className="pl-8 pr-4 py-4 border-r border-[var(--border)]/40 font-mono font-bold text-[#1a2138]">
                     {row.month}
                   </td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-slate-600">{row.store}</td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center text-slate-600">{row.totalItems}</td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center font-bold text-emerald-600">{row.normalCount}</td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center font-bold text-red-600">
-                    {row.shortageCount > 0 ? row.shortageCount : <span className="text-slate-300">—</span>}
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-[#4a5568]">{row.store}</td>
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center text-[#4a5568]">{row.totalItems}</td>
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center font-bold text-emerald-600">{row.normalCount}</td>
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center font-bold text-red-600">
+                    {row.shortageCount > 0 ? row.shortageCount : <span className="text-[#b0bdd4]">—</span>}
                   </td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center font-bold text-blue-600">
-                    {row.surplusCount > 0 ? row.surplusCount : <span className="text-slate-300">—</span>}
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center font-bold text-blue-600">
+                    {row.surplusCount > 0 ? row.surplusCount : <span className="text-[#b0bdd4]">—</span>}
                   </td>
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                     <span className={cn(
                       "font-mono text-xs font-black",
                       row.avgLossRate > 4 ? "text-red-600" : row.avgLossRate > 2 ? "text-amber-600" : "text-emerald-600"
@@ -498,10 +498,10 @@ export const StockTakePage = () => {
                       -{row.avgLossRate}%
                     </span>
                   </td>
-                  <td className="pl-4 pr-8 py-4 text-slate-400 text-xs font-mono">
+                  <td className="pl-4 pr-8 py-4 text-[var(--subtle-foreground)] text-xs font-mono">
                     <div className="flex items-center justify-between">
                       {row.submittedAt}
-                      <ChevronDown className="h-4 w-4 text-slate-300 group-hover:text-slate-400 rotate-[-90deg]" />
+                      <ChevronDown className="h-4 w-4 text-[#b0bdd4] group-hover:text-[var(--subtle-foreground)] rotate-[-90deg]" />
                     </div>
                   </td>
                 </tr>
@@ -511,15 +511,15 @@ export const StockTakePage = () => {
         </div>
 
         {/* 페이지네이션 */}
-        <div className="px-8 py-4 bg-white border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Page 1 of 2</p>
+        <div className="px-8 py-4 bg-card border-t border-[var(--border)] flex items-center justify-between">
+          <p className="text-[11px] font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">Page 1 of 2</p>
           <div className="flex items-center gap-1">
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-30 shadow-sm">
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-[var(--border)] bg-card text-[var(--subtle-foreground)] hover:bg-[var(--panel-soft)] transition-all disabled:opacity-30 shadow-sm">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold shadow-md shadow-primary/20">1</button>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-slate-600 text-xs font-bold hover:bg-slate-50 transition-all">2</button>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all shadow-sm">
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-[#4a5568] text-xs font-bold hover:bg-[var(--panel-soft)] transition-all">2</button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-[var(--border)] bg-card text-[var(--subtle-foreground)] hover:bg-[var(--panel-soft)] transition-all shadow-sm">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>

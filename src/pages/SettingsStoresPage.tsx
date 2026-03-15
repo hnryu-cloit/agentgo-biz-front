@@ -75,11 +75,11 @@ export const SettingsStoresPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div>
           <p className="text-sm font-semibold text-primary">설정</p>
-          <h2 className="text-2xl font-bold text-slate-900">매장 기본 설정</h2>
-          <p className="mt-1 text-base text-slate-500">매장별 영업 정보 및 메뉴북 등 관련 서류를 통합 관리합니다.</p>
+          <h2 className="text-2xl font-bold text-foreground">매장 기본 설정</h2>
+          <p className="mt-1 text-base text-muted-foreground">매장별 영업 정보 및 메뉴북 등 관련 서류를 통합 관리합니다.</p>
         </div>
       </section>
 
@@ -88,34 +88,34 @@ export const SettingsStoresPage: React.FC = () => {
         {configs.map((c) => (
           <article key={c.id} className={cn(
             "rounded-2xl border transition-all duration-300 shadow-sm",
-            c.expanded ? "border-primary/20 bg-white ring-1 ring-primary/5 shadow-md" : "border-border/90 bg-card hover:border-[#DCE4F3]"
+            c.expanded ? "border-primary/20 bg-card ring-1 ring-primary/5 shadow-md" : "border-border/90 bg-card hover:border-[#d5deec]"
           )}>
             <button
               onClick={() => toggleExpand(c.id)}
-              className="flex w-full items-center justify-between p-5 transition-colors hover:bg-slate-50/50"
+              className="flex w-full items-center justify-between p-5 transition-colors hover:bg-[var(--panel-soft)]/50"
             >
               <div className="flex items-center gap-4">
                 <div className={cn(
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-sm",
-                  c.expanded ? "bg-primary text-white" : "bg-[#EEF4FF] text-primary"
+                  c.expanded ? "bg-primary text-white" : "bg-[#eef3ff] text-primary"
                 )}>
                   <Store className="h-5 w-5" />
                 </div>
                 <div className="text-left">
-                  <p className="text-base font-bold text-slate-900">{c.name}</p>
-                  <p className="text-xs font-medium text-slate-400 mt-0.5">
+                  <p className="text-base font-bold text-foreground">{c.name}</p>
+                  <p className="text-xs font-medium text-[var(--subtle-foreground)] mt-0.5">
                     {c.openTime}~{c.closeTime} · {c.seats}석 · {c.serviceType}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
-                  <Paperclip className="h-3 w-3 text-slate-400" />
-                  <span className="text-[11px] font-bold text-slate-500">{c.files.length} Files</span>
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[var(--panel-soft)] rounded-full border border-[var(--border)]">
+                  <Paperclip className="h-3 w-3 text-[var(--subtle-foreground)]" />
+                  <span className="text-[11px] font-bold text-muted-foreground">{c.files.length} Files</span>
                 </div>
                 <div className={cn(
                   "rounded-full p-1.5 transition-all",
-                  c.expanded ? "bg-primary/10 text-primary rotate-180" : "bg-slate-100 text-slate-400"
+                  c.expanded ? "bg-primary/10 text-primary rotate-180" : "bg-[var(--muted)] text-[var(--subtle-foreground)]"
                 )}>
                   <ChevronDown className="h-4 w-4" />
                 </div>
@@ -123,28 +123,28 @@ export const SettingsStoresPage: React.FC = () => {
             </button>
 
             {c.expanded && (
-              <div className="border-t border-slate-100 bg-white p-6 animate-in slide-in-from-top-2 duration-300">
+              <div className="border-t border-[var(--border)] bg-card p-6 animate-in slide-in-from-top-2 duration-300">
                 <div className="grid gap-8 lg:grid-cols-12">
                   
                   {/* 기본 정보 설정 */}
                   <div className="lg:col-span-7 space-y-6">
-                    <h4 className="text-sm font-bold text-slate-800 px-1">기본 운영 정보</h4>
+                    <h4 className="text-sm font-bold text-[#1a2138] px-1">기본 운영 정보</h4>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 px-1">영업 시작 시간</label>
-                        <input type="time" value={c.openTime} onChange={(e) => updateField(c.id, "openTime", e.target.value)} className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-primary/50" />
+                        <label className="text-xs font-bold text-muted-foreground px-1">영업 시작 시간</label>
+                        <input type="time" value={c.openTime} onChange={(e) => updateField(c.id, "openTime", e.target.value)} className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm font-medium text-[#34415b] outline-none focus:border-primary/50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 px-1">영업 종료 시간</label>
-                        <input type="time" value={c.closeTime} onChange={(e) => updateField(c.id, "closeTime", e.target.value)} className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-primary/50" />
+                        <label className="text-xs font-bold text-muted-foreground px-1">영업 종료 시간</label>
+                        <input type="time" value={c.closeTime} onChange={(e) => updateField(c.id, "closeTime", e.target.value)} className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm font-medium text-[#34415b] outline-none focus:border-primary/50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 px-1">총 좌석 수</label>
-                        <input type="number" value={c.seats} onChange={(e) => updateField(c.id, "seats", Number(e.target.value))} className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-primary/50" />
+                        <label className="text-xs font-bold text-muted-foreground px-1">총 좌석 수</label>
+                        <input type="number" value={c.seats} onChange={(e) => updateField(c.id, "seats", Number(e.target.value))} className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm font-medium text-[#34415b] outline-none focus:border-primary/50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 px-1">서비스 운영 유형</label>
-                        <select value={c.serviceType} onChange={(e) => updateField(c.id, "serviceType", e.target.value as StoreConfig["serviceType"])} className="h-10 w-full rounded-xl border border-[#D6E0F0] bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-primary/50">
+                        <label className="text-xs font-bold text-muted-foreground px-1">서비스 운영 유형</label>
+                        <select value={c.serviceType} onChange={(e) => updateField(c.id, "serviceType", e.target.value as StoreConfig["serviceType"])} className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm font-medium text-[#34415b] outline-none focus:border-primary/50">
                           {serviceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
@@ -154,34 +154,34 @@ export const SettingsStoresPage: React.FC = () => {
                   {/* 파일 관리 섹션 */}
                   <div className="lg:col-span-5 space-y-6">
                     <div className="flex items-center justify-between px-1">
-                      <h4 className="text-sm font-bold text-slate-800">매장 관련 서류 및 메뉴북</h4>
+                      <h4 className="text-sm font-bold text-[#1a2138]">매장 관련 서류 및 메뉴북</h4>
                       <button className="text-[11px] font-bold text-primary hover:underline">일괄 다운로드</button>
                     </div>
                     
                     <div className="space-y-2">
                       {c.files.map((file) => (
-                        <div key={file.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-[#F8FAFF] group transition-all hover:border-primary/20">
+                        <div key={file.id} className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[#f4f7ff] group transition-all hover:border-primary/20">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                              <FileText className="h-4 w-4 text-slate-400" />
+                            <div className="p-2 bg-card rounded-lg shadow-sm">
+                              <FileText className="h-4 w-4 text-[var(--subtle-foreground)]" />
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-slate-700">{file.name}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5">{file.size} · {file.uploadedAt}</p>
+                              <p className="text-xs font-bold text-[#34415b]">{file.name}</p>
+                              <p className="text-[10px] text-[var(--subtle-foreground)] mt-0.5">{file.size} · {file.uploadedAt}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-1.5 text-slate-400 hover:text-primary transition-colors">
+                            <button className="p-1.5 text-[var(--subtle-foreground)] hover:text-primary transition-colors">
                               <Download className="h-3.5 w-3.5" />
                             </button>
-                            <button onClick={() => deleteFile(c.id, file.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                            <button onClick={() => deleteFile(c.id, file.id)} className="p-1.5 text-[var(--subtle-foreground)] hover:text-red-500 transition-colors">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </div>
                       ))}
                       
-                      <button className="w-full mt-2 flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-slate-400 hover:border-primary/30 hover:text-primary hover:bg-primary/[0.02] transition-all group">
+                      <button className="w-full mt-2 flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed border-[var(--border)] rounded-2xl bg-card text-[var(--subtle-foreground)] hover:border-primary/30 hover:text-primary hover:bg-primary/[0.02] transition-all group">
                         <Upload className="h-5 w-5 transition-transform group-hover:-translate-y-1" />
                         <span className="text-[11px] font-bold">새 파일 등록 (PDF, JPG, PNG)</span>
                       </button>
@@ -197,7 +197,7 @@ export const SettingsStoresPage: React.FC = () => {
                   )}
                   <button 
                     onClick={() => saveConfig(c.id)}
-                    className="rounded-lg bg-primary px-8 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#1E5BE9] transition-all active:scale-95"
+                    className="rounded-lg bg-primary px-8 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#2356e0] transition-all active:scale-95"
                   >
                     설정 저장
                   </button>

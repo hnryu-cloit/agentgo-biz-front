@@ -50,7 +50,7 @@ const roleStyle: Record<UserRole, string> = {
   hq_admin: "text-purple-600 bg-purple-50 border-purple-100",
   marketer: "text-indigo-600 bg-indigo-50 border-indigo-100",
   supervisor: "text-primary bg-primary/5 border-primary/10",
-  store_owner: "text-slate-500 bg-slate-50 border-slate-100",
+  store_owner: "text-muted-foreground bg-[var(--panel-soft)] border-[var(--border)]",
 };
 
 export const SettingsUsersPage: React.FC = () => {
@@ -68,15 +68,15 @@ export const SettingsUsersPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-10 font-sans">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">설정</p>
-            <h2 className="text-2xl font-bold text-slate-900">사용자 및 권한 관리</h2>
-            <p className="mt-1 text-base text-slate-500">시스템 접속 계정을 관리하고 직무에 맞는 운영 권한을 부여합니다.</p>
+            <h2 className="text-2xl font-bold text-foreground">사용자 및 권한 관리</h2>
+            <p className="mt-1 text-base text-muted-foreground">시스템 접속 계정을 관리하고 직무에 맞는 운영 권한을 부여합니다.</p>
           </div>
           <button
-            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#1E5BE9]"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#2356e0]"
           >
             <UserPlus className="h-4 w-4" />
             신규 사용자 초대
@@ -85,70 +85,70 @@ export const SettingsUsersPage: React.FC = () => {
       </section>
 
       {/* Table Section */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+      <section className="app-card overflow-hidden">
         {/* Search & Tool Bar */}
-        <div className="p-5 border-b border-border bg-white flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="p-5 border-b border-border bg-card flex flex-col md:flex-row gap-4 justify-between items-center">
           <div className="relative flex-1 max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--subtle-foreground)]" />
             <input 
               type="text" 
               placeholder="이름, 이메일, 부서로 검색..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl border border-border bg-white text-sm font-medium text-slate-700 outline-none focus:border-primary/50 transition-all shadow-sm placeholder:text-slate-300"
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-border bg-card text-sm font-medium text-[#34415b] outline-none focus:border-primary/50 transition-all shadow-sm placeholder:text-[#b0bdd4]"
             />
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-white text-xs font-bold text-slate-600 hover:bg-[#F8FAFF] shadow-sm">
+            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-xs font-bold text-[#4a5568] hover:bg-[#f4f7ff] shadow-sm">
               <Filter className="h-3.5 w-3.5" />
               필터
             </button>
-            <div className="h-6 w-px bg-slate-100" />
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total {filteredUsers.length}</span>
+            <div className="h-6 w-px bg-[var(--muted)]" />
+            <span className="text-[11px] font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">Total {filteredUsers.length}</span>
           </div>
         </div>
 
         {/* Table Area */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#F7FAFF] text-slate-500">
+            <thead className="bg-[#f4f7ff] text-muted-foreground">
               <tr>
-                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50">사용자 정보</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center">소속 부서/팀</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center">권한 그룹</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center">담당 매장</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center">최근 접속</th>
-                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-slate-100/50 text-center">상태</th>
+                <th className="pl-8 pr-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40">사용자 정보</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center">소속 부서/팀</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center">권한 그룹</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center">담당 매장</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center">최근 접속</th>
+                <th className="px-4 py-4 font-bold text-[11px] uppercase tracking-wider border-r border-[var(--border)]/40 text-center">상태</th>
                 <th className="pl-4 pr-8 py-4 font-bold text-[11px] uppercase tracking-wider text-center">관리</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {filteredUsers.slice(0, 10).map((u) => (
                 <tr key={u.id} className={cn(
-                  "transition-colors hover:bg-slate-50/50",
-                  !u.active && "bg-slate-50/30 opacity-60"
+                  "transition-colors hover:bg-[var(--panel-soft)]/50",
+                  !u.active && "bg-[var(--panel-soft)]/30 opacity-60"
                 )}>
                   {/* 1열: 사용자 정보 (좌측 정렬) */}
-                  <td className="pl-8 pr-4 py-4 border-r border-slate-100/50">
+                  <td className="pl-8 pr-4 py-4 border-r border-[var(--border)]/40">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold shadow-sm border",
-                        u.active ? "bg-white border-primary/20 text-primary" : "bg-slate-100 border-slate-200 text-slate-400"
+                        u.active ? "bg-card border-primary/20 text-primary" : "bg-[var(--muted)] border-[var(--border)] text-[var(--subtle-foreground)]"
                       )}>
                         {u.name.substring(0, 1)}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-800 leading-tight">{u.name}</p>
-                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">{u.email}</p>
+                        <p className="font-bold text-[#1a2138] leading-tight">{u.name}</p>
+                        <p className="text-[11px] font-medium text-[var(--subtle-foreground)] mt-0.5">{u.email}</p>
                       </div>
                     </div>
                   </td>
                   {/* 2열: 소속 부서 (중앙 정렬) */}
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
-                    <span className="text-xs font-medium text-slate-600">{u.department}</span>
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
+                    <span className="text-xs font-medium text-[#4a5568]">{u.department}</span>
                   </td>
                   {/* 3열: 권한 그룹 (중앙 정렬) */}
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                     <span className={cn(
                       "inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-bold shadow-sm",
                       roleStyle[u.role]
@@ -157,25 +157,25 @@ export const SettingsUsersPage: React.FC = () => {
                     </span>
                   </td>
                   {/* 4열: 담당 매장 (중앙 정렬) */}
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                     <div className="flex flex-wrap justify-center gap-1">
                       {u.assignedStores && u.assignedStores.length > 0 ? (
                         u.assignedStores.map(s => (
-                          <span key={s} className="rounded bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 border border-slate-100">
+                          <span key={s} className="rounded bg-[var(--panel-soft)] px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground border border-[var(--border)]">
                             {s}
                           </span>
                         ))
                       ) : (
-                        <span className="text-[10px] text-slate-300 italic">No Access</span>
+                        <span className="text-[10px] text-[#b0bdd4] italic">No Access</span>
                       )}
                     </div>
                   </td>
                   {/* 5열: 최근 접속 (중앙 정렬) */}
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
-                    <span className="text-[11px] font-medium text-slate-500">{u.lastLogin}</span>
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
+                    <span className="text-[11px] font-medium text-muted-foreground">{u.lastLogin}</span>
                   </td>
                   {/* 6열: 상태 (중앙 정렬) */}
-                  <td className="px-4 py-4 border-r border-slate-100/50 text-center">
+                  <td className="px-4 py-4 border-r border-[var(--border)]/40 text-center">
                     <div className="flex justify-center">
                       {u.active ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
@@ -183,7 +183,7 @@ export const SettingsUsersPage: React.FC = () => {
                           활성
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--subtle-foreground)]">
                           <XCircle className="h-3 w-3" />
                           비활성
                         </span>
@@ -195,15 +195,15 @@ export const SettingsUsersPage: React.FC = () => {
                     <div className="flex justify-center gap-1">
                       <button 
                         onClick={() => toggleActive(u.id)}
-                        className="p-1.5 text-slate-400 hover:text-primary transition-colors"
+                        className="p-1.5 text-[var(--subtle-foreground)] hover:text-primary transition-colors"
                         title={u.active ? "비활성화" : "활성화"}
                       >
                         {u.active ? <ShieldAlert className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                       </button>
-                      <button className="p-1.5 text-slate-400 hover:text-primary transition-colors">
+                      <button className="p-1.5 text-[var(--subtle-foreground)] hover:text-primary transition-colors">
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                      <button className="p-1.5 text-[var(--subtle-foreground)] hover:text-red-500 transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -215,15 +215,15 @@ export const SettingsUsersPage: React.FC = () => {
         </div>
 
         {/* Standard Pagination Area */}
-        <div className="px-8 py-4 bg-white border-t border-border flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Page 1 of 2</p>
+        <div className="px-8 py-4 bg-card border-t border-border flex items-center justify-between">
+          <p className="text-[11px] font-bold text-[var(--subtle-foreground)] uppercase tracking-widest">Page 1 of 2</p>
           <div className="flex items-center gap-1">
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-white text-slate-400 hover:bg-slate-50 shadow-sm">
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-[var(--subtle-foreground)] hover:bg-[var(--panel-soft)] shadow-sm">
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold shadow-md shadow-primary/20">1</button>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-slate-600 text-xs font-bold hover:bg-slate-50 transition-all">2</button>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-white text-slate-400 hover:bg-slate-50 shadow-sm">
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent text-[#4a5568] text-xs font-bold hover:bg-[var(--panel-soft)] transition-all">2</button>
+            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-[var(--subtle-foreground)] hover:bg-[var(--panel-soft)] shadow-sm">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

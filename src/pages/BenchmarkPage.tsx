@@ -63,22 +63,22 @@ export const BenchmarkPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <p className="text-sm font-semibold text-primary">성과 분석</p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-900">매장 벤치마크</h2>
-        <p className="mt-1 text-base text-slate-500">
+        <h2 className="mt-1 text-2xl font-bold text-foreground">매장 벤치마크</h2>
+        <p className="mt-1 text-base text-muted-foreground">
           유사 상권·브랜드 매장과 핵심 지표를 비교하고 개선 우선순위를 파악합니다.
         </p>
       </section>
 
       {/* Store Selector */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-[#EEF4FF] p-1.5 shadow-sm">
+          <div className="rounded-lg bg-[#eef3ff] p-1.5 shadow-sm">
             <MapPin className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">비교 매장 선택</h3>
-          <span className="ml-auto text-[11px] font-bold uppercase tracking-wider text-slate-400">Min. 3 Stores Required</span>
+          <h3 className="text-lg font-bold text-foreground">비교 매장 선택</h3>
+          <span className="ml-auto text-[11px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">Min. 3 Stores Required</span>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -89,13 +89,13 @@ export const BenchmarkPage: React.FC = () => {
               className={cn(
                 "group flex items-start gap-3 rounded-xl border p-3.5 text-left transition-all shadow-sm hover:shadow-md",
                 s.selected
-                  ? "border-[#CFE0FF] bg-[#F7FAFF]"
-                  : "border-[#DCE4F3] bg-white hover:border-primary/30"
+                  ? "border-[#c9d8ff] bg-[#f4f7ff]"
+                  : "border-[#d5deec] bg-card hover:border-primary/30"
               )}
             >
               <div className={cn(
                 "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors shadow-sm",
-                s.selected ? "border-primary bg-primary" : "border-[#DCE4F3] bg-white group-hover:border-primary/50"
+                s.selected ? "border-primary bg-primary" : "border-[#d5deec] bg-card group-hover:border-primary/50"
               )}>
                 {s.selected && (
                   <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
@@ -106,11 +106,11 @@ export const BenchmarkPage: React.FC = () => {
               <div className="min-w-0">
                 <p className={cn(
                   "text-sm font-bold transition-colors",
-                  s.selected ? "text-[#2454C8]" : "text-slate-800"
+                  s.selected ? "text-[#2f66ff]" : "text-[#1a2138]"
                 )}>
                   {s.name}
                 </p>
-                <p className="mt-1 text-xs font-medium text-slate-400 leading-tight">
+                <p className="mt-1 text-xs font-medium text-[var(--subtle-foreground)] leading-tight">
                   {s.area} · {s.brand} · {s.size}
                 </p>
               </div>
@@ -127,13 +127,13 @@ export const BenchmarkPage: React.FC = () => {
 
       {/* Metric Comparison */}
       {selected.length >= 3 && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated animate-in fade-in zoom-in-95 duration-300">
+        <section className="app-card p-5 md:p-6 animate-in fade-in zoom-in-95 duration-300">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-slate-100 p-1.5">
-                <BarChart2 className="h-5 w-5 text-slate-500" />
+              <div className="rounded-lg bg-[var(--muted)] p-1.5">
+                <BarChart2 className="h-5 w-5 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">지표 비교</h3>
+              <h3 className="text-lg font-bold text-foreground">지표 비교</h3>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {metricDefs.map((m) => (
@@ -144,8 +144,8 @@ export const BenchmarkPage: React.FC = () => {
                   className={cn(
                     "rounded-lg border px-3 py-1.5 text-[13px] font-bold shadow-sm transition-all",
                     activeMetric === m.key
-                      ? "border-[#CFE0FF] bg-[#EEF4FF] text-[#2454C8]"
-                      : "border-[#D6E0F0] bg-white text-slate-500 hover:bg-[#F8FAFF]"
+                      ? "border-[#c9d8ff] bg-[#eef3ff] text-[#2f66ff]"
+                      : "border-[#d5deec] bg-card text-muted-foreground hover:bg-[#f4f7ff]"
                   )}
                 >
                   {m.label}
@@ -160,12 +160,12 @@ export const BenchmarkPage: React.FC = () => {
 
           <div className="mt-6 space-y-4">
             {/* My Store */}
-            <div className="flex items-center gap-4 rounded-xl border border-[#CFE0FF] bg-[#F7FAFF] p-3 shadow-sm">
-              <span className="w-24 shrink-0 rounded-full border border-[#CFE0FF] bg-white px-2 py-1 text-center text-[11px] font-bold text-[#2454C8] shadow-sm">
+            <div className="flex items-center gap-4 rounded-xl border border-[#c9d8ff] bg-[#f4f7ff] p-3 shadow-sm">
+              <span className="w-24 shrink-0 rounded-full border border-[#c9d8ff] bg-card px-2 py-1 text-center text-[11px] font-bold text-[#2f66ff] shadow-sm">
                 내 매장
               </span>
               <div className="flex-1">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--border)] shadow-inner">
                   <div
                     className="h-full rounded-full bg-primary shadow-sm transition-all duration-700"
                     style={{ width: `${((myStore[activeMetric] as number) / bestVal) * 100}%` }}
@@ -173,11 +173,11 @@ export const BenchmarkPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex w-32 shrink-0 items-center justify-end gap-3">
-                <span className="text-sm font-bold text-slate-900">
+                <span className="text-sm font-bold text-foreground">
                   {typeof myStore[activeMetric] === "number" && metric.unit === "원"
                     ? (myStore[activeMetric] as number).toLocaleString()
                     : myStore[activeMetric]}
-                  <span className="ml-0.5 text-xs text-slate-400 font-medium">{metric.unit !== "원" ? metric.unit : "원"}</span>
+                  <span className="ml-0.5 text-xs text-[var(--subtle-foreground)] font-medium">{metric.unit !== "원" ? metric.unit : "원"}</span>
                 </span>
                 {(() => {
                   const delta = (((myStore[activeMetric] as number) - bestVal) / bestVal) * 100;
@@ -202,9 +202,9 @@ export const BenchmarkPage: React.FC = () => {
                 const isBest = val === bestVal;
                 return (
                   <div key={s.id} className="flex items-center gap-4">
-                    <span className="w-24 shrink-0 truncate text-xs font-bold text-slate-500">{s.name}</span>
+                    <span className="w-24 shrink-0 truncate text-xs font-bold text-muted-foreground">{s.name}</span>
                     <div className="flex-1">
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted)]">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-700",
@@ -215,9 +215,9 @@ export const BenchmarkPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex w-32 shrink-0 items-center justify-end gap-3">
-                      <span className="text-sm font-bold text-slate-700">
+                      <span className="text-sm font-bold text-[#34415b]">
                         {metric.unit === "원" ? val.toLocaleString() : val}
-                        <span className="ml-0.5 text-[10px] text-slate-400 font-medium">{metric.unit !== "원" ? metric.unit : "원"}</span>
+                        <span className="ml-0.5 text-[10px] text-[var(--subtle-foreground)] font-medium">{metric.unit !== "원" ? metric.unit : "원"}</span>
                       </span>
                       {isBest ? (
                         <span className="rounded bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black text-white shadow-sm">
@@ -236,26 +236,26 @@ export const BenchmarkPage: React.FC = () => {
       )}
 
       {/* Action Recommendations */}
-      <section className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated">
+      <section className="app-card p-5 md:p-6">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-emerald-50 p-1.5 shadow-sm">
             <TrendingUp className="h-5 w-5 text-emerald-500" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">벤치마크 기반 개선 액션</h3>
+          <h3 className="text-lg font-bold text-foreground">벤치마크 기반 개선 액션</h3>
         </div>
-        <p className="mt-1 text-base text-slate-500">격차가 큰 지표 중심으로 AI가 제안하는 실행 가능한 개선안입니다.</p>
+        <p className="mt-1 text-base text-muted-foreground">격차가 큰 지표 중심으로 AI가 제안하는 실행 가능한 개선안입니다.</p>
 
         <div className="mt-5 space-y-3">
           {actionRecs.map((rec) => (
-            <div key={rec.label} className="group flex items-start gap-4 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
+            <div key={rec.label} className="group flex items-start gap-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
               <div className="flex-1">
-                <p className="text-[15px] font-bold text-slate-800">{rec.label}</p>
-                <p className="mt-1 text-sm font-medium text-slate-500 leading-relaxed">{rec.desc}</p>
+                <p className="text-[15px] font-bold text-[#1a2138]">{rec.label}</p>
+                <p className="mt-1 text-sm font-medium text-muted-foreground leading-relaxed">{rec.desc}</p>
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 shadow-sm">
+                  <span className="rounded-full border border-emerald-200 bg-card px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 shadow-sm">
                     {rec.impact}
                   </span>
-                  <span className="rounded-full border border-[#DCE4F3] bg-white px-2.5 py-0.5 text-[11px] font-bold text-slate-400 shadow-sm">
+                  <span className="rounded-full border border-[#d5deec] bg-card px-2.5 py-0.5 text-[11px] font-bold text-[var(--subtle-foreground)] shadow-sm">
                     난이도: {rec.difficulty}
                   </span>
                 </div>
