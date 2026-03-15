@@ -1,7 +1,7 @@
 import type React from "react";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Bell, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Bell, X, Settings, LogOut } from "lucide-react";
 import { sessionUser } from "@/data/sessionUser";
 
 type Crumb = { label: string };
@@ -26,6 +26,9 @@ const breadcrumbMap: Record<string, Crumb[]> = {
   "/settings/users":          [{ label: "리포트 / 설정" }, { label: "사용자 관리" }],
   "/settings/stores":         [{ label: "리포트 / 설정" }, { label: "매장 설정" }],
   "/data/upload":             [{ label: "데이터" }, { label: "데이터 업로드" }],
+  "/admin/settings":          [{ label: "관리자" }, { label: "설정" }],
+  "/owner/stock-take":        [{ label: "점주" }, { label: "재고 실사" }],
+  "/owner/labor":             [{ label: "점주" }, { label: "인력 최적화" }],
 };
 
 type Notification = {
@@ -53,8 +56,10 @@ const notifIcon: Record<Notification["type"], string> = {
 
 export const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const crumbs = breadcrumbMap[location.pathname] ?? [{ label: "대시보드" }];
   const [notifOpen, setNotifOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -147,21 +152,56 @@ export const Header: React.FC = () => {
           </div>
 
           {/* User Info */}
-          <div className="hidden h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-[10px] md:flex">
-            <div className="size-[28px] overflow-hidden rounded-full border border-[#CCDAF0] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
-              {sessionUser.avatarUrl ? (
-                <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
-              ) : (
-                <div className="grid size-full place-items-center text-[12px] font-bold">{sessionUser.initials}</div>
-              )}
+          <div className="relative hidden md:block">
+            <div className="flex h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-[10px]">
+              <div className="size-[28px] overflow-hidden rounded-full border border-[#CCDAF0] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
+                {sessionUser.avatarUrl ? (
+                  <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
+                ) : (
+                  <div className="grid size-full place-items-center text-[12px] font-bold">{sessionUser.initials}</div>
+                )}
+              </div>
+              <div className="mx-2 flex-1 truncate">
+                <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">{sessionUser.name}</p>
+                <p className="truncate text-[11px] leading-tight text-slate-500">{sessionUser.email}</p>
+              </div>
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600"
+                aria-label="user menu"
+              >
+                <span className="material-symbols-outlined text-[18px]">more_vert</span>
+              </button>
             </div>
-            <div className="mx-2 flex-1 truncate">
-              <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">{sessionUser.name}</p>
-              <p className="truncate text-[11px] leading-tight text-slate-500">{sessionUser.email}</p>
-            </div>
-            <button className="text-slate-400" aria-label="user menu">
-              <span className="material-symbols-outlined text-[18px]">more_vert</span>
-            </button>
+
+            {/* 유저 드롭다운 */}
+            {userMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
+                  <div className="border-b border-border/60 px-4 py-3">
+                    <p className="text-xs font-bold text-slate-800">{sessionUser.name}</p>
+                    <p className="text-[11px] text-slate-400">{sessionUser.roleLabel}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => { setUserMenuOpen(false); navigate("/admin/settings"); }}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F7FAFF]"
+                    >
+                      <Settings className="h-4 w-4 text-slate-400" />
+                      설정
+                    </button>
+                    <button
+                      onClick={() => { setUserMenuOpen(false); navigate("/login"); }}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      로그아웃
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
