@@ -72,11 +72,11 @@ export const Header: React.FC = () => {
     <header className="fixed left-0 right-0 top-0 z-30 h-[68px] border-b border-border bg-white/90 backdrop-blur-sm lg:left-64">
       <div className="flex h-full items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-400">AgentGo Biz</span>
+          <span className="text-sm font-medium text-[var(--subtle-foreground)]">AgentGo Biz</span>
           {crumbs.map((crumb, i) => (
             <span key={crumb.label} className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px] text-slate-300">chevron_right</span>
-              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-400"}>
+              <span className="material-symbols-outlined text-[16px] text-[#b0bdd4]">chevron_right</span>
+              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-[#1a2138]" : "text-sm font-medium text-[var(--subtle-foreground)]"}>
                 {crumb.label}
               </span>
             </span>
@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] text-slate-500 transition-colors hover:border-[#BFD1ED] hover:text-slate-700"
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#d5deec] bg-[#f4f7ff] text-muted-foreground transition-colors hover:border-[#bac9e3] hover:text-[#34415b]"
               aria-label="알림"
             >
               <Bell className="h-4 w-4" />
@@ -104,7 +104,7 @@ export const Header: React.FC = () => {
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
                 <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
                   <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-                    <p className="text-sm font-bold text-slate-900">알림 인박스</p>
+                    <p className="text-sm font-bold text-foreground">알림 인박스</p>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
                         <button
@@ -115,7 +115,7 @@ export const Header: React.FC = () => {
                         </button>
                       )}
                       <button onClick={() => setNotifOpen(false)}>
-                        <X className="h-4 w-4 text-slate-400" />
+                        <X className="h-4 w-4 text-[var(--subtle-foreground)]" />
                       </button>
                     </div>
                   </div>
@@ -124,11 +124,11 @@ export const Header: React.FC = () => {
                       <div
                         key={n.id}
                         className={`flex items-start gap-3 border-b border-border/40 px-4 py-3 last:border-0 ${
-                          n.read ? "bg-white" : "bg-[#F7FAFF]"
+                          n.read ? "bg-white" : "bg-[#f4f7ff]"
                         }`}
                       >
                         <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                          n.type === "alert" ? "bg-red-50" : "bg-[#EEF4FF]"
+                          n.type === "alert" ? "bg-red-50" : "bg-[#eef3ff]"
                         }`}>
                           <span className={`material-symbols-outlined text-[14px] ${
                             n.type === "alert" ? "text-red-500" : "text-primary"
@@ -137,12 +137,12 @@ export const Header: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-semibold ${n.read ? "text-slate-600" : "text-slate-900"}`}>
+                          <p className={`text-xs font-semibold ${n.read ? "text-[#4a5568]" : "text-foreground"}`}>
                             {n.title}
                           </p>
-                          <p className="text-xs text-slate-400">{n.desc}</p>
+                          <p className="text-xs text-[var(--subtle-foreground)]">{n.desc}</p>
                         </div>
-                        <span className="shrink-0 text-[10px] text-slate-400">{n.time}</span>
+                        <span className="shrink-0 text-[10px] text-[var(--subtle-foreground)]">{n.time}</span>
                       </div>
                     ))}
                   </div>
@@ -153,8 +153,8 @@ export const Header: React.FC = () => {
 
           {/* User Info */}
           <div className="relative hidden md:block">
-            <div className="flex h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-[10px]">
-              <div className="size-[28px] overflow-hidden rounded-full border border-[#CCDAF0] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
+            <div className="flex h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-[10px]">
+              <div className="size-[28px] overflow-hidden rounded-full border border-[#c9d8ff] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
                 {sessionUser.avatarUrl ? (
                   <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
                 ) : (
@@ -162,12 +162,12 @@ export const Header: React.FC = () => {
                 )}
               </div>
               <div className="mx-2 flex-1 truncate">
-                <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">{sessionUser.name}</p>
-                <p className="truncate text-[11px] leading-tight text-slate-500">{sessionUser.email}</p>
+                <p className="truncate text-[13px] font-semibold leading-tight text-[#1a2138]">{sessionUser.name}</p>
+                <p className="truncate text-[11px] leading-tight text-muted-foreground">{sessionUser.email}</p>
               </div>
               <button
                 onClick={() => setUserMenuOpen((v) => !v)}
-                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600"
+                className="rounded-lg p-1 text-[var(--subtle-foreground)] transition-colors hover:bg-slate-200/60 hover:text-[#4a5568]"
                 aria-label="user menu"
               >
                 <span className="material-symbols-outlined text-[18px]">more_vert</span>
@@ -180,15 +180,15 @@ export const Header: React.FC = () => {
                 <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                 <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
                   <div className="border-b border-border/60 px-4 py-3">
-                    <p className="text-xs font-bold text-slate-800">{sessionUser.name}</p>
-                    <p className="text-[11px] text-slate-400">{sessionUser.roleLabel}</p>
+                    <p className="text-xs font-bold text-[#1a2138]">{sessionUser.name}</p>
+                    <p className="text-[11px] text-[var(--subtle-foreground)]">{sessionUser.roleLabel}</p>
                   </div>
                   <div className="py-1">
                     <button
                       onClick={() => { setUserMenuOpen(false); navigate("/admin/settings"); }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F7FAFF]"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#34415b] transition-colors hover:bg-[#f4f7ff]"
                     >
-                      <Settings className="h-4 w-4 text-slate-400" />
+                      <Settings className="h-4 w-4 text-[var(--subtle-foreground)]" />
                       설정
                     </button>
                     <button

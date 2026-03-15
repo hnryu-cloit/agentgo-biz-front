@@ -120,12 +120,12 @@ export const FloatingAiChat: React.FC = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto bg-[#F8FAFF] p-4">
+          <div className="flex-1 overflow-y-auto bg-[#f4f7ff] p-4">
             <div className="space-y-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "")}>
                   <div className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white overflow-hidden border border-slate-100 shadow-sm",
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white overflow-hidden border border-[var(--border)] shadow-sm",
                     msg.role === "assistant" ? "bg-white p-1" : "bg-slate-400"
                   )}>
                     {msg.role === "assistant" ? <img src={Favicon} className="h-full w-full" /> : <User className="h-4 w-4" />}
@@ -135,33 +135,33 @@ export const FloatingAiChat: React.FC = () => {
                       "rounded-2xl px-3 py-2 text-sm shadow-sm",
                       msg.role === "user" 
                         ? "rounded-tr-sm bg-primary text-white" 
-                        : "rounded-tl-sm border border-[#DCE4F3] bg-white text-slate-800 font-medium"
+                        : "rounded-tl-sm border border-[#d5deec] bg-white text-[#1a2138] font-medium"
                     )}>
                       {msg.content}
                     </div>
                     {msg.evidence && (
-                      <div className="w-full rounded-xl border border-[#DCE4F3] bg-white/50 p-2.5 shadow-sm">
+                      <div className="w-full rounded-xl border border-[#d5deec] bg-white/50 p-2.5 shadow-sm">
                         <p className="mb-1.5 text-[10px] font-bold text-primary uppercase tracking-wider">Analysis Basis</p>
                         <div className="space-y-1">
                           {msg.evidence.map((ev) => (
                             <div key={ev.label} className="flex justify-between text-[11px]">
-                              <span className="text-slate-400 font-medium">{ev.label}</span>
-                              <span className="font-bold text-slate-600">{ev.value}</span>
+                              <span className="text-[var(--subtle-foreground)] font-medium">{ev.label}</span>
+                              <span className="font-bold text-[#4a5568]">{ev.value}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                    <span className="text-[9px] font-bold text-slate-300">{msg.timestamp}</span>
+                    <span className="text-[9px] font-bold text-[#b0bdd4]">{msg.timestamp}</span>
                   </div>
                 </div>
               ))}
               {loading && (
                 <div className="flex gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white border border-slate-100 p-1 shadow-sm">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white border border-[var(--border)] p-1 shadow-sm">
                     <img src={Favicon} className="h-full w-full" />
                   </div>
-                  <div className="rounded-2xl rounded-tl-sm border border-[#DCE4F3] bg-white px-3 py-2 shadow-sm">
+                  <div className="rounded-2xl rounded-tl-sm border border-[#d5deec] bg-white px-3 py-2 shadow-sm">
                     <div className="flex gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/40" />
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/40 [animation-delay:0.2s]" />
@@ -176,18 +176,18 @@ export const FloatingAiChat: React.FC = () => {
 
           {/* Input Area */}
           <div className="border-t border-border bg-white p-3">
-            <div className="flex items-center gap-2 rounded-xl border border-[#D6E0F0] bg-[#F8FAFF] px-3 py-1.5 transition-all focus-within:border-primary/50 focus-within:bg-white focus-within:shadow-sm">
+            <div className="flex items-center gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-3 py-1.5 transition-all focus-within:border-primary/50 focus-within:bg-white focus-within:shadow-sm">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder="질문을 입력하세요..."
-                className="flex-1 bg-transparent text-sm font-medium outline-none text-slate-700"
+                className="flex-1 bg-transparent text-sm font-medium outline-none text-[#34415b]"
               />
               <button 
                 onClick={send}
                 disabled={!input.trim() || loading}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-all hover:bg-[#1E5BE9] disabled:opacity-30 active:scale-95"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-all hover:bg-[#2356e0] disabled:opacity-30 active:scale-95"
               >
                 <Send className="h-3.5 w-3.5" />
               </button>
@@ -197,7 +197,7 @@ export const FloatingAiChat: React.FC = () => {
                 <button
                   key={tag}
                   onClick={() => setInput(tag)}
-                  className="rounded-full border border-[#DCE4F3] bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-500 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                  className="rounded-full border border-[#d5deec] bg-white px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground hover:border-primary/50 hover:text-primary transition-all shadow-sm"
                 >
                   {tag}
                 </button>

@@ -98,7 +98,7 @@ export const Sidebar: React.FC = () => {
                   <div className="px-3 py-1">
                     <span className={cn(
                       "text-[10px] font-bold uppercase tracking-[0.12em]",
-                      hasActive ? "text-primary" : "text-slate-400"
+                      hasActive ? "text-primary" : "text-[var(--subtle-foreground)]"
                     )}>
                       {section.section}
                     </span>
@@ -107,7 +107,7 @@ export const Sidebar: React.FC = () => {
 
                 <div className={cn(
                   "space-y-0.5",
-                  section.section && "relative ml-1 border-l border-slate-100 pl-2"
+                  section.section && "relative ml-1 border-l border-[var(--border)] pl-2"
                 )}>
                   {section.items.map((item) => (
                     <NavLink
@@ -118,8 +118,8 @@ export const Sidebar: React.FC = () => {
                         cn(
                           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-all",
                           isActive
-                            ? "bg-[#EDF3FF] text-[#2454C8]"
-                            : "text-slate-500 hover:bg-[#F7FAFF] hover:text-slate-900"
+                            ? "bg-[#eef3ff] text-[#2f66ff]"
+                            : "text-muted-foreground hover:bg-[#f4f7ff] hover:text-foreground"
                         )
                       }
                     >
@@ -127,12 +127,12 @@ export const Sidebar: React.FC = () => {
                         <>
                           {/* Active Indicator Bar */}
                           {isActive && (
-                            <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-[#2454C8]" />
+                            <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-[#2f66ff]" />
                           )}
                           
                           <span className={cn(
                             "material-symbols-outlined text-[20px] transition-colors",
-                            isActive ? "text-[#2454C8] font-variation-fill" : "text-slate-400 group-hover:text-slate-600"
+                            isActive ? "text-[#2f66ff] font-variation-fill" : "text-[var(--subtle-foreground)] group-hover:text-[#4a5568]"
                           )}>
                             {item.icon}
                           </span>
@@ -150,7 +150,7 @@ export const Sidebar: React.FC = () => {
         </nav>
 
         <div className="border-t border-border/60 pt-4 text-center">
-          <p className="text-[10px] leading-relaxed text-slate-400">
+          <p className="text-[10px] leading-relaxed text-[var(--subtle-foreground)]">
             © 2026 ITCEN CLOIT<br />All rights reserved
           </p>
         </div>

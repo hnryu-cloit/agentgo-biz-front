@@ -33,14 +33,14 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground aria-invalid:border-destructive flex w-fit items-center justify-between gap-2 rounded-xl border bg-white px-3 py-2 text-sm whitespace-nowrap shadow-sm transition-[color,box-shadow,border-color] outline-none hover:border-[#BFD1ED] focus-visible:border-[#82A9EF] focus-visible:ring-[3px] focus-visible:ring-[#95B4EB]/25 disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+        "border-input data-[placeholder]:text-muted-foreground aria-invalid:border-destructive flex w-fit items-center justify-between gap-2 rounded-xl border bg-white px-3 py-2 text-sm whitespace-nowrap shadow-sm transition-[color,box-shadow,border-color] outline-none hover:border-[#bac9e3] focus-visible:border-[#82A9EF] focus-visible:ring-[3px] focus-visible:ring-[#95B4EB]/25 disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
         className,
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <span className="material-symbols-outlined text-[18px] leading-none text-slate-500">expand_more</span>
+        <span className="material-symbols-outlined text-[18px] leading-none text-muted-foreground">expand_more</span>
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -105,7 +105,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-[#EEF4FF] focus:text-[#1E44A8] relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "focus:bg-[#eef3ff] focus:text-[#1E44A8] relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -115,7 +115,7 @@ function SelectItem({
         className="absolute right-2 flex size-3.5 items-center justify-center"
       >
         <SelectPrimitive.ItemIndicator>
-          <span className="material-symbols-outlined text-[16px] leading-none text-[#2454C8]">check</span>
+          <span className="material-symbols-outlined text-[16px] leading-none text-[#2f66ff]">check</span>
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -149,7 +149,7 @@ function SelectScrollUpButton({
       )}
       {...props}
     >
-      <span className="material-symbols-outlined text-[16px] leading-none text-slate-500">expand_less</span>
+      <span className="material-symbols-outlined text-[16px] leading-none text-muted-foreground">expand_less</span>
     </SelectPrimitive.ScrollUpButton>
   );
 }
@@ -167,7 +167,7 @@ function SelectScrollDownButton({
       )}
       {...props}
     >
-      <span className="material-symbols-outlined text-[16px] leading-none text-slate-500">expand_more</span>
+      <span className="material-symbols-outlined text-[16px] leading-none text-muted-foreground">expand_more</span>
     </SelectPrimitive.ScrollDownButton>
   );
 }

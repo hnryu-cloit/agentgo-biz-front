@@ -13,12 +13,12 @@ type EmptyStateProps = {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, action }) => {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] py-14 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EEF4FF]">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-[#d5deec] bg-[#f4f7ff] py-14 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef3ff]">
         {icon ?? <Inbox className="h-6 w-6 text-primary" />}
       </div>
-      <p className="mt-4 text-base font-semibold text-slate-700">{title}</p>
-      {description && <p className="mt-1.5 max-w-xs text-sm text-slate-400">{description}</p>}
+      <p className="mt-4 text-base font-semibold text-[#34415b]">{title}</p>
+      {description && <p className="mt-1.5 max-w-xs text-sm text-[var(--subtle-foreground)]">{description}</p>}
       {action && (
         <button
           onClick={action.onClick}

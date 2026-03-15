@@ -7,7 +7,7 @@ import { FloatingAiChat } from "./FloatingAiChat";
 
 export const Layout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <Sidebar />
       <Header />
       <GlobalFilterBar />

@@ -17,12 +17,12 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
         <AlertCircle className="h-6 w-6 text-red-500" />
       </div>
-      <p className="mt-4 text-base font-semibold text-slate-700">{title}</p>
-      <p className="mt-1.5 max-w-xs text-sm text-slate-400">{message}</p>
+      <p className="mt-4 text-base font-semibold text-[#34415b]">{title}</p>
+      <p className="mt-1.5 max-w-xs text-sm text-[var(--subtle-foreground)]">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-5 rounded-lg border border-[#D6E0F0] bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F8FAFF]"
+          className="mt-5 rounded-lg border border-[#d5deec] bg-white px-4 py-2 text-sm font-medium text-[#34415b] hover:bg-[#f4f7ff]"
         >
           다시 시도
         </button>
