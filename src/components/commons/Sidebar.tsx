@@ -24,6 +24,8 @@ const menuSections: MenuSection[] = [
     section: "점주",
     items: [
       { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
+      { to: "/owner/stock-take", label: "재고 실사", icon: "inventory_2" },
+      { to: "/owner/labor", label: "인력 최적화", icon: "groups" },
     ],
   },
   {

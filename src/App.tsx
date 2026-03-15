@@ -21,6 +21,9 @@ import { BenchmarkPage } from "@/pages/BenchmarkPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { SettingsUsersPage } from "@/pages/SettingsUsersPage";
 import { SettingsStoresPage } from "@/pages/SettingsStoresPage";
+import { StockTakePage } from "@/pages/StockTakePage";
+import { LaborOptimizationPage } from "@/pages/LaborOptimizationPage";
+import { AdminSettingsPage } from "@/pages/AdminSettingsPage";
 
 export const App: React.FC = () => {
   return (
@@ -35,6 +38,8 @@ export const App: React.FC = () => {
         {/* 점주 */}
         <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
         <Route path="/owner/qna" element={<QnaPage />} />
+        <Route path="/owner/stock-take" element={<StockTakePage />} />
+        <Route path="/owner/labor" element={<LaborOptimizationPage />} />
 
         {/* SV */}
         <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
@@ -63,6 +68,9 @@ export const App: React.FC = () => {
 
         {/* 데이터 */}
         <Route path="/data/upload" element={<DataUploadPage />} />
+
+        {/* 관리자 설정 */}
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
