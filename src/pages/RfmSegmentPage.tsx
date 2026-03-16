@@ -103,15 +103,15 @@ export const RfmSegmentPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Target className="h-4 w-4 text-primary" />
-            <span className="ds-eyebrow">Customer Intelligence</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">Customer Intelligence</span>
           </div>
-          <h1 className="ds-page-title">고객 세그먼트 분석 <span className="text-muted-foreground font-light">|</span> RFM Matrix</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">고객 세그먼트 분석 <span className="text-muted-foreground font-light">|</span> RFM Matrix</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button className="ds-button ds-button-outline h-11 uppercase font-black tracking-widest text-[10px] italic">
+          <button className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 border border-[#DCE4F3] bg-white text-slate-700 hover:bg-gray-50 h-11 uppercase font-black tracking-widest text-[10px] italic">
             <Filter className="h-4 w-4 mr-2" /> Segment Filters
           </button>
-          <button className="ds-button ds-button-primary h-11 px-6 shadow-xl shadow-primary/20">
+          <button className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 bg-primary text-white hover:bg-[#1E5BE9] shadow-sm h-11 px-6 shadow-xl shadow-primary/20">
             <MousePointer2 className="h-4 w-4 mr-2" /> Generate Target Group
           </button>
         </div>
@@ -126,7 +126,7 @@ export const RfmSegmentPage: React.FC = () => {
               key={seg.key}
               onClick={() => setSelected(seg.key)}
               className={cn(
-                "ds-kpi-card p-8 cursor-pointer relative overflow-hidden group border-border/50 bg-white",
+                "rounded-2xl border border-border/90 bg-card shadow-sm p-6 flex flex-col gap-4 p-8 cursor-pointer relative overflow-hidden group border-border/50 bg-white",
                 isActive ? "border-primary/40 bg-primary/[0.02] shadow-2xl scale-[1.02]" : "hover:border-primary/20"
               )}
             >
@@ -134,7 +134,7 @@ export const RfmSegmentPage: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <div className={cn(
                   "h-14 w-14 rounded-2xl flex items-center justify-center transition-all",
-                  isActive ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-panel-soft text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
+                  isActive ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-gray-50 text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
                 )}>
                   {segmentIcons[seg.key]}
                 </div>
@@ -148,8 +148,8 @@ export const RfmSegmentPage: React.FC = () => {
                   <span className="text-muted-foreground/60">Sales Share</span>
                   <span className="text-foreground italic">{seg.salesShare}%</span>
                 </div>
-                <div className="h-1 w-full bg-panel-soft rounded-full overflow-hidden">
-                  <div className={cn("h-full transition-all duration-1000", isActive ? "bg-ai-gradient" : "bg-muted-foreground/20")} style={{ width: `${seg.salesShare}%` }} />
+                <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
+                  <div className={cn("h-full transition-all duration-1000", isActive ? "bg-primary" : "bg-muted-foreground/20")} style={{ width: `${seg.salesShare}%` }} />
                 </div>
               </div>
             </article>
@@ -161,13 +161,13 @@ export const RfmSegmentPage: React.FC = () => {
         <div className="lg:col-span-8 space-y-8">
           {/* AI Analysis Panel */}
           {activeSegment && (
-            <section className="ds-ai-panel !p-10 border-primary/5">
+            <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-8 !p-10 border-primary/5">
               <div className="flex items-start gap-8 relative z-10">
                 <div className="h-20 w-20 rounded-[2.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 shrink-0 rotate-3 group hover:rotate-0 transition-transform">
                   <BarChart3 className="h-10 w-10" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="ds-section-title text-2xl font-black italic tracking-tighter mb-2">{activeSegment.label} 집중 최적화 가이드</h3>
+                  <h3 className="text-lg font-bold text-slate-900 text-2xl font-black italic tracking-tighter mb-2">{activeSegment.label} 집중 최적화 가이드</h3>
                   <p className="text-base text-muted-foreground font-medium leading-relaxed mb-8 italic">
                     {activeSegment.description}. 최근 방문 데이터 시뮬레이션 결과, 
                     <span className="text-primary font-black underline decoration-primary/20 decoration-4 underline-offset-4 ml-1">AI Recommendation:</span> 전용 메뉴 15% 리워드 제공 시 24%의 복귀 전환율이 예상됩니다.
@@ -179,7 +179,7 @@ export const RfmSegmentPage: React.FC = () => {
                       { label: "LTV Protect", val: "₩4.2M", type: "warning" },
                     ].map((m, i) => (
                       <div key={i} className="bg-white/60 p-5 rounded-[2rem] border border-white/40 shadow-sm">
-                        <p className="ds-eyebrow !text-[9px] mb-1 opacity-60">{m.label}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-[9px] mb-1 opacity-60">{m.label}</p>
                         <p className={cn("text-xl font-black italic", m.type === "success" ? "text-emerald-600" : m.type === "warning" ? "text-amber-600" : "text-foreground")}>{m.val}</p>
                       </div>
                     ))}
@@ -190,46 +190,46 @@ export const RfmSegmentPage: React.FC = () => {
           )}
 
           {/* Table */}
-          <article className="ds-card overflow-hidden">
-            <div className="ds-card-header !bg-panel-soft/30">
+          <article className="rounded-2xl border border-border/90 bg-card shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between !bg-gray-50/30">
               <div className="flex items-center gap-3">
                 <Target className="h-5 w-5 text-primary" />
-                <h3 className="ds-section-title">세그먼트 타겟 리스트</h3>
+                <h3 className="text-lg font-bold text-slate-900">세그먼트 타겟 리스트</h3>
               </div>
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Selection: {targetCount} Nodes active</p>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="ds-table">
-                <thead className="ds-table-thead">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-gray-50 text-gray-500 text-[10px] font-semibold uppercase tracking-widest border-b border-border">
                   <tr>
-                    <th className="ds-table-th">Customer ID</th>
-                    <th className="ds-table-th text-center">Current Grade</th>
-                    <th className="ds-table-th text-center">Recency</th>
-                    <th className="ds-table-th">Risk Index</th>
-                    <th className="ds-table-th text-right">Predicted LTV</th>
-                    <th className="ds-table-th text-right">Control</th>
+                    <th className="px-6 py-3 text-left">Customer ID</th>
+                    <th className="px-6 py-3 text-left text-center">Current Grade</th>
+                    <th className="px-6 py-3 text-left text-center">Recency</th>
+                    <th className="px-6 py-3 text-left">Risk Index</th>
+                    <th className="px-6 py-3 text-left text-right">Predicted LTV</th>
+                    <th className="px-6 py-3 text-left text-right">Control</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {customers.map((c) => (
-                    <tr key={c.id} className={cn("ds-table-tr font-bold", c.excluded && "opacity-20 grayscale")}>
-                      <td className="ds-table-td font-mono text-primary italic text-xs">#{c.id}</td>
-                      <td className="ds-table-td text-center">
-                        <span className={cn("ds-badge border-none font-black italic", c.grade === "VIP" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>{c.grade}</span>
+                    <tr key={c.id} className={cn("border-b border-border/50 hover:bg-gray-50/50 transition-colors font-bold", c.excluded && "opacity-20 grayscale")}>
+                      <td className="px-6 py-4 font-medium font-mono text-primary italic text-xs">#{c.id}</td>
+                      <td className="px-6 py-4 font-medium text-center">
+                        <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border-none font-black italic", c.grade === "VIP" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>{c.grade}</span>
                       </td>
-                      <td className="ds-table-td text-center italic text-foreground">{c.daysSince}d</td>
-                      <td className="ds-table-td">
+                      <td className="px-6 py-4 font-medium text-center italic text-foreground">{c.daysSince}d</td>
+                      <td className="px-6 py-4 font-medium">
                         <div className="flex items-center gap-4">
-                          <div className="flex-1 h-1.5 bg-panel-soft rounded-full overflow-hidden shadow-inner">
+                          <div className="flex-1 h-1.5 bg-gray-50 rounded-full overflow-hidden shadow-inner">
                             <div className={cn("h-full transition-all duration-1000 shadow-sm", c.riskScore > 85 ? "bg-red-500" : "bg-amber-500")} style={{ width: `${c.riskScore}%` }} />
                           </div>
                           <span className="text-[10px] font-black font-mono w-6 italic">{c.riskScore}</span>
                         </div>
                       </td>
-                      <td className="ds-table-td text-right font-black font-mono text-foreground italic">₩{(c.predictedLtv/1000).toFixed(0)}k</td>
-                      <td className="ds-table-td text-right">
-                        <button onClick={() => toggleExclude(c.id)} className={cn("ds-button !h-8 !px-4 !text-[9px] uppercase font-black tracking-widest rounded-lg transition-all", c.excluded ? "bg-muted text-muted-foreground" : "bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-sm")}>{c.excluded ? "Include" : "Exclude"}</button>
+                      <td className="px-6 py-4 font-medium text-right font-black font-mono text-foreground italic">₩{(c.predictedLtv/1000).toFixed(0)}k</td>
+                      <td className="px-6 py-4 font-medium text-right">
+                        <button onClick={() => toggleExclude(c.id)} className={cn("inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 !h-8 !px-4 !text-[9px] uppercase font-black tracking-widest rounded-lg transition-all", c.excluded ? "bg-muted text-muted-foreground" : "bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-sm")}>{c.excluded ? "Include" : "Exclude"}</button>
                       </td>
                     </tr>
                   ))}
@@ -241,14 +241,14 @@ export const RfmSegmentPage: React.FC = () => {
 
         {/* Action Sidebar */}
         <div className="lg:col-span-4 space-y-8">
-          <article className="ds-card p-10 bg-slate-950 text-white border-none shadow-2xl relative overflow-hidden">
+          <article className="rounded-2xl border border-border/90 bg-card shadow-sm p-10 bg-slate-950 text-white border-none shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 blur-[80px] rounded-full -mr-20 -mt-20" />
-            <h3 className="ds-section-title !text-white text-2xl mb-2 italic">Campaign Execution</h3>
+            <h3 className="text-lg font-bold text-slate-900 !text-white text-2xl mb-2 italic">Campaign Execution</h3>
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-10 border-b border-white/10 pb-6 italic">Targeted Offer Deployment</p>
 
             <div className="space-y-8 mb-12">
               <div className="p-6 bg-white/5 border border-white/10 rounded-[2.5rem] relative group hover:bg-white/10 transition-all">
-                <p className="ds-eyebrow !text-primary !text-[9px] mb-3">Audience</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-primary !text-[9px] mb-3">Audience</p>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-black uppercase italic tracking-tighter">{selected}</span>
                   <span className="text-3xl font-black italic">{targetCount} <span className="text-xs font-normal text-slate-500 tracking-normal">Nodes</span></span>
@@ -256,7 +256,7 @@ export const RfmSegmentPage: React.FC = () => {
               </div>
 
               <div className="p-6 bg-white/5 border border-white/10 rounded-[2.5rem] relative group hover:bg-white/10 transition-all">
-                <p className="ds-eyebrow !text-slate-400 !text-[9px] mb-3">Model ROI</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-slate-400 !text-[9px] mb-3">Model ROI</p>
                 <div className="flex items-end gap-2">
                   <span className="text-4xl font-black text-emerald-400 italic leading-none">3.8x</span>
                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Impact Index</p>
@@ -270,7 +270,7 @@ export const RfmSegmentPage: React.FC = () => {
                 <span className="font-black uppercase tracking-[0.3em] text-sm italic">Deployed</span>
               </div>
             ) : (
-              <button onClick={() => setSentOffer(true)} className="ds-button w-full h-16 bg-ai-gradient border-none !rounded-3xl shadow-[0_0_20px_rgba(47,102,255,0.4)] hover:shadow-[0_0_40px_rgba(47,102,255,0.6)] group">
+              <button onClick={() => setSentOffer(true)} className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 w-full h-16 bg-primary border-none !rounded-3xl shadow-[0_0_20px_rgba(47,102,255,0.4)] hover:shadow-[0_0_40px_rgba(47,102,255,0.6)] group">
                 <Send className="h-6 w-6 mr-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
                 <span className="font-black uppercase tracking-[0.3em] text-sm italic">Execute Now</span>
               </button>

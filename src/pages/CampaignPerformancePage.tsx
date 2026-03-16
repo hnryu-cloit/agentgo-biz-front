@@ -51,7 +51,7 @@ export const CampaignPerformancePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">마케팅</p>
@@ -99,7 +99,7 @@ export const CampaignPerformancePage: React.FC = () => {
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <article key={kpi.label} className="app-card p-5">
+            <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-bold text-muted-foreground">{kpi.label}</p>
                 <div className={cn("rounded-lg p-1.5 shadow-sm", kpi.bg)}>
@@ -115,7 +115,7 @@ export const CampaignPerformancePage: React.FC = () => {
         })}
       </section>
 
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="mb-5 flex items-center gap-2">
           <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
             <BarChart2 className="h-5 w-5 text-muted-foreground" />

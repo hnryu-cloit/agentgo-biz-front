@@ -78,7 +78,7 @@ export const CampaignDesignerPage: React.FC = () => {
     <div className="space-y-6">
 
       {/* ── 헤더 ── */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-semibold text-primary">마케팅</p>
@@ -117,7 +117,7 @@ export const CampaignDesignerPage: React.FC = () => {
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* Step 1. 세그먼트 선택 */}
-        <article className="flex flex-col app-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
             <Users className="h-5 w-5 text-[var(--subtle-foreground)]" />
             Step 1. 세그먼트 선택
@@ -154,7 +154,7 @@ export const CampaignDesignerPage: React.FC = () => {
         </article>
 
         {/* Step 2. 오퍼 설계 */}
-        <article className="flex flex-col app-card p-5 md:p-6">
+        <article className="flex flex-col rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
             <Sparkles className="h-5 w-5 text-[var(--subtle-foreground)]" />
             Step 2. 오퍼 설계
@@ -247,7 +247,7 @@ export const CampaignDesignerPage: React.FC = () => {
       </section>
 
       {/* ── Step 3. BEP 손익분기 계산 ── */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
           <Calculator className="h-5 w-5 text-[var(--subtle-foreground)]" />
           Step 3. 손익분기점 (BEP) 확인
@@ -444,7 +444,7 @@ export const CampaignDesignerPage: React.FC = () => {
       </section>
 
       {/* ── 예상 성과 요약 ── */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
           <BarChart2 className="h-5 w-5 text-[var(--subtle-foreground)]" />
           예상 성과 요약
