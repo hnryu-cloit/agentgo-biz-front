@@ -73,13 +73,13 @@ export const BenchmarkPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <p className="text-sm font-semibold text-primary">성과 분석</p>
         <h2 className="mt-1 text-2xl font-bold text-foreground">매장 벤치마크</h2>
         <p className="mt-1 text-base text-muted-foreground">최신 일자 실데이터 기준으로 유사 매장 성과와 개선 우선순위를 비교합니다.</p>
       </section>
 
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-[#eef3ff] p-1.5 shadow-sm">
             <MapPin className="h-5 w-5 text-primary" />
@@ -111,7 +111,7 @@ export const BenchmarkPage: React.FC = () => {
       </section>
 
       {selectedStore && (
-        <section className="app-card animate-in fade-in zoom-in-95 p-5 md:p-6 duration-300">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated animate-in fade-in zoom-in-95 p-5 md:p-6 duration-300">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="rounded-lg bg-[var(--muted)] p-1.5">
@@ -181,7 +181,7 @@ export const BenchmarkPage: React.FC = () => {
         </section>
       )}
 
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-emerald-50 p-1.5 shadow-sm">
             <TrendingUp className="h-5 w-5 text-emerald-500" />
