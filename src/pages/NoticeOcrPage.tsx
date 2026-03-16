@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState } from "react";
-import { ScanLine, Upload, FileText, CheckSquare, Send, Clock, CheckCircle2, AlertCircle, RefreshCw, Layers } from "lucide-react";
+import { ScanLine, Upload, FileText, CheckSquare, Send, Clock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ocrLines = [
@@ -24,6 +24,8 @@ const deployHistory = [
   { store: "D매장", status: "대기중", time: "-" },
 ];
 
+const steps = ["이미지 업로드", "AI OCR 분석", "체크리스트 확인", "전사 배포"];
+
 export const NoticeOcrPage: React.FC = () => {
   const [uploaded, setUploaded] = useState(true);
   const [checks, setChecks] = useState<number[]>([1, 2]);
@@ -33,236 +35,284 @@ export const NoticeOcrPage: React.FC = () => {
   };
 
   const doneCount = checks.length;
+  const currentStep = 2; // 0-based: 체크리스트 단계 진행 중
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 pb-10">
 
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ScanLine className="h-4 w-4 text-primary" />
-            <span className="ds-eyebrow">Vision Intelligence</span>
-          </div>
-          <h1 className="ds-page-title">공지 OCR 및 자동화 <span className="text-muted-foreground font-light">|</span> 체크리스트</h1>
-        </div>
-        <button className="ds-button ds-button-outline h-11 px-6 !text-xs uppercase tracking-widest font-black">
-          <Layers className="h-4 w-4 mr-2" />
-          Model Config
-        </button>
-      </div>
-
-      {/* Step Indicator */}
-      <section className="ds-card p-1">
-        <div className="flex items-center justify-between px-10 py-6">
-          {["이미지 업로드", "AI OCR 분석", "체크리스트 확인", "전사 배포"].map((step, idx) => (
-            <div key={step} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center gap-2 group">
-                <div className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-black transition-all",
-                  idx < 3 ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110" : "bg-panel-soft text-muted-foreground"
-                )}>
-                  {idx < 2 ? <CheckCircle2 className="h-6 w-6" /> : idx + 1}
-                </div>
-                <span className={cn(
-                  "text-[11px] font-black uppercase tracking-tighter mt-2 transition-colors",
-                  idx < 3 ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {step}
-                </span>
-              </div>
-              {idx < 3 && <div className={cn("flex-1 h-0.5 mx-6 rounded-full", idx < 2 ? "bg-primary/20" : "bg-panel-soft")} />}
+      {/* 헤더 */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-[#eef3ff] p-3">
+              <ScanLine className="h-5 w-5 text-primary" />
             </div>
-          ))}
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Vision Intelligence</p>
+              <h1 className="text-xl font-bold text-foreground">공지 OCR 자동화</h1>
+            </div>
+          </div>
+
+          {/* 진행 단계 */}
+          <div className="flex items-center gap-2">
+            {steps.map((step, idx) => (
+              <div key={step} className="flex items-center">
+                <div className="flex items-center gap-1.5">
+                  <div className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold transition-all",
+                    idx < currentStep
+                      ? "bg-primary text-white"
+                      : idx === currentStep
+                      ? "bg-primary text-white"
+                      : "border border-[#d5deec] bg-card text-muted-foreground"
+                  )}>
+                    {idx < currentStep ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
+                  </div>
+                  <span className={cn(
+                    "hidden text-xs font-medium md:block",
+                    idx <= currentStep ? "text-primary" : "text-muted-foreground"
+                  )}>{step}</span>
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={cn("mx-2 h-px w-6", idx < currentStep ? "bg-primary/40" : "bg-[#d5deec]")} />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Steps Grid */}
-      <div className="grid gap-8 lg:grid-cols-12">
-        
-        {/* Left Column */}
-        <div className="lg:col-span-5 space-y-8">
-          {/* Step 1 */}
-          <article className="ds-card p-8 border-primary/5">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
-              <h3 className="ds-section-title text-base flex items-center gap-3">
-                <Upload className="h-5 w-5 text-primary" />
-                Step 1. 소스 데이터 업로드
-              </h3>
-              <span className="ds-badge ds-badge-info">Ready</span>
+      {/* 메인 그리드 */}
+      <div className="grid gap-6 lg:grid-cols-12">
+
+        {/* 왼쪽 열 */}
+        <div className="lg:col-span-5 space-y-6">
+
+          {/* Step 1: 업로드 */}
+          <article className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+            <div className="mb-4 flex items-center justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#eef3ff] p-2">
+                  <Upload className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-sm font-bold text-foreground">Step 1. 소스 데이터 업로드</h2>
+              </div>
+              <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">완료</span>
             </div>
 
             {uploaded ? (
-              <div className="p-6 ds-ai-panel border-none shadow-none group">
-                <div className="flex items-center gap-5">
-                  <div className="h-16 w-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:rotate-3 transition-transform">
-                    <FileText className="h-8 w-8" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-foreground truncate uppercase">공지_2026_03_10.jpg</p>
-                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">2.4 MB · High Resolution</p>
-                  </div>
-                  <button onClick={() => setUploaded(false)} className="ds-button ds-button-ghost !h-10 !w-10 !p-0"><RefreshCw className="h-4 w-4" /></button>
+              <div className="rounded-xl border border-[#c9d8ff] bg-[#eef3ff] px-4 py-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white border border-[#d5deec]">
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">공지_2026_03_10.jpg</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">2.4 MB · 고해상도</p>
+                </div>
+                <button
+                  onClick={() => setUploaded(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
               </div>
             ) : (
-              <div className="rounded-3xl border-2 border-dashed border-border bg-panel-soft/30 p-12 text-center hover:border-primary/40 transition-all cursor-pointer group">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-20 group-hover:opacity-40 transition-opacity" />
-                <p className="text-sm font-black text-foreground">Drop Image or PDF here</p>
-                <button onClick={() => setUploaded(true)} className="ds-button ds-button-primary h-10 px-8 mt-8 uppercase tracking-widest font-black text-[10px]">Select File</button>
+              <div
+                onClick={() => setUploaded(true)}
+                className="rounded-xl border-2 border-dashed border-[#d5deec] bg-[#f4f7ff] p-8 text-center cursor-pointer hover:border-primary/40 hover:bg-[#eef3ff] transition-all"
+              >
+                <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-3 opacity-40" />
+                <p className="text-sm font-medium text-foreground">이미지 또는 PDF 드래그</p>
+                <p className="mt-1 text-xs text-muted-foreground">클릭하여 파일 선택</p>
               </div>
             )}
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="ds-eyebrow !text-[9px] ml-1">Target Zone</label>
-                <select className="ds-input w-full bg-panel-soft/50 border-none font-black text-xs uppercase">
-                  <option>Global (All)</option>
-                  <option>Seoul North</option>
-                  <option>Seoul South</option>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">대상 권역</label>
+                <select className="w-full rounded-lg border border-[#d5deec] bg-[#f4f7ff] px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary">
+                  <option>전체</option>
+                  <option>수도권 북부</option>
+                  <option>수도권 남부</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="ds-eyebrow !text-[9px] ml-1">Due Date</label>
-                <input type="date" defaultValue="2026-03-10" className="ds-input w-full bg-panel-soft/50 border-none font-black text-xs" />
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">마감일</label>
+                <input
+                  type="date"
+                  defaultValue="2026-03-10"
+                  className="w-full rounded-lg border border-[#d5deec] bg-[#f4f7ff] px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                />
               </div>
             </div>
           </article>
 
-          {/* Step 3 */}
-          <article className="ds-card p-8">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
-              <h3 className="ds-section-title text-base flex items-center gap-3 text-emerald-600">
-                <CheckSquare className="h-5 w-5" />
-                Step 3. AI Generated Checklist
-              </h3>
+          {/* Step 3: 체크리스트 */}
+          <article className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+            <div className="mb-4 flex items-center justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#eef3ff] p-2">
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-sm font-bold text-foreground">Step 3. AI 체크리스트</h2>
+              </div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-muted-foreground uppercase">{doneCount}/{checklist.length} Verified</p>
-                <div className="w-20 h-1 bg-panel-soft rounded-full overflow-hidden mt-1">
-                  <div className="h-full bg-emerald-500" style={{ width: `${(doneCount/checklist.length)*100}%` }} />
+                <p className="text-[10px] font-semibold text-muted-foreground">{doneCount}/{checklist.length} 완료</p>
+                <div className="mt-1 h-1 w-16 overflow-hidden rounded-full bg-[#e8edf5]">
+                  <div className="h-full bg-emerald-500" style={{ width: `${(doneCount / checklist.length) * 100}%` }} />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {checklist.map((item) => (
-                <div 
+                <div
                   key={item.id}
                   onClick={() => toggleCheck(item.id)}
                   className={cn(
-                    "flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer group",
-                    checks.includes(item.id) ? "bg-emerald-50 border-emerald-200" : "bg-white border-border hover:border-emerald-300"
+                    "flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 transition-all",
+                    checks.includes(item.id)
+                      ? "border-emerald-200 bg-emerald-50"
+                      : "border-[#d5deec] bg-[#f4f7ff] hover:border-[#b8ccff] hover:bg-[#eef3ff]"
                   )}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className={cn(
-                      "h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all",
-                      checks.includes(item.id) ? "bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-white border-border group-hover:border-emerald-400"
+                      "flex h-5 w-5 items-center justify-center rounded border transition-all",
+                      checks.includes(item.id)
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-[#d5deec] bg-card"
                     )}>
-                      {checks.includes(item.id) && <CheckCircle2 className="h-4 w-4 text-white" />}
+                      {checks.includes(item.id) && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
                     </div>
-                    <span className={cn("text-sm font-black italic", checks.includes(item.id) ? "text-emerald-700" : "text-foreground")}>{item.task}</span>
+                    <span className={cn("text-sm font-medium", checks.includes(item.id) ? "text-emerald-700" : "text-foreground")}>
+                      {item.task}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase font-mono">D-{item.deadline.split('/')[1]}</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground">~{item.deadline}</span>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-10">
-              <button className="ds-button ds-button-outline uppercase tracking-widest font-black text-[10px]">Archive Draft</button>
-              <button className="ds-button ds-button-primary bg-ai-gradient border-none shadow-2xl shadow-primary/30 uppercase tracking-widest font-black text-[10px]">
-                <Send className="h-4 w-4 mr-2" /> Publish Now
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button className="rounded-lg border border-[#d5deec] bg-card px-3 py-2.5 text-sm font-medium text-[#34415b] hover:bg-[#f4f7ff] transition-colors">
+                임시 저장
+              </button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm transition-colors">
+                <Send className="h-4 w-4" /> 전사 배포
               </button>
             </div>
           </article>
         </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-7 space-y-8">
-          {/* Step 2 */}
-          <article className="ds-card overflow-hidden flex flex-col h-full">
-            <div className="p-8 ds-ai-panel border-none rounded-none flex items-center justify-between border-b border-primary/10">
-              <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-3xl bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/40 rotate-3">
-                  <ScanLine className="h-8 w-8" />
+        {/* 오른쪽 열 */}
+        <div className="lg:col-span-7 space-y-6">
+
+          {/* Step 2: OCR 결과 */}
+          <article className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#eef3ff] p-2">
+                  <ScanLine className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="ds-section-title text-xl">Step 2. AI OCR 분석 엔진</h3>
-                  <p className="ds-eyebrow !text-[9px] mt-1 text-primary/60">Engine: AgentGo-Vision v2.4 (Neural Optimized)</p>
+                  <h2 className="text-sm font-bold text-foreground">Step 2. AI OCR 분석 결과</h2>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">AgentGo-Vision v2.4</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="ds-eyebrow !text-[9px] mb-2 opacity-60">Confidence Score</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-black text-foreground italic leading-none">96%</span>
-                  <div className="w-24 h-2 bg-white/30 rounded-full overflow-hidden shadow-inner">
-                    <div className="h-full bg-ai-gradient" style={{ width: "96%" }} />
+              <div className="flex items-center gap-3">
+                <p className="text-[10px] font-semibold text-muted-foreground">신뢰도</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-foreground">96%</span>
+                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#e8edf5]">
+                    <div className="h-full bg-primary" style={{ width: "96%" }} />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-10 space-y-6 flex-1 bg-white">
+            <div className="space-y-2 p-5">
               {ocrLines.map((line, idx) => (
-                <div key={idx} className="group relative">
-                  <div className="p-6 bg-panel-soft/30 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white transition-all hover:shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[9px] font-black text-primary uppercase italic font-mono">Conf: {line.confidence}%</span>
-                    </div>
-                    <p className="text-base font-black text-foreground leading-relaxed italic tracking-tight">"{line.text}"</p>
-                    <div className="mt-4 flex gap-2">
-                      {idx === 0 && <span className="ds-badge ds-badge-danger border-none">Priority</span>}
-                      {idx === 1 && <span className="ds-badge ds-badge-info border-none">POS Logic</span>}
-                    </div>
+                <div key={idx} className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-foreground leading-relaxed flex-1">"{line.text}"</p>
+                    <span className="shrink-0 text-[10px] font-semibold text-muted-foreground">{line.confidence}%</span>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    {idx === 0 && <span className="rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">우선 처리</span>}
+                    {idx === 1 && <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">POS 연동</span>}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="p-6 bg-panel-soft/50 border-t border-border/50 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs font-black text-muted-foreground uppercase tracking-widest italic">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                Direct Edit Mode Enabled
+            <div className="flex items-center justify-between border-t border-border/50 bg-gray-50/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                직접 편집 모드 활성화
               </div>
-              <button className="ds-button ds-button-ghost !h-9 !px-4 !text-[10px] uppercase font-black tracking-widest underline decoration-primary/20 hover:text-primary">Manual Verification →</button>
+              <button className="text-xs font-medium text-primary hover:underline">수동 검증 →</button>
             </div>
           </article>
 
-          {/* Step 4 */}
-          <article className="ds-card p-8">
-            <div className="flex items-center justify-between mb-10 pb-4 border-b border-border/50">
+          {/* Step 4: 배포 현황 */}
+          <article className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+            <div className="mb-4 flex items-center justify-between border-b border-border/50 pb-4">
               <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <h3 className="ds-section-title text-base uppercase tracking-widest italic">Step 4. Live Propagation Tracking</h3>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <p className="ds-eyebrow !text-[9px] opacity-60 mb-1">Global Coverage</p>
-                  <p className="text-lg font-black text-foreground italic">50% <span className="text-xs font-normal text-muted-foreground"> (2/4 Nodes)</span></p>
+                <div className="rounded-lg bg-[#eef3ff] p-2">
+                  <Clock className="h-4 w-4 text-primary" />
                 </div>
-                <button className="ds-button ds-button-ghost !h-10 !w-10 !p-0"><RefreshCw className="h-4 w-4 text-primary" /></button>
+                <h2 className="text-sm font-bold text-foreground">Step 4. 전사 배포 현황</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-foreground">2/4 완료</span>
+                <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground hover:text-foreground transition-colors">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[#e8edf5]">
+              <div className="h-full bg-primary transition-all duration-700" style={{ width: "50%" }} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               {deployHistory.map((item) => (
-                <div key={item.store} className="p-5 bg-panel-soft/20 rounded-2xl border border-border/40 flex items-center justify-between group hover:border-primary/20 transition-all">
-                  <div className="flex items-center gap-4">
+                <div
+                  key={item.store}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border px-4 py-3",
+                    item.status === "완료"
+                      ? "border-emerald-200 bg-emerald-50"
+                      : "border-[#d5deec] bg-[#f4f7ff]"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
                     <div className={cn(
                       "h-2 w-2 rounded-full",
-                      item.status === "완료" ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" : "bg-slate-400"
+                      item.status === "완료" ? "bg-emerald-500" : "bg-[#c5d0e0]"
                     )} />
-                    <span className="text-sm font-black text-foreground uppercase tracking-tighter italic">{item.store}</span>
+                    <span className="text-sm font-medium text-foreground">{item.store}</span>
                   </div>
                   <div className="text-right">
                     <span className={cn(
-                      "ds-badge border-none shadow-sm",
-                      item.status === "완료" ? "ds-badge-success" : "bg-white text-muted-foreground"
+                      "text-xs font-semibold",
+                      item.status === "완료" ? "text-emerald-600" : "text-muted-foreground"
                     )}>{item.status}</span>
-                    <p className="text-[9px] font-black text-muted-foreground/40 mt-2 font-mono uppercase italic">{item.time}</p>
+                    {item.time !== "-" && (
+                      <p className="text-[10px] text-muted-foreground">{item.time}</p>
+                    )}
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* AI 인사이트 */}
+            <div className="mt-4 rounded-xl border border-[#c9d8ff] bg-[#eef3ff] px-4 py-3">
+              <p className="text-xs font-medium leading-relaxed text-foreground">
+                <span className="font-bold text-primary">AI 분석:</span>{" "}
+                C·D 매장은 아직 배포 대기 중입니다. 마감일(3/10) 이전에 담당자에게 재확인을 권고합니다.
+              </p>
             </div>
           </article>
         </div>

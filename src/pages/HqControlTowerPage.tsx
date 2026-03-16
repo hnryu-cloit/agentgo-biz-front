@@ -5,27 +5,25 @@ import {
   Users,
   ShieldAlert,
   Activity,
-  ArrowUpRight,
   Map,
   Server,
   CheckCircle2,
-  Clock,
   RotateCcw,
   Database,
   TriangleAlert,
   Cpu,
-  Layers,
   Zap,
   Play,
   Settings2,
   ChevronRight,
   BarChart3,
   Globe,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAgentStatuses, getControlTowerOverview } from "@/services/hq";
 
-type TabKey = "agents" | "workflows" | "simulation" | "data" | "risk";
+type TabKey = "agents" | "workflows" | "simulation";
 
 type Agent = {
   id: string;
@@ -65,10 +63,22 @@ const regions = [
   { label: "수도권", status: "안정적 초과 달성", pct: 112 },
   { label: "충청권", status: "목표 달성 전망", pct: 98 },
   { label: "경상권", status: "목표 미달 위험", pct: 85 },
-  { label: "전라권", status: "심각한 실적 하락", pct: 72, warn: "AI 제안: 지역 타겟팅 캠페인 실행" },
+  { label: "전라권", status: "심각한 실적 하락", pct: 72, warn: "AI 제안: 지역 타겟팅 캠페인 실행 권고" },
 ];
 
-export const HqControlTowerPage = () => {
+const infraNodes = [
+  { label: "데이터 동기화", val: "248 노드 활성", icon: Database, status: "정상" },
+  { label: "엔진 부하", val: "CPU 42% / GPU 68%", icon: Activity, status: "정상" },
+  { label: "API 상태", val: "인증 토큰 만료 임박 (D-2)", icon: ShieldAlert, status: "경고" },
+];
+
+const tabLabels: Record<TabKey, string> = {
+  agents: "에이전트",
+  workflows: "워크플로우",
+  simulation: "시뮬레이션",
+};
+
+export const HqControlTowerPage: React.FC = () => {
   const [tab, setTab] = useState<TabKey>("agents");
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
   const [overview, setOverview] = useState<Awaited<ReturnType<typeof getControlTowerOverview>> | null>(null);
@@ -78,7 +88,7 @@ export const HqControlTowerPage = () => {
     getControlTowerOverview().then((response) => {
       if (!alive) return;
       setOverview(response);
-    }).catch(() => { /* fallback 유지 */ });
+    }).catch(() => {});
     getAgentStatuses().then((response) => {
       if (!alive || response.length === 0) return;
       setAgents(response.map((agent) => ({
@@ -90,115 +100,123 @@ export const HqControlTowerPage = () => {
         status: agent.status === "healthy" ? "정상" : agent.status === "degraded" ? "주의" : "장애",
         type: agent.agent_name,
       })));
-    }).catch(() => { /* fallback 유지 */ });
+    }).catch(() => {});
     return () => { alive = false; };
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Globe className="h-4 w-4 text-primary" />
-            <span className="ds-eyebrow">Global Operations Center</span>
-          </div>
-          <h1 className="ds-page-title">전사 통합 관제 <span className="text-muted-foreground font-light">|</span> HQ Control Tower</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl border-emerald-500/20 bg-emerald-500/5">
-            <div className="live-point" />
-            <span className="text-[11px] font-black text-emerald-600 uppercase">System Active</span>
-          </div>
-          <button className="ds-button ds-button-primary h-11 px-6">
-            <Play className="h-4 w-4 mr-2 fill-current" />
-            Run Global Workflow
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6 pb-10">
 
-      {/* Global KPI Grid */}
-      <section className="grid gap-5 md:grid-cols-4">
-        {[
-          { label: "전국 총 매출", val: `₩${(((overview?.revenue_total ?? 425000000) / 100000000)).toFixed(2)}억`, delta: `Δ ₩${Math.abs(Math.round(overview?.revenue_vs_last_week ?? 0)).toLocaleString()}`, icon: Activity, type: "primary" },
-          { label: "운영 가맹점", val: `${overview?.total_stores ?? 248}개`, delta: `${overview?.period_label ?? "N/A"}`, icon: Building2, type: "primary" },
-          { label: "정상 에이전트", val: `${overview?.agents.healthy ?? agents.filter((agent) => agent.status === "정상").length}개`, delta: `전체 ${overview?.agents.total ?? agents.length}개`, icon: Users, type: "primary" },
-          { label: "에스컬레이션", val: `${overview?.active_alerts ?? 14}건`, delta: `Down ${overview?.agents.down ?? 0}개`, icon: ShieldAlert, type: "danger" },
-        ].map((kpi, idx) => (
-          <article key={idx} className="ds-kpi-card bg-white hover:border-primary/20">
-            <div className="flex items-center justify-between">
-              <p className="ds-kpi-label">{kpi.label}</p>
-              <span className={cn(
-                "ds-badge",
-                kpi.type === "danger" ? "ds-badge-danger" : "ds-badge-success"
-              )}>{kpi.delta}</span>
+      {/* 헤더 */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-[#eef3ff] p-3">
+              <Globe className="h-5 w-5 text-primary" />
             </div>
-            <p className="ds-kpi-value">{kpi.val}</p>
-            <div className={cn(
-              "h-10 w-10 rounded-xl flex items-center justify-center bg-panel-soft",
-              kpi.type === "danger" ? "text-red-500" : "text-primary"
-            )}>
-              <kpi.icon className="h-5 w-5" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Global Operations Center</p>
+              <h1 className="text-xl font-bold text-foreground">전사 통합 관제 타워</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-3 py-2">
+              <div className="live-point" />
+              <span className="text-xs font-semibold text-emerald-600">시스템 정상</span>
+            </div>
+            <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm">
+              <Play className="h-4 w-4 fill-current" />
+              전사 워크플로우 실행
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* KPI 그리드 */}
+      <section className="grid gap-4 md:grid-cols-4">
+        {[
+          { label: "전국 총 매출", val: `₩${(((overview?.revenue_total ?? 425000000) / 100000000)).toFixed(2)}억`, delta: `전주 대비 ₩${Math.abs(Math.round(overview?.revenue_vs_last_week ?? 0)).toLocaleString()}`, icon: Activity, warn: false },
+          { label: "운영 가맹점", val: `${overview?.total_stores ?? 248}개`, delta: overview?.period_label ?? "이번 달 기준", icon: Building2, warn: false },
+          { label: "정상 에이전트", val: `${overview?.agents.healthy ?? agents.filter((a) => a.status === "정상").length}개`, delta: `전체 ${overview?.agents.total ?? agents.length}개 중`, icon: Users, warn: false },
+          { label: "에스컬레이션", val: `${overview?.active_alerts ?? 14}건`, delta: `다운 ${overview?.agents.down ?? 0}개`, icon: ShieldAlert, warn: true },
+        ].map((kpi, idx) => (
+          <article key={idx} className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{kpi.label}</p>
+                <p className="text-2xl font-bold text-foreground">{kpi.val}</p>
+                <p className={cn("text-xs font-medium", kpi.warn ? "text-red-500" : "text-muted-foreground")}>{kpi.delta}</p>
+              </div>
+              <div className={cn("rounded-xl p-2.5", kpi.warn ? "bg-red-50" : "bg-[#eef3ff]")}>
+                <kpi.icon className={cn("h-5 w-5", kpi.warn ? "text-red-500" : "text-primary")} />
+              </div>
             </div>
           </article>
         ))}
       </section>
 
-      {/* Orchestration Tabs */}
-      <section className="ds-card overflow-hidden">
-        <div className="ds-card-header !bg-panel-soft/30">
+      {/* 오케스트레이션 탭 */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated">
+        <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <Layers className="h-5 w-5 text-primary" />
-            <h3 className="ds-section-title">AI 에이전트 오케스트레이션</h3>
+            <div className="rounded-lg bg-[#eef3ff] p-2">
+              <Layers className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-sm font-bold text-foreground">AI 에이전트 오케스트레이션</h2>
           </div>
-          <div className="flex bg-muted p-1 rounded-xl">
-            {(["agents", "workflows", "simulation", "data", "risk"] as TabKey[]).map((t) => (
+          <div className="flex gap-1">
+            {(Object.keys(tabLabels) as TabKey[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={cn(
-                  "px-4 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest",
-                  tab === t ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  "rounded-lg px-4 py-2 text-xs font-semibold transition-all",
+                  tab === t
+                    ? "bg-primary text-white"
+                    : "border border-[#d5deec] bg-[#f4f7ff] text-[#34415b] hover:bg-[#eef3ff]"
                 )}
               >
-                {t}
+                {tabLabels[t]}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-5 md:p-6">
           {tab === "agents" && (
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {agents.map((agent) => (
-                <div key={agent.id} className="p-6 rounded-2xl border border-border bg-white hover:border-primary/30 transition-all group shadow-sm">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                        <Cpu className="h-6 w-6" />
+                <div key={agent.id} className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4">
+                  <div className="mb-4 flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-[#eef3ff] p-2">
+                        <Cpu className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <p className="ds-eyebrow !text-[9px] mb-1">{agent.type}</p>
-                        <h4 className="text-sm font-black text-foreground">{agent.name}</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{agent.type}</p>
+                        <p className="text-sm font-semibold text-foreground">{agent.name}</p>
                       </div>
                     </div>
                     <span className={cn(
-                      "ds-badge",
-                      agent.status === "정상" ? "ds-badge-success" : "ds-badge-warning"
+                      "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                      agent.status === "정상" ? "bg-emerald-50 text-emerald-600" :
+                      agent.status === "주의" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
                     )}>{agent.status}</span>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Health Index</p>
-                      <p className="text-sm font-black text-foreground italic">{agent.health.toFixed(1)}%</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>헬스 지수</span>
+                      <span className="font-semibold text-foreground">{agent.health}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-panel-soft rounded-full overflow-hidden">
-                      <div className={cn("h-full transition-all duration-500", agent.health > 90 ? "bg-emerald-500" : "bg-amber-500")} style={{ width: `${agent.health}%` }} />
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8edf5]">
+                      <div
+                        className={cn("h-full transition-all duration-500", agent.health > 90 ? "bg-emerald-500" : "bg-amber-500")}
+                        style={{ width: `${agent.health}%` }}
+                      />
                     </div>
-                    <div className="flex justify-between text-[10px] font-black text-muted-foreground pt-2 uppercase italic">
-                      <span>Tasks: {agent.dailyTasks}</span>
-                      <span>Run: {agent.lastRun}</span>
+                    <div className="flex justify-between text-[10px] text-muted-foreground pt-1">
+                      <span>일간 작업 {agent.dailyTasks}건</span>
+                      <span>최근 실행 {agent.lastRun}</span>
                     </div>
                   </div>
                 </div>
@@ -207,101 +225,108 @@ export const HqControlTowerPage = () => {
           )}
 
           {tab === "workflows" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {workflowRuns.map((wf) => (
-                <div key={wf.id} className="flex items-center gap-6 p-6 bg-white rounded-2xl border border-border hover:shadow-lg transition-all group">
+                <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 hover:border-[#b8ccff] hover:bg-[#eef3ff] transition-all group">
                   <div className={cn(
-                    "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner transition-all",
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
                     wf.status === "running" ? "bg-primary/10" : wf.status === "completed" ? "bg-emerald-50" : "bg-red-50"
                   )}>
-                    {wf.status === "running" ? <RotateCcw className="h-7 w-7 text-primary animate-spin" /> : 
-                     wf.status === "completed" ? <CheckCircle2 className="h-7 w-7 text-emerald-500" /> : <TriangleAlert className="h-7 w-7 text-red-500" />}
+                    {wf.status === "running" ? <RotateCcw className="h-5 w-5 text-primary animate-spin" /> :
+                     wf.status === "completed" ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> :
+                     <TriangleAlert className="h-5 w-5 text-red-500" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="text-base font-black text-foreground truncate">{wf.name}</h4>
-                      <span className="ds-badge ds-badge-info">{wf.stage} Stage</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground font-bold flex items-center gap-2">
-                      <Building2 className="h-3.5 w-3.5" /> {wf.store} 대상 · {wf.startedAt} Initiated {wf.duration && `· ${wf.duration} Elapsed`}
+                    <p className="text-sm font-semibold text-foreground truncate">{wf.name}</p>
+                    <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <Building2 className="h-3 w-3" />
+                      {wf.store} · {wf.startedAt} 시작{wf.duration && ` · 소요 ${wf.duration}`}
                     </p>
                   </div>
-                  <button className="ds-button ds-button-ghost !h-10 !w-10 !p-0 opacity-0 group-hover:opacity-100"><Settings2 className="h-5 w-5" /></button>
+                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">{wf.stage} 단계</span>
+                  <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground">
+                    <Settings2 className="h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
 
           {tab === "simulation" && (
-            <div className="grid gap-10 lg:grid-cols-2">
-              <div className="space-y-8">
-                <div className="p-8 ds-ai-panel border-none shadow-none">
-                  <h4 className="text-xs font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <Zap className="h-4 w-4 fill-current" /> Scenario Engine
-                  </h4>
-                  <div className="relative">
-                    <textarea 
-                      className="ds-input w-full h-40 resize-none pt-5 leading-relaxed bg-white/50 backdrop-blur-sm" 
-                      placeholder="분석하고 싶은 시나리오를 입력하세요. (예: 원가 5% 인상 시 전사 마진 변화)"
-                    />
-                    <button className="absolute bottom-4 right-4 ds-button ds-button-primary h-12 px-8 !rounded-2xl shadow-2xl shadow-primary/40">Run Simulation</button>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="space-y-4">
+                <div className="rounded-xl border border-[#c9d8ff] bg-[#eef3ff] p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-primary">시나리오 엔진</p>
                   </div>
+                  <textarea
+                    className="w-full rounded-lg border border-[#d5deec] bg-white px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary resize-none h-32"
+                    placeholder="분석하고 싶은 시나리오를 입력하세요. (예: 원가 5% 인상 시 전사 마진 변화)"
+                  />
+                  <button className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm">
+                    시뮬레이션 실행
+                  </button>
                 </div>
-                <div className="space-y-3">
-                  <p className="ds-eyebrow !text-muted-foreground/60 ml-1">Archive</p>
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground ml-1">저장된 시나리오</p>
                   {["원가 인상 대응 시나리오", "신메뉴 출시 임팩트 분석"].map((s, i) => (
-                    <div key={i} className="flex items-center justify-between p-5 bg-white border border-border rounded-2xl hover:border-primary/30 transition-all cursor-pointer group shadow-sm">
-                      <span className="text-sm font-black text-foreground italic">{s}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <div key={i} className="flex items-center justify-between rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-4 py-3 hover:border-[#b8ccff] hover:bg-[#eef3ff] transition-all cursor-pointer group">
+                      <span className="text-sm font-medium text-foreground">{s}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="p-10 ds-glass rounded-3xl flex flex-col items-center justify-center text-center">
-                <div className="h-24 w-24 rounded-full bg-panel-soft flex items-center justify-center mb-8 border border-border shadow-inner">
-                  <BarChart3 className="h-10 w-10 text-primary opacity-20" />
+              <div className="flex flex-col items-center justify-center rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-8 text-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-card flex items-center justify-center border border-[#d5deec]">
+                  <BarChart3 className="h-8 w-8 text-primary opacity-30" />
                 </div>
-                <h4 className="ds-section-title text-xl mb-3 italic">Waiting for Input...</h4>
-                <p className="text-sm text-muted-foreground max-w-xs font-medium">시나리오를 입력하면 AI 모델이 실시간 전사 데이터를 동기화하여 분석을 시작합니다.</p>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">시나리오 대기 중</p>
+                  <p className="mt-1 text-xs text-muted-foreground">시나리오를 입력하면 AI가 실시간 전사 데이터를 분석합니다.</p>
+                </div>
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Regional & Infrastructure */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        <article className="ds-card p-8">
-          <div className="flex items-center justify-between mb-10 border-b border-border/50 pb-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <Map className="h-6 w-6" />
+      {/* 권역별 목표 + 인프라 */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <article className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+          <div className="mb-5 flex items-center justify-between border-b border-border/50 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-[#eef3ff] p-2">
+                <Map className="h-4 w-4 text-primary" />
               </div>
-              <h3 className="ds-section-title text-xl">권역별 목표 달성 예보</h3>
+              <h2 className="text-sm font-bold text-foreground">권역별 목표 달성 예보</h2>
             </div>
-            <button className="ds-button ds-button-ghost !text-[10px] uppercase font-black tracking-widest italic">View Details →</button>
           </div>
-          
-          <div className="space-y-10">
+          <div className="space-y-5">
             {regions.map((r) => (
-              <div key={r.label} className="space-y-4">
+              <div key={r.label} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-foreground w-12 italic underline decoration-primary/20 decoration-4 underline-offset-4">{r.label}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-foreground w-12">{r.label}</span>
                     <span className={cn(
-                      "ds-badge",
-                      r.pct > 100 ? "ds-badge-success" : "ds-badge-warning"
+                      "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                      r.pct > 100 ? "bg-emerald-50 text-emerald-600" :
+                      r.pct > 80 ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
                     )}>{r.status}</span>
                   </div>
-                  <span className="text-lg font-black text-foreground italic">{r.pct}%</span>
+                  <span className="text-sm font-bold text-foreground">{r.pct}%</span>
                 </div>
-                <div className="h-2 w-full bg-panel-soft rounded-full overflow-hidden shadow-inner">
-                  <div className={cn("h-full transition-all duration-1000", r.pct > 100 ? "bg-emerald-500" : r.pct > 80 ? "bg-primary" : "bg-red-500")} style={{ width: `${Math.min(r.pct, 100)}%` }} />
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8edf5]">
+                  <div
+                    className={cn("h-full transition-all duration-700", r.pct > 100 ? "bg-emerald-500" : r.pct > 80 ? "bg-primary" : "bg-red-500")}
+                    style={{ width: `${Math.min(r.pct, 100)}%` }}
+                  />
                 </div>
                 {r.warn && (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
-                    <TriangleAlert className="h-4 w-4 text-red-500 shrink-0" />
-                    <p className="text-[11px] font-black text-red-600 uppercase tracking-tighter">{r.warn}</p>
+                  <div className="flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+                    <TriangleAlert className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                    <p className="text-xs font-medium text-red-600">{r.warn}</p>
                   </div>
                 )}
               </div>
@@ -309,40 +334,46 @@ export const HqControlTowerPage = () => {
           </div>
         </article>
 
-        <article className="ds-card p-8 bg-slate-950 text-white border-none shadow-2xl flex flex-col">
-          <div className="flex items-center justify-between mb-10 border-b border-white/10 pb-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center text-primary">
-                <Server className="h-6 w-6" />
+        <article className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+          <div className="mb-5 flex items-center justify-between border-b border-border/50 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-[#eef3ff] p-2">
+                <Server className="h-4 w-4 text-primary" />
               </div>
-              <h3 className="ds-section-title text-xl !text-white">인프라 및 엔진 관제</h3>
+              <h2 className="text-sm font-bold text-foreground">인프라 및 엔진 관제</h2>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5">
               <div className="live-point" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">99.9% Up</span>
+              <span className="text-[10px] font-semibold text-emerald-600">가용률 99.9%</span>
             </div>
           </div>
-
-          <div className="space-y-4 flex-1">
-            {[
-              { label: "Data Sync", val: "248 Nodes Active", icon: Database, color: "text-emerald-400" },
-              { label: "Engine Load", val: "CPU 42% / GPU 68%", icon: Activity, color: "text-blue-400" },
-              { label: "API Status", val: "Auth Token Critical (D-2)", icon: ShieldAlert, color: "text-red-400" },
-            ].map((node, i) => (
-              <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-all">
-                <div className="flex items-center gap-5">
-                  <node.icon className={cn("h-6 w-6", node.color)} />
+          <div className="space-y-3">
+            {infraNodes.map((node, i) => (
+              <div key={i} className={cn(
+                "flex items-center justify-between rounded-xl border px-4 py-3",
+                node.status === "경고"
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-[#d5deec] bg-[#f4f7ff]"
+              )}>
+                <div className="flex items-center gap-3">
+                  <div className={cn("rounded-lg p-2", node.status === "경고" ? "bg-amber-100" : "bg-[#eef3ff]")}>
+                    <node.icon className={cn("h-4 w-4", node.status === "경고" ? "text-amber-600" : "text-primary")} />
+                  </div>
                   <div>
-                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{node.label}</p>
-                    <p className="text-sm font-black text-white mt-1 italic tracking-tight">{node.val}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{node.label}</p>
+                    <p className="text-sm font-medium text-foreground">{node.val}</p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-white/20 group-hover:text-white transition-all" />
+                <span className={cn(
+                  "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                  node.status === "경고" ? "bg-amber-100 text-amber-700" : "bg-emerald-50 text-emerald-600"
+                )}>{node.status}</span>
               </div>
             ))}
           </div>
-
-          <button className="ds-button w-full mt-10 h-14 bg-white/5 border border-white/10 !text-white/60 hover:bg-white/10 uppercase tracking-[0.3em] font-black transition-all shadow-none">View System Logs</button>
+          <button className="mt-4 w-full rounded-lg border border-[#d5deec] bg-card px-4 py-2.5 text-sm font-medium text-[#34415b] hover:bg-[#f4f7ff] transition-colors">
+            시스템 로그 보기
+          </button>
         </article>
       </div>
     </div>
