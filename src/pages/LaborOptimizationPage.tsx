@@ -5,7 +5,6 @@ import {
   Zap,
   Bot,
   AlertTriangle,
-  CheckCircle2,
   Clock,
   UserPlus,
   Calendar,
@@ -54,7 +53,7 @@ const hourSlots: HourSlot[] = [
 const aiRecommendations = [
   {
     level: "warning" as const,
-    tag: "Understaffed",
+    tag: "인력 부족",
     title: "12~13시 런치 피크 — 1명 추가 배치 권장",
     desc: "예상 객수 대비 홀 인력이 부족하여 서비스 지연 위험이 높습니다. 최예린 사원의 출근을 1시간 앞당기는 것을 추천합니다.",
     impact: "예상 손실액 ₩160,000 방어",
@@ -126,7 +125,7 @@ export const LaborOptimizationPage = () => {
           if (activeSlots.length === 0) return;
           setProductivitySlots(activeSlots.map((slot) => ({
             hour: String(slot.hour).padStart(2, "0"),
-            revenue: slot.visit_count * 10_000, // 방문 1건 ≈ ₩10,000 (차트 스케일용 추정치)
+            revenue: slot.visit_count * 10_000,
             staffCount: slot.recommended_staff,
             recommended: slot.recommended_staff,
             manHourRevenue: slot.recommended_staff > 0 ? Math.round((slot.visit_count * 10_000) / slot.recommended_staff) : 0,
@@ -139,160 +138,193 @@ export const LaborOptimizationPage = () => {
   }, [selectedDate, selectedStore]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 pb-10">
 
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Users className="h-4 w-4 text-primary" />
-            <span className="ds-eyebrow">Labor Force Management</span>
+      {/* 페이지 헤더 */}
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">인력 최적화</span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">인력 리소스 최적화</h2>
+            <p className="mt-1 text-sm text-slate-500">시간대별 인시당 매출(SPLH) 분석 및 스케줄 최적화를 수행합니다.</p>
           </div>
-          <h1 className="ds-page-title">인력 리소스 최적화 <span className="text-muted-foreground font-light">|</span> SPLH 분석</h1>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-white px-3 py-2">
+              <select
+                value={selectedStore}
+                onChange={(e) => setSelectedStore(e.target.value)}
+                className="bg-transparent text-sm text-slate-700 focus:outline-none"
+              >
+                {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-white px-3 py-2">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent text-sm text-slate-700 focus:outline-none"
+              />
+            </div>
+            <button className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]">
+              <UserPlus className="h-4 w-4" />
+              스케줄 자동 생성
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <select value={selectedStore} onChange={(e) => setSelectedStore(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none">
-              {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
-            </select>
-          </div>
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <Calendar className="h-4 w-4 text-primary" />
-            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none" />
-          </div>
-          <button className="ds-button ds-button-primary h-11">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Schedule Auto-Gen
-          </button>
-        </div>
-      </div>
+      </section>
 
-      {/* KPI Summary */}
-      <section className="grid gap-5 md:grid-cols-4">
-          {[
-          { label: "평균 SPLH", val: `₩${Math.round(productivitySlots.reduce((acc, slot) => acc + slot.manHourRevenue, 0) / Math.max(productivitySlots.length, 1)).toLocaleString()}`, delta: selectedDate, type: "danger", icon: TrendingDown },
-          { label: "현재 가용 인력", val: `${availableLabor?.available_count ?? activeStaff}명`, delta: "Live", type: "success", icon: Users },
-          { label: "피크 충족률", val: `${Math.round(productivitySlots.reduce((acc, slot) => acc + (slot.staffCount / Math.max(slot.recommended, 1)), 0) / Math.max(productivitySlots.length, 1) * 100)}%`, delta: "Data", type: "warning", icon: Zap },
-          { label: "총 근무 인시", val: `${staffRoster.reduce((acc, staff) => acc + staff.hoursWorked, 0).toFixed(1)}h`, delta: selectedStore, type: "success", icon: Clock },
+      {/* KPI 요약 */}
+      <section className="grid gap-3 md:grid-cols-4">
+        {[
+          { label: "평균 SPLH", val: `₩${Math.round(productivitySlots.reduce((acc, slot) => acc + slot.manHourRevenue, 0) / Math.max(productivitySlots.length, 1)).toLocaleString()}`, sub: selectedDate, icon: TrendingDown, color: "text-red-500" },
+          { label: "가용 인력", val: `${availableLabor?.available_count ?? activeStaff}명`, sub: "현재 근무중", icon: Users, color: "text-emerald-600" },
+          { label: "피크 충족률", val: `${Math.round(productivitySlots.reduce((acc, slot) => acc + (slot.staffCount / Math.max(slot.recommended, 1)), 0) / Math.max(productivitySlots.length, 1) * 100)}%`, sub: "권장 대비", icon: Zap, color: "text-amber-500" },
+          { label: "총 근무 인시", val: `${staffRoster.reduce((acc, staff) => acc + staff.hoursWorked, 0).toFixed(1)}h`, sub: selectedStore, icon: Clock, color: "text-primary" },
         ].map((kpi, idx) => (
-          <article key={idx} className="ds-kpi-card bg-white">
+          <article key={idx} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
             <div className="flex items-center justify-between">
-              <p className="ds-kpi-label">{kpi.label}</p>
-              <span className={cn(
-                "ds-badge",
-                kpi.type === "danger" ? "ds-badge-danger" : kpi.type === "warning" ? "ds-badge-warning" : "ds-badge-success"
-              )}>{kpi.delta}</span>
+              <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
+              <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                <kpi.icon className="h-4 w-4 text-primary" />
+              </div>
             </div>
-            <p className="ds-kpi-value leading-none">{kpi.val}</p>
-            <div className="h-10 w-10 rounded-xl bg-panel-soft flex items-center justify-center text-primary mt-2">
-              <kpi.icon className="h-5 w-5" />
-            </div>
+            <p className="mt-3 text-3xl font-bold text-slate-900">{kpi.val}</p>
+            <p className="mt-1 text-xs text-slate-400">{kpi.sub}</p>
           </article>
         ))}
       </section>
 
-      {/* AI Panel */}
-      <section className="ds-ai-panel">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center shadow-xl shadow-primary/30">
-            <Bot className="h-7 w-7 text-white" />
+      {/* AI 인력 권고 */}
+      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
+            <Bot className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h2 className="ds-section-title text-xl">AI 인력 최적화 리포트</h2>
-            <p className="text-sm text-muted-foreground font-medium">실시간 트래픽 분석 기반 스케줄 조정 제안</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">AI 인력 권고</p>
+            <p className="mt-0.5 text-sm font-bold text-slate-900">실시간 트래픽 분석 기반 스케줄 조정 제안</p>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {aiRecommendations.map((rec, i) => (
-            <div key={i} className="flex items-start gap-5 p-6 bg-white/60 rounded-2xl border border-white/40 group hover:border-primary/20 transition-all">
-              <div className={cn(
-                "h-12 w-12 rounded-2xl flex items-center justify-center shrink-0",
-                rec.level === "warning" ? "bg-amber-50 text-amber-600" : "bg-primary/5 text-primary"
-              )}>
-                {rec.level === "warning" ? <AlertTriangle className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className={cn(
-                    "ds-badge border-none",
-                    rec.level === "warning" ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary"
-                  )}>{rec.tag}</span>
-                  <h4 className="font-black text-foreground">{rec.title}</h4>
+            <div key={i} className="rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                  rec.level === "warning" ? "bg-amber-50" : "bg-[#EEF4FF]"
+                )}>
+                  {rec.level === "warning"
+                    ? <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    : <Zap className="h-4 w-4 text-primary" />
+                  }
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed font-medium">{rec.desc}</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="ds-eyebrow !text-[9px] mb-1 opacity-60">Impact</p>
-                <p className="text-sm font-black text-primary italic uppercase tracking-tighter">{rec.impact}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn(
+                      "rounded border px-1.5 py-0.5 text-[10px] font-semibold",
+                      rec.level === "warning" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-[#BFD4FF] bg-[#EEF4FF] text-primary"
+                    )}>{rec.tag}</span>
+                    <p className="text-sm font-bold text-slate-900">{rec.title}</p>
+                  </div>
+                  <p className="text-xs text-slate-500">{rec.desc}</p>
+                </div>
+                <p className="shrink-0 text-xs font-semibold text-primary">{rec.impact}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        {/* Productivity Chart */}
-        <section className="lg:col-span-8 ds-card flex flex-col">
-          <div className="ds-card-header !bg-panel-soft/30">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              <h3 className="ds-section-title">시간대별 생산성 (SPLH)</h3>
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* 시간대별 생산성 차트 */}
+        <section className="lg:col-span-8 rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-bold text-slate-700">시간대별 생산성 (SPLH)</h3>
             </div>
-            <div className="flex gap-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Revenue</span>
-              <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-muted" /> Labor</span>
+            <div className="flex gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-primary" /> 매출</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-gray-300" /> 권장인원</span>
             </div>
           </div>
-          
-          <div className="p-10 flex-1">
-            <div className="flex h-64 items-end gap-4 px-2">
-              {productivitySlots.map((slot, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-4 h-full group">
-                  <div className="relative w-full flex-1 flex items-end justify-center gap-1">
-                    <div className="absolute w-full rounded-t-xl bg-panel-soft/50 transition-all duration-500" style={{ height: `${(slot.staffCount / 6) * 100}%` }} />
-                    <div className="relative w-1/2 bg-ai-gradient rounded-t-xl transition-all duration-500 shadow-xl shadow-primary/10 group-hover:scale-x-110" style={{ height: `${(slot.revenue / maxRevenue) * 100}%` }}>
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white text-[9px] font-black px-2 py-1 rounded-lg z-10 italic">SPLH: ₩{(slot.manHourRevenue/1000).toFixed(0)}k</div>
-                    </div>
+          <div className="flex h-44 items-end gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-3 pb-3 pt-4">
+            {productivitySlots.map((slot, idx) => {
+              const under = slot.staffCount < slot.recommended;
+              return (
+                <div key={idx} className="flex flex-1 flex-col items-center gap-1 group">
+                  <div className="flex w-full items-end justify-center gap-0.5" style={{ height: "100%" }}>
+                    {/* 권장 인원 바 (회색) */}
+                    <div
+                      className="w-2 rounded-t bg-gray-300"
+                      style={{ height: `${(slot.recommended / 6) * 100}%` }}
+                    />
+                    {/* 매출 바 (primary, 부족 시 amber) */}
+                    <div
+                      className={cn("w-3 rounded-t transition-opacity group-hover:opacity-70", under ? "bg-amber-400" : "bg-primary/80")}
+                      style={{ height: `${(slot.revenue / maxRevenue) * 100}%` }}
+                    />
                   </div>
-                  <span className="text-[10px] font-black text-muted-foreground font-mono italic">{slot.hour}h</span>
+                  <span className="text-[10px] text-slate-400">{slot.hour}시</span>
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+          {/* 하단 범례 보조 */}
+          <div className="mt-3 flex items-center gap-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> 인력 부족 시간대</span>
+            <span>SPLH = 시간당 매출 / 투입 인원</span>
           </div>
         </section>
 
-        {/* Staff Sidebar */}
-        <section className="lg:col-span-4 ds-card">
-          <div className="ds-card-header">
-            <h3 className="ds-section-title text-base">실시간 로스터</h3>
-            <button className="ds-button ds-button-ghost !h-9 !w-9 !p-0 rounded-xl"><Search className="h-4 w-4" /></button>
+        {/* 실시간 로스터 */}
+        <section className="lg:col-span-4 rounded-2xl border border-border/90 bg-card shadow-elevated">
+          <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+            <h3 className="text-sm font-bold text-slate-700">실시간 로스터</h3>
+            <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#DCE4F3] bg-white text-slate-400 hover:text-slate-600">
+              <Search className="h-3.5 w-3.5" />
+            </button>
           </div>
           <div className="p-4 space-y-2">
             {staffRoster.map((staff) => (
-              <div key={staff.id} className={cn(
-                "flex items-center justify-between p-4 rounded-2xl border transition-all group hover:border-primary/20",
-                staff.status === "근무중" ? "bg-white border-border" : "bg-panel-soft/30 border-transparent opacity-50"
-              )}>
-                <div className="flex items-center gap-4">
+              <div
+                key={staff.id}
+                className={cn(
+                  "flex items-center justify-between rounded-xl border p-3 transition-colors",
+                  staff.status === "근무중" ? "border-[#DCE4F3] bg-white" : "border-transparent bg-gray-50 opacity-60"
+                )}
+              >
+                <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="h-11 w-11 rounded-2xl bg-panel-soft flex items-center justify-center font-black text-primary text-xs border border-border group-hover:border-primary/30 transition-colors uppercase italic">{staff.name.slice(-2)}</div>
-                    {staff.status === "근무중" && <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-success" />}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF4FF] text-xs font-bold text-primary">
+                      {staff.name.slice(-2)}
+                    </div>
+                    {staff.status === "근무중" && (
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                    )}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-foreground italic leading-none">{staff.name}</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1.5">{staff.role} · {staff.startTime}-{staff.endTime}</p>
+                    <p className="text-sm font-semibold text-slate-900">{staff.name}</p>
+                    <p className="text-[10px] text-slate-400">{staff.role} · {staff.startTime}–{staff.endTime}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-black text-primary italic leading-none">₩{(staff.revenueContrib/1000).toFixed(0)}k</p>
-                  <p className="text-[9px] font-black text-muted-foreground uppercase mt-1 italic tracking-widest">{staff.hoursWorked}h Contribution</p>
+                  <p className="text-xs font-semibold text-primary">₩{(staff.revenueContrib / 1000).toFixed(0)}k</p>
+                  <p className="text-[10px] text-slate-400">{staff.hoursWorked}h</p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="p-6 border-t border-border/50 bg-panel-soft/30">
-            <button className="ds-button ds-button-outline w-full !rounded-2xl uppercase tracking-[0.2em] font-black text-[10px] italic">Edit Roster Settings</button>
+          <div className="border-t border-border/50 p-4">
+            <button className="w-full rounded-xl border border-[#DCE4F3] bg-white py-2 text-xs font-semibold text-slate-600 hover:bg-gray-50">
+              로스터 설정
+            </button>
           </div>
         </section>
       </div>

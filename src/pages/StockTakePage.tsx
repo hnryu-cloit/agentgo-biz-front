@@ -151,94 +151,109 @@ export const StockTakePage = () => {
   }, [selectedMonth, selectedStore]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 pb-10">
 
-      {/* Save Toast */}
+      {/* 저장 완료 토스트 */}
       {savedBanner && (
-        <div className="fixed top-24 right-8 z-50 flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md px-6 py-4 shadow-2xl text-emerald-700 animate-in slide-in-from-right-8 duration-300">
-          <CheckCircle2 className="h-5 w-5" /> 
-          <p className="font-black text-sm uppercase tracking-tight italic">Inventory Data Finalized</p>
+        <div className="fixed right-6 top-[140px] z-50 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+          <p className="text-sm font-semibold">재고 실사 데이터가 저장되었습니다.</p>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Package className="h-4 w-4 text-primary" />
-            <span className="ds-eyebrow">Stock Inventory Audit</span>
+      {/* 페이지 헤더 */}
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Package className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">재고 관리</span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">월말 재고 실사</h2>
+            <p className="mt-1 text-sm text-slate-500">이론재고 대비 실재고를 입력하고 손실률을 확인합니다.</p>
           </div>
-          <h1 className="ds-page-title">월말 재고 실사 <span className="text-muted-foreground font-light">|</span> 이론 vs 실재고</h1>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-white px-3 py-2">
+              <select
+                value={selectedStore}
+                onChange={(e) => setSelectedStore(e.target.value)}
+                className="bg-transparent text-sm text-slate-700 focus:outline-none"
+              >
+                {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-[#DCE4F3] bg-white px-3 py-2">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-sm text-slate-700 focus:outline-none"
+              />
+            </div>
+            <button
+              onClick={handleSave}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
+            >
+              <Save className="h-4 w-4" />
+              실사 저장
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <select value={selectedStore} onChange={(e) => setSelectedStore(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none">
-              {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
-            </select>
-          </div>
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <Calendar className="h-4 w-4 text-primary" />
-            <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none" />
-          </div>
-          <button onClick={handleSave} className="ds-button ds-button-primary h-11 px-6 shadow-2xl shadow-primary/20">
-            <Save className="h-4 w-4 mr-2" /> Commit Audit
-          </button>
-        </div>
-      </div>
+      </section>
 
-      {/* KPI Grid */}
-      <section className="grid gap-5 md:grid-cols-4">
+      {/* KPI 요약 */}
+      <section className="grid gap-3 md:grid-cols-4">
         {[
-          { label: "Total Items", val: `${items.length}`, delta: "Master", type: "info", icon: ClipboardCheck },
-          { label: "Audit Success", val: `${normalCount}`, delta: "Within ±5%", type: "success", icon: CheckCircle2 },
-          { label: "Critical Loss", val: `${shortageCount}`, delta: "-10% Under", type: "danger", icon: TrendingDown },
-          { label: "Excess Stock", val: `${surplusCount}`, delta: "+5% Over", type: "warning", icon: TrendingUp },
+          { label: "전체 품목 수", val: `${items.length}개`, sub: "마스터 기준", icon: ClipboardCheck },
+          { label: "정상 품목", val: `${normalCount}개`, sub: "±5% 이내", icon: CheckCircle2 },
+          { label: "손실 품목", val: `${shortageCount}개`, sub: "-10% 초과", icon: TrendingDown },
+          { label: "과잉 품목", val: `${surplusCount}개`, sub: "+5% 초과", icon: TrendingUp },
         ].map((kpi, idx) => (
-          <article key={idx} className="ds-kpi-card bg-white">
+          <article key={idx} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
             <div className="flex items-center justify-between">
-              <p className="ds-kpi-label">{kpi.label}</p>
-              <span className={cn(
-                "ds-badge shadow-none border-none font-black italic",
-                kpi.type === "danger" ? "bg-red-100 text-red-600" : kpi.type === "warning" ? "bg-amber-100 text-amber-600" : kpi.type === "success" ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
-              )}>{kpi.delta}</span>
+              <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
+              <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                <kpi.icon className="h-4 w-4 text-primary" />
+              </div>
             </div>
-            <p className="ds-kpi-value leading-none">{kpi.val}</p>
-            <div className="h-10 w-10 rounded-xl bg-panel-soft flex items-center justify-center text-primary mt-2">
-              <kpi.icon className="h-5 w-5" />
-            </div>
+            <p className="mt-3 text-3xl font-bold text-slate-900">{kpi.val}</p>
+            <p className="mt-1 text-xs text-slate-400">{kpi.sub}</p>
           </article>
         ))}
       </section>
 
-      {/* AI Anomalies */}
+      {/* AI 재고 이상 감지 */}
       {anomalies.length > 0 && (
-        <section className="ds-ai-panel !bg-red-50/30 border-red-500/10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center shadow-xl shadow-red-500/30">
-              <AlertCircle className="h-7 w-7 text-white" />
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm md:p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500 shadow-sm">
+              <AlertCircle className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="ds-section-title text-xl !text-red-600">AI 재고 이상 감지 경보</h2>
-              <p className="text-sm text-red-600/60 font-medium italic">이론재고 대비 임계치(8%) 초과 손실 품목 감지</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-red-600">AI 이상 감지</p>
+              <p className="mt-0.5 text-sm font-bold text-slate-900">이론재고 대비 임계치(8%) 초과 손실 품목 감지</p>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             {anomalies.map((item) => {
               const rate = diffRate(item.theoretical, item.actual)!;
               return (
-                <div key={item.id} className="bg-white/80 backdrop-blur-md rounded-2xl border border-red-200 p-6 shadow-sm group hover:border-red-400 transition-all">
-                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-red-50">
-                    <span className="ds-badge bg-red-500 text-white border-none italic">Critical Loss</span>
-                    <span className="text-xl font-black text-red-600 italic">{rate.toFixed(1)}%</span>
+                <div key={item.id} className="rounded-xl border border-red-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                      손실 경보
+                    </span>
+                    <span className="text-sm font-bold text-red-600">{rate.toFixed(1)}%</span>
                   </div>
-                  <h4 className="font-black text-foreground text-lg mb-2 italic underline decoration-red-100 decoration-4 underline-offset-4">{item.name}</h4>
-                  <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">
-                    <span>Theoretical {item.theoretical}</span>
+                  <p className="font-bold text-slate-900 mb-1">{item.name}</p>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+                    <span>이론 {item.theoretical}</span>
                     <ChevronRight className="h-3 w-3" />
-                    <span className="text-red-600">Actual {item.actual}</span>
+                    <span className="text-red-500">실재 {item.actual}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed font-medium">발주 검수 오류 또는 관리 소홀로 인한 대량 손실 가능성이 매우 높습니다.</p>
+                  <p className="text-xs text-slate-400">발주 검수 오류 또는 관리 소홀로 인한 손실 가능성이 있습니다.</p>
                 </div>
               );
             })}
@@ -246,93 +261,119 @@ export const StockTakePage = () => {
         </section>
       )}
 
-      {/* Audit Table */}
-      <section className="ds-card overflow-hidden">
-        <div className="ds-card-header !bg-panel-soft/30">
-          <div className="flex items-center gap-3">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            <h3 className="ds-section-title">재고 실사 입력 테이블</h3>
+      {/* 재고 실사 입력 테이블 */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-slate-700">재고 실사 입력</h3>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex bg-muted p-1 rounded-xl shrink-0">
+          <div className="flex items-center gap-3">
+            {/* 카테고리 탭 */}
+            <div className="flex items-center gap-1 rounded-xl border border-[#DCE4F3] bg-white p-1">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={cn(
-                    "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest",
-                    activeCategory === cat ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    "rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+                    activeCategory === cat
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
                   )}
                 >
                   {cat}
                 </button>
               ))}
             </div>
+            {/* 검색 */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input className="ds-input pl-9 h-9 text-[10px] w-48 bg-white border-border/50 uppercase tracking-widest" placeholder="Search Master..." />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                className="h-9 w-44 rounded-xl border border-[#DCE4F3] bg-white pl-8 pr-3 text-sm text-slate-700 focus:border-primary focus:outline-none placeholder:text-slate-300"
+                placeholder="품목 검색..."
+              />
             </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="ds-table">
-            <thead className="ds-table-thead">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-gray-50 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-border">
               <tr>
-                <th className="ds-table-th">Master Info</th>
-                <th className="ds-table-th text-right">Theoretical</th>
-                <th className="ds-table-th text-center w-44">Actual Input</th>
-                <th className="ds-table-th text-right italic">Variance</th>
-                <th className="ds-table-th text-center">Status</th>
-                <th className="ds-table-th">Operator Notes</th>
+                <th className="px-5 py-3">품목 정보</th>
+                <th className="px-5 py-3 text-right">이론재고</th>
+                <th className="px-5 py-3 text-center w-44">실재고 입력</th>
+                <th className="px-5 py-3 text-right">차이</th>
+                <th className="px-5 py-3 text-center">상태</th>
+                <th className="px-5 py-3">비고</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/50">
+            <tbody>
               {filteredItems.map((item) => {
                 const rate = diffRate(item.theoretical, item.actual);
                 const diff = item.actual !== null ? item.actual - item.theoretical : null;
                 const isAnomaly = rate !== null && rate < -8;
                 return (
-                  <tr key={item.id} className={cn("ds-table-tr", isAnomaly && "bg-red-50/20 hover:bg-red-50/30")}>
-                    <td className="ds-table-td">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-panel-soft flex items-center justify-center font-black text-muted-foreground text-[9px] uppercase tracking-tighter italic border border-border/50">{item.id}</div>
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "border-b border-border/50 transition-colors hover:bg-gray-50/50",
+                      isAnomaly && "bg-red-50/30"
+                    )}
+                  >
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#DCE4F3] bg-white text-[10px] font-medium text-slate-400">
+                          {item.id}
+                        </div>
                         <div>
-                          <p className="font-black text-foreground italic">{item.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1 italic opacity-60">{item.category} · {item.unit}</p>
+                          <p className="font-semibold text-slate-900">{item.name}</p>
+                          <p className="text-[10px] text-slate-400">{item.category} · {item.unit}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="ds-table-td text-right font-mono font-black text-foreground italic">
+                    <td className="px-5 py-4 text-right font-semibold text-slate-900">
                       {item.theoretical.toLocaleString()}
                     </td>
-                    <td className="ds-table-td">
-                      <input 
-                        type="number" 
-                        step="0.1" 
+                    <td className="px-5 py-4">
+                      <input
+                        type="number"
+                        step="0.1"
                         value={item.actual ?? ""}
                         onChange={(e) => handleActualChange(item.id, e.target.value)}
-                        className="ds-input w-full h-10 text-right font-black font-mono !bg-white border-primary/10 shadow-inner italic"
+                        className="h-9 w-full rounded-xl border border-[#DCE4F3] bg-white px-3 text-right text-sm font-semibold text-slate-900 focus:border-primary focus:outline-none"
                         placeholder="0.0"
                       />
                     </td>
-                    <td className="ds-table-td text-right">
+                    <td className="px-5 py-4 text-right">
                       {diff !== null ? (
-                        <div className={cn("font-black text-xs italic tracking-tighter", diff < 0 ? "text-red-500" : diff > 0 ? "text-blue-500" : "text-muted-foreground/40")}>
-                          {diff > 0 ? "+" : ""}{diff.toFixed(1)}<span className="ml-1 opacity-40">{item.unit}</span>
-                        </div>
-                      ) : <span className="text-muted-foreground/20">—</span>}
+                        <span className={cn("text-sm font-semibold", diff < 0 ? "text-red-500" : diff > 0 ? "text-blue-500" : "text-slate-400")}>
+                          {diff > 0 ? "+" : ""}{diff.toFixed(1)}
+                        </span>
+                      ) : <span className="text-slate-300">—</span>}
                     </td>
-                    <td className="ds-table-td text-center">
+                    <td className="px-5 py-4 text-center">
                       {rate !== null ? (
                         <span className={cn(
-                          "ds-badge shadow-sm font-mono italic",
-                          rate < -10 ? "ds-badge-danger" : rate > 5 ? "ds-badge-info" : "ds-badge-success"
-                        )}>{rate > 0 ? "+" : ""}{rate.toFixed(1)}%</span>
-                      ) : <span className="text-muted-foreground/20 italic text-[10px]">Pending</span>}
+                          "rounded border px-1.5 py-0.5 text-[10px] font-semibold",
+                          rate < -10
+                            ? "border-red-200 bg-red-50 text-red-500"
+                            : rate > 5
+                              ? "border-blue-200 bg-blue-50 text-blue-600"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-600"
+                        )}>
+                          {rate > 0 ? "+" : ""}{rate.toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-300">미입력</span>
+                      )}
                     </td>
-                    <td className="ds-table-td">
-                      <input className="bg-transparent border-none text-[11px] font-bold w-full focus:ring-0 placeholder:text-muted-foreground/20 placeholder:italic" placeholder="Record reason for audit variance..." />
+                    <td className="px-5 py-4">
+                      <input
+                        className="w-full bg-transparent text-xs text-slate-500 focus:outline-none placeholder:text-slate-200"
+                        placeholder="비고 입력..."
+                      />
                     </td>
                   </tr>
                 );
@@ -342,36 +383,41 @@ export const StockTakePage = () => {
         </div>
       </section>
 
-      {/* History Grid */}
-      <section className="ds-card p-8 bg-white border-primary/5">
-        <div className="flex items-center justify-between mb-10 border-b border-border/50 pb-6">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-panel-soft text-primary flex items-center justify-center">
-              <History className="h-6 w-6" />
-            </div>
-            <h3 className="ds-section-title text-xl">Monthly Audit History</h3>
+      {/* 실사 이력 */}
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-slate-700">월별 실사 이력</h3>
           </div>
-          <button className="ds-button ds-button-ghost !text-[10px] uppercase font-black tracking-widest italic underline underline-offset-4 decoration-primary/20">Full Archive Report →</button>
+          <button className="text-xs font-medium text-primary hover:underline">전체 이력 보기</button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {history.map((log) => (
-            <div key={log.id} className="p-6 ds-glass rounded-3xl border-border/40 flex items-center justify-between group hover:border-primary/30 transition-all cursor-pointer">
-              <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-white border border-border shadow-inner flex flex-col items-center justify-center group-hover:bg-primary/5 group-hover:border-primary/20 transition-all">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase leading-none">{log.month.split('-')[0]}</p>
-                  <p className="text-lg font-black text-primary leading-none mt-1 italic tracking-tighter">{log.month.split('-')[1]}</p>
+            <div
+              key={log.id}
+              className="flex items-center justify-between rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm transition-colors hover:border-[#BFD1ED]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border border-[#DCE4F3] bg-[#F7FAFF]">
+                  <p className="text-[9px] font-semibold text-slate-400">{log.month.split("-")[0]}</p>
+                  <p className="text-lg font-bold text-primary leading-none">{log.month.split("-")[1]}월</p>
                 </div>
                 <div>
-                  <p className="text-sm font-black text-foreground italic uppercase">Audit Integrity Sync</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1.5 italic">{log.submittedAt} · {log.totalItems} Nodes verified</p>
+                  <p className="text-sm font-semibold text-slate-900">{log.store}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{log.submittedAt} · {log.totalItems}개 품목</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-black text-red-500 italic uppercase leading-none tracking-tighter">Loss Index: {log.avgLossRate}%</p>
-                <div className="flex gap-1 justify-end mt-2">
-                  <div className="h-1 w-10 rounded-full bg-panel-soft overflow-hidden"><div className="h-full bg-emerald-500 transition-all duration-1000 shadow-[0_0_5px_rgba(16,185,129,0.5)]" style={{ width: `${(log.normalCount/log.totalItems)*100}%` }} /></div>
-                  <div className="h-1 w-10 rounded-full bg-panel-soft overflow-hidden"><div className="h-full bg-red-500 transition-all duration-1000 shadow-[0_0_5px_rgba(239,68,68,0.5)]" style={{ width: `${(log.shortageCount/log.totalItems)*100}%` }} /></div>
+                <p className="text-sm font-semibold text-red-500">손실률 {log.avgLossRate}%</p>
+                <div className="flex gap-1 justify-end mt-1.5">
+                  <div className="h-1.5 w-10 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(log.normalCount / log.totalItems) * 100}%` }} />
+                  </div>
+                  <div className="h-1.5 w-10 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full bg-red-400 transition-all" style={{ width: `${(log.shortageCount / log.totalItems) * 100}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
