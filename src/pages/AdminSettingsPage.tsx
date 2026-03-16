@@ -82,7 +82,7 @@ export const AdminSettingsPage = () => {
       )}
 
       {/* ── 헤더 ── */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* 아바타 */}
@@ -138,7 +138,7 @@ export const AdminSettingsPage = () => {
       {activeTab === "account" && (
         <div className="grid gap-5 lg:grid-cols-2">
           {/* 프로필 정보 */}
-          <section className="app-card p-5 md:p-6 space-y-4">
+          <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6 space-y-4">
             <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
               <User className="h-4 w-4 text-[var(--subtle-foreground)]" />
               프로필 정보
@@ -179,7 +179,7 @@ export const AdminSettingsPage = () => {
           </section>
 
           {/* 보안 설정 */}
-          <section className="app-card p-5 md:p-6 space-y-4">
+          <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6 space-y-4">
             <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
               <Lock className="h-4 w-4 text-[var(--subtle-foreground)]" />
               보안 설정
@@ -257,8 +257,8 @@ export const AdminSettingsPage = () => {
 
       {/* ── 알림 설정 탭 ── */}
       {activeTab === "notifications" && (
-        <section className="app-card overflow-hidden">
-          <div className="app-section-header">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground">알림 채널별 설정</h3>
             <span className="text-[11px] font-black text-[#b0bdd4] uppercase tracking-widest">Email · Push · SMS</span>
           </div>
@@ -311,7 +311,7 @@ export const AdminSettingsPage = () => {
       {activeTab === "system" && (
         <div className="grid gap-5 lg:grid-cols-2">
           {/* 기본 설정 */}
-          <section className="app-card p-5 md:p-6 space-y-4">
+          <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground">기본 환경 설정</h3>
             <div className="space-y-4">
               <div>
@@ -356,7 +356,7 @@ export const AdminSettingsPage = () => {
           </section>
 
           {/* 데이터 보관 정책 */}
-          <section className="app-card p-5 md:p-6 space-y-4">
+          <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground">데이터 보관 정책</h3>
             <div className="space-y-3">
               <div>
@@ -401,7 +401,7 @@ export const AdminSettingsPage = () => {
           </section>
 
           {/* 연동 상태 */}
-          <section className="app-card p-5 md:p-6 space-y-3 lg:col-span-2">
+          <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6 space-y-3 lg:col-span-2">
             <h3 className="text-base font-bold text-foreground">외부 시스템 연동 상태</h3>
             <div className="grid gap-3 md:grid-cols-3">
               {[
@@ -430,8 +430,8 @@ export const AdminSettingsPage = () => {
 
       {/* ── 감사 로그 탭 ── */}
       {activeTab === "audit" && (
-        <section className="app-card overflow-hidden">
-          <div className="app-section-header">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground">감사 로그</h3>
             <span className="text-[11px] font-black text-[#b0bdd4] uppercase tracking-widest">My Activity Log</span>
           </div>
