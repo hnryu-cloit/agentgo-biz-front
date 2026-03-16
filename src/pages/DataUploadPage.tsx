@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Upload, CheckCircle2, Clock, AlertCircle, FileText, RefreshCcw, Database, Layers, Search, History } from "lucide-react";
 import { storeNames } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { uploadDataFile, getUploadJobs, retryUploadJob } from "@/services/data";
+import type { DataType } from "@/types/api";
 
 type UploadType = "sales" | "cost" | "customer" | "review";
 
@@ -51,9 +53,51 @@ const initialHistory: UploadHistory[] = [
 export const DataUploadPage = () => {
   const [selectedType, setSelectedType] = useState<UploadType>("sales");
   const [selectedStore, setSelectedStore] = useState("전체 매장");
-  const [uploadHistory] = useState(initialHistory);
+  const [uploadHistory, setUploadHistory] = useState(initialHistory);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const guide = columnGuides[selectedType];
+
+  // API 연결: 업로드 이력 로드
+  useEffect(() => {
+    let alive = true;
+    getUploadJobs()
+      .then((res) => {
+        if (!alive || res.items.length === 0) return;
+        setUploadHistory(res.items.map((j) => ({
+          id: j.id,
+          fileName: j.original_filename,
+          type: j.data_type,
+          store: j.store_id,
+          rows: j.preview_rows?.length ?? 0,
+          uploadedAt: j.created_at.replace("T", " ").slice(0, 16),
+          status: j.status === "completed" ? "completed" : j.status === "pending" || j.status === "processing" ? "processing" : "error",
+        })));
+      })
+      .catch(() => { /* mock 유지 */ });
+    return () => { alive = false; };
+  }, []);
+
+  const handleFileSelect = (file: File) => {
+    if (!file) return;
+    setUploading(true);
+    const storeId = selectedStore === "전체 매장" ? "global" : selectedStore;
+    uploadDataFile(file, selectedType as DataType, storeId)
+      .then((res) => {
+        setUploadHistory((prev) => [{
+          id: res.job_id,
+          fileName: file.name,
+          type: selectedType,
+          store: storeId,
+          rows: 0,
+          uploadedAt: new Date().toLocaleString("ko-KR"),
+          status: "processing" as const,
+        }, ...prev]);
+      })
+      .catch(() => { /* 알림 없이 실패 처리 */ })
+      .finally(() => setUploading(false));
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -116,11 +160,19 @@ export const DataUploadPage = () => {
             </div>
 
             {/* Dropzone */}
-            <div className="rounded-[2.5rem] border-2 border-dashed border-border bg-panel-soft/30 p-16 text-center hover:border-primary/40 transition-all cursor-pointer group">
+            <div
+              className="rounded-[2.5rem] border-2 border-dashed border-border bg-panel-soft/30 p-16 text-center hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileSelect(f); }}
+            >
+              <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
               <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-20 group-hover:opacity-40 transition-opacity" />
               <p className="text-sm font-black text-foreground italic uppercase tracking-widest">Drop CSV or XLSX here</p>
               <p className="text-[10px] text-muted-foreground font-bold mt-2 opacity-60">MAX FILE SIZE: 50MB</p>
-              <button className="ds-button ds-button-primary h-10 px-8 mt-10 uppercase tracking-widest font-black text-[10px]">Browse Local Files</button>
+              <button disabled={uploading} className="ds-button ds-button-primary h-10 px-8 mt-10 uppercase tracking-widest font-black text-[10px] disabled:opacity-50">
+                {uploading ? "Uploading..." : "Browse Local Files"}
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-6">

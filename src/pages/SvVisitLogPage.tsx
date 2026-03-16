@@ -1,13 +1,14 @@
 import type React from "react";
-import { useState } from "react";
-import { 
-  MapPin, Plus, CheckCircle2, ChevronDown, 
-  Sparkles, ClipboardCheck, MessageSquare, Camera, 
+import { useEffect, useState } from "react";
+import {
+  MapPin, Plus, CheckCircle2, ChevronDown,
+  Sparkles, ClipboardCheck, MessageSquare, Camera,
   User, Calendar, Trash2, Send, LayoutGrid,
   Edit3, Save, X, AlertCircle
 } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { getVisitLogs, createVisitLog } from "@/services/supervisor";
 
 type VisitCategory = "운영" | "위생" | "서비스" | "데이터";
 type ItemStatus = "pass" | "warn" | "fail";
@@ -91,6 +92,30 @@ export const SvVisitLogPage: React.FC = () => {
     followup: "",
   });
 
+  // API 연결: 방문 기록 로드
+  useEffect(() => {
+    let alive = true;
+    getVisitLogs()
+      .then((res) => {
+        if (!alive || res.items.length === 0) return;
+        setVisits(res.items.map((v) => ({
+          id: v.id,
+          store: v.store_id,
+          visitDate: v.visit_date,
+          supervisor: v.supervisor_id,
+          aiBriefing: "",
+          checklist: [],
+          notes: v.summary,
+          ownerFeedback: v.coaching_points ?? "",
+          followups: [],
+          expanded: false,
+          isEditing: false,
+        })));
+      })
+      .catch(() => { /* mock 유지 */ });
+    return () => { alive = false; };
+  }, []);
+
   const toggleExpand = (id: string) => {
     setVisits((prev) => prev.map((v) => (v.id === id ? { ...v, expanded: !v.expanded } : v)));
   };
@@ -153,6 +178,17 @@ export const SvVisitLogPage: React.FC = () => {
     setVisits([record, ...visits]);
     setShowForm(false);
     setNewLog({ store: storeNames[0], visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
+
+    // API 저장 (실패 시 로컬 상태 유지)
+    createVisitLog({
+      store_id: newLog.store,
+      visit_date: newLog.visitDate,
+      purpose: "현장 방문",
+      summary: newLog.notes,
+      issues_found: null,
+      coaching_points: newLog.ownerFeedback || null,
+      next_visit_date: null,
+    }).catch(() => { /* 로컬 상태 유지 */ });
   };
 
   return (

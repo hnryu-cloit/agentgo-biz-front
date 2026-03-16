@@ -2,99 +2,66 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@theme {
+  --font-sans: "Pretendard", "Inter", "Noto Sans KR", sans-serif;
 
-:root {
-  font-family: "Pretendard", "Inter", "Noto Sans KR", sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* ── Core Colors ── */
+  --color-primary: #2f66ff;
+  --color-primary-hover: #1e56e0;
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: #eef3ff;
+  --color-primary-border: #c9d8ff;
 
-  /* ── Core Colors (Design System Baseline) ── */
-  --primary:              #2f66ff;
-  --primary-hover:        #1e56e0;
-  --primary-foreground:   #ffffff;
-  --primary-soft:         #eef3ff;
-  --primary-border:       #c9d8ff;
+  --color-background: #f8fafc;
+  --color-card: #ffffff;
+  --color-panel-soft: #f1f5f9;
+  --color-surface-hover: #f8fafc;
+  --color-surface-active: #f1f5f9;
+  --color-popover: #ffffff;
 
-  --background:     #f8fafc;
-  --card:           #ffffff;
-  --panel-soft:     #f1f5f9;
-  --surface-hover:  #f8fafc;
-  --surface-active: #f1f5f9;
-  --popover:        #ffffff;
+  --color-foreground: #0f172a;
+  --color-card-foreground: #0f172a;
+  --color-popover-foreground: #0f172a;
+  --color-muted-foreground: #64748b;
+  --color-subtle-foreground: #94a3b8;
 
-  --foreground:          #0f172a;
-  --card-foreground:     #0f172a;
-  --popover-foreground:  #0f172a;
-  --muted-foreground:    #64748b;
-  --subtle-foreground:   #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-input: #f8fafc;
+  --color-ring: #93aeea;
 
-  --border:        #e2e8f0;
-  --border-strong: #cbd5e1;
-  --input:         #f8fafc;
-  --ring:          #93aeea;
+  --color-success: #10b981;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fffbeb;
+  --color-destructive: #ef4444;
+  --color-destructive-soft: #fef2f2;
+  --color-info: #3b82f6;
+  --color-info-soft: #eff6ff;
 
-  --success:       #10b981;
-  --success-soft:  #ecfdf5;
-  --warning:       #f59e0b;
-  --warning-soft:  #fffbeb;
-  --destructive:   #ef4444;
-  --destructive-soft: #fef2f2;
-  --info:          #3b82f6;
-  --info-soft:     #eff6ff;
-
-  /* ── Geometry & Shadows ── */
-  --radius: 0.75rem;
+  /* ── Geometry ── */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-ds: 0 6px 18px rgba(30, 59, 109, 0.08); /* Standard Design System Shadow */
+  /* ── Shadows ── */
+  --shadow-ds: 0 6px 18px rgba(30, 59, 109, 0.08);
 
   /* ── AI & Digital Twin Specials ── */
-  --ai-gradient: linear-gradient(135deg, #2f66ff 0%, #8a3ffc 100%);
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  --background-image-ai-gradient: linear-gradient(135deg, #2f66ff 0%, #8a3ffc 100%);
+  --color-glass-bg: rgba(255, 255, 255, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.2);
 }
 
-.dark {
-  --background:     #0f172a;
-  --card:           #1e293b;
-  --panel-soft:     #334155;
-  --foreground:     #f8fafc;
-  --border:         #334155;
-  --border-strong:  #475569;
-  --input:          #0f172a;
-  --glass-bg:       rgba(15, 23, 42, 0.8);
-}
-
-@theme inline {
-  --radius-sm:  calc(var(--radius) - 4px);
-  --radius-md:  var(--radius);
-  --radius-lg:  var(--radius-lg);
-  --radius-xl:  var(--radius-xl);
-  --radius-2xl: calc(var(--radius-xl) + 4px);
-
-  --color-primary:               var(--primary);
-  --color-primary-foreground:    var(--primary-foreground);
-  --color-background:            var(--background);
-  --color-foreground:            var(--foreground);
-  --color-card:                  var(--card);
-  --color-card-foreground:       var(--card-foreground);
-  --color-border:                var(--border);
-  --color-muted-foreground:      var(--muted-foreground);
-  --color-panel-soft:            var(--panel-soft);
-}
+@custom-variant dark (&:is(.dark *));
 
 @layer base {
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     background-image: 
       radial-gradient(at 0% 0%, rgba(47, 102, 255, 0.03) 0, transparent 50%),
       radial-gradient(at 100% 100%, rgba(138, 63, 252, 0.02) 0, transparent 50%);
@@ -108,9 +75,9 @@
     @apply mx-auto w-full max-w-[1440px] px-6 md:px-10 py-8 space-y-8;
   }
 
-  /* ── DS Card (card.png) ── */
+  /* ── DS Card ── */
   .ds-card {
-    @apply bg-card rounded-2xl border border-border shadow-ds overflow-hidden;
+    @apply bg-card rounded-2xl border border-border shadow-[var(--shadow-ds)] overflow-hidden;
   }
   .ds-card-header {
     @apply px-6 py-5 border-b border-border/50 flex items-center justify-between bg-card/50;
@@ -119,9 +86,11 @@
     @apply p-6;
   }
 
-  /* ── DS KPI Card (KPI.png) ── */
+  /* ── DS KPI Card ── */
   .ds-kpi-card {
-    @apply ds-card p-6 flex flex-col gap-4 transition-all hover:shadow-lg hover:-translate-y-1;
+    /* Manual repetition of ds-card logic to avoid Tailwind @apply nesting issues */
+    @apply bg-card rounded-2xl border border-border shadow-[var(--shadow-ds)] overflow-hidden;
+    @apply p-6 flex flex-col gap-4 transition-all hover:shadow-lg hover:-translate-y-1;
   }
   .ds-kpi-label {
     @apply text-xs font-black uppercase tracking-[0.15em] text-muted-foreground;
@@ -133,9 +102,10 @@
     @apply inline-flex items-center gap-1 text-[11px] font-black px-2 py-0.5 rounded-lg;
   }
 
-  /* ── DS Table (Table.png) ── */
+  /* ── DS Table ── */
   .ds-table-container {
-    @apply ds-card overflow-x-auto;
+    /* Manual repetition of ds-card logic */
+    @apply bg-card rounded-2xl border border-border shadow-[var(--shadow-ds)] overflow-x-auto;
   }
   .ds-table {
     @apply w-full text-left text-sm border-collapse;
@@ -153,7 +123,7 @@
     @apply px-6 py-4 font-medium;
   }
 
-  /* ── DS Button (button.png) ── */
+  /* ── DS Button ── */
   .ds-button {
     @apply inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-black transition-all active:scale-95 disabled:opacity-50 cursor-pointer;
   }
@@ -167,7 +137,7 @@
     @apply text-muted-foreground hover:text-foreground hover:bg-panel-soft;
   }
 
-  /* ── DS Badge (badge.png, chip.png) ── */
+  /* ── DS Badge ── */
   .ds-badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter;
   }
@@ -176,12 +146,12 @@
   .ds-badge-danger  { @apply bg-destructive-soft text-destructive; }
   .ds-badge-info    { @apply bg-info-soft text-info; }
 
-  /* ── DS Input (input.png) ── */
+  /* ── DS Input ── */
   .ds-input {
     @apply rounded-xl border border-border bg-input h-11 px-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 placeholder:text-subtle-foreground;
   }
 
-  /* ── DS Typography (Typography.png) ── */
+  /* ── DS Typography ── */
   .ds-page-title {
     @apply text-[28px] md:text-[32px] font-black tracking-tight text-foreground leading-tight;
   }
@@ -197,14 +167,13 @@
     @apply relative overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-8;
   }
   .ds-ai-gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--ai-gradient);
+    @apply bg-clip-text text-transparent bg-ai-gradient;
   }
   .ds-glass {
     @apply bg-glass-bg backdrop-blur-xl border border-glass-border shadow-lg;
   }
 
-  /* ── Live Animation (live-point) ── */
+  /* ── Live Animation ── */
   .live-point {
     @apply relative inline-flex h-2 w-2 rounded-full bg-success;
   }
@@ -214,7 +183,6 @@
   }
 }
 
-/* ── Custom Utilities ── */
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

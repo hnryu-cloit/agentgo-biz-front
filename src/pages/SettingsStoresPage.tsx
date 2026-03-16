@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Store, CheckCircle2, ChevronDown, FileText, Upload, Trash2, Download, Paperclip } from "lucide-react";
 import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { getStores, updateStore } from "@/services/settings";
 
 type StoreFile = {
   id: string;
@@ -32,7 +33,7 @@ export const SettingsStoresPage: React.FC = () => {
   const [configs, setConfigs] = useState<StoreConfig[]>([]);
 
   useEffect(() => {
-    const initial = storeResources.map((s, i) => ({
+    const fallback = storeResources.map((s, i) => ({
       id: s?.id ?? `s${i}`,
       name: s?.name ?? `매장 ${i + 1}`,
       openTime: "10:00",
@@ -48,7 +49,25 @@ export const SettingsStoresPage: React.FC = () => {
       expanded: i === 0,
       saved: false,
     }));
-    setConfigs(initial);
+
+    getStores()
+      .then((res) => {
+        if (res.items.length === 0) { setConfigs(fallback); return; }
+        setConfigs(res.items.map((s, i) => ({
+          id: s.id,
+          name: s.name,
+          openTime: s.open_time ?? "10:00",
+          closeTime: s.close_time ?? "22:00",
+          breakStart: s.break_start ?? "15:00",
+          breakEnd: s.break_end ?? "16:30",
+          seats: s.seats ?? 42,
+          serviceType: (s.service_type as StoreConfig["serviceType"]) ?? "전체",
+          files: [],
+          expanded: i === 0,
+          saved: false,
+        })));
+      })
+      .catch(() => setConfigs(fallback));
   }, []);
 
   const toggleExpand = (id: string) => {
@@ -66,10 +85,21 @@ export const SettingsStoresPage: React.FC = () => {
   };
 
   const saveConfig = (id: string) => {
+    const target = configs.find((c) => c.id === id);
+    if (!target) return;
     setConfigs(configs.map(c => c.id === id ? { ...c, saved: true } : c));
-    setTimeout(() => {
-      setConfigs(prev => prev.map(c => c.id === id ? { ...c, saved: false } : c));
-    }, 2000);
+    updateStore(id, {
+      open_time: target.openTime,
+      close_time: target.closeTime,
+      break_start: target.breakStart,
+      break_end: target.breakEnd,
+      seats: target.seats,
+      service_type: target.serviceType,
+    }).finally(() => {
+      setTimeout(() => {
+        setConfigs(prev => prev.map(c => c.id === id ? { ...c, saved: false } : c));
+      }, 2000);
+    });
   };
 
   return (

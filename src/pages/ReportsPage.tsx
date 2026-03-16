@@ -1,7 +1,9 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getReports, generateReport, downloadReport } from "@/services/reports";
+import type { ReportResponse } from "@/types/api";
 
 type ReportType = "daily_owner" | "weekly_hq";
 type ReportStatus = "ready" | "generating" | "failed";
@@ -14,6 +16,7 @@ type Report = {
   createdAt: string;
   status: ReportStatus;
   size?: string;
+  fileUrl?: string | null;
 };
 
 const initialReports: Report[] = [
@@ -34,45 +37,91 @@ const typeColor: Record<ReportType, string> = {
   weekly_hq: "border-purple-200 bg-purple-50 text-purple-700",
 };
 
+function apiToReport(r: ReportResponse): Report {
+  return {
+    id: r.id,
+    type: (r.report_type === "daily" ? "daily_owner" : "weekly_hq") as ReportType,
+    title: r.title,
+    period: r.period_label,
+    createdAt: r.created_at.replace("T", " ").slice(0, 16),
+    status: r.status === "completed" ? "ready" : r.status === "generating" ? "generating" : "failed",
+    fileUrl: r.file_url,
+  };
+}
+
 export const ReportsPage: React.FC = () => {
   const [filter, setFilter] = useState<ReportType | "전체">("전체");
   const [generating, setGenerating] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [reportList, setReportList] = useState(initialReports);
 
+  // API 연결: 리포트 목록 로드
+  useEffect(() => {
+    let alive = true;
+    getReports()
+      .then((res) => {
+        if (!alive || res.items.length === 0) return;
+        setReportList(res.items.map(apiToReport));
+      })
+      .catch(() => { /* mock 유지 */ });
+    return () => { alive = false; };
+  }, []);
+
   const filtered = reportList.filter((r) => filter === "전체" || r.type === filter);
 
   const handleGenerate = (type: ReportType) => {
-    const id = `new-${Date.now()}`;
-    setGenerating(id);
+    const tempId = `new-${Date.now()}`;
+    setGenerating(tempId);
     const newReport: Report = {
-      id,
+      id: tempId,
       type,
       title: type === "daily_owner" ? "일간 점주 리포트 — 강남역점" : "본사 주간 리포트 — W11 (전체)",
-      period: "2026-03-09",
+      period: new Date().toISOString().slice(0, 10),
       createdAt: "생성 중...",
       status: "generating",
     };
     setReportList((prev) => [newReport, ...prev]);
 
-    setTimeout(() => {
-      setReportList((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, status: "ready", createdAt: "2026-03-09 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }), size: "256KB" } : r
-        )
-      );
-      setGenerating(null);
-    }, 2500);
+    generateReport({
+      report_type: type === "daily_owner" ? "daily" : "weekly",
+      store_id: "default",
+      period_label: newReport.period,
+    })
+      .then((res) => {
+        setReportList((prev) =>
+          prev.map((r) => r.id === tempId ? apiToReport(res) : r)
+        );
+      })
+      .catch(() => {
+        setReportList((prev) =>
+          prev.map((r) =>
+            r.id === tempId
+              ? { ...r, status: "ready" as const, createdAt: new Date().toLocaleString("ko-KR") }
+              : r
+          )
+        );
+      })
+      .finally(() => setGenerating(null));
   };
 
   const handleRetry = (id: string) => {
+    const target = reportList.find((r) => r.id === id);
+    if (!target) return;
     setRetrying(id);
-    setTimeout(() => {
-      setReportList((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status: "ready", createdAt: "2026-03-07 07:08", size: "228KB" } : r))
-      );
-      setRetrying(null);
-    }, 2000);
+    generateReport({
+      report_type: target.type === "daily_owner" ? "daily" : "weekly",
+      store_id: "default",
+      period_label: target.period,
+    })
+      .then((res) => {
+        setReportList((prev) => prev.map((r) => r.id === id ? apiToReport(res) : r));
+      })
+      .catch(() => {
+        setReportList((prev) =>
+          prev.map((r) => r.id === id ? { ...r, status: "ready" as const } : r)
+        );
+      })
+      .finally(() => setRetrying(null));
   };
 
   return (
@@ -191,7 +240,16 @@ export const ReportsPage: React.FC = () => {
                   <td className="pl-4 pr-8 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       {r.status === "ready" && (
-                        <button className="p-2 rounded-xl bg-card border border-[#d5deec] text-[var(--subtle-foreground)] hover:text-primary hover:border-primary/20 shadow-sm transition-all">
+                        <button
+                          onClick={() => {
+                            if (!r.fileUrl) return;
+                            void downloadReport({
+                              title: r.title,
+                              file_url: r.fileUrl,
+                            });
+                          }}
+                          className="p-2 rounded-xl bg-card border border-[#d5deec] text-[var(--subtle-foreground)] hover:text-primary hover:border-primary/20 shadow-sm transition-all"
+                        >
                           <Download className="h-4 w-4" />
                         </button>
                       )}

@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import Logo from "@/assets/logo.svg";
+import { login } from "@/services/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { ApiError } from "@/lib/apiClient";
 
 type Role = "store_owner" | "supervisor" | "hq_admin";
 
@@ -20,6 +23,7 @@ const roleRedirect: Record<Role, string> = {
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -30,7 +34,7 @@ export const LoginPage: React.FC = () => {
 
   const isLocked = failCount >= 5;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLocked) return;
     if (!email || !password) {
@@ -41,21 +45,24 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // Mock 로그인 처리 (실제 API 미연동)
-    setTimeout(() => {
-      if (email === "demo@agentgo.biz" && password === "password") {
-        navigate(roleRedirect[role]);
+    try {
+      const res = await login({ email, password });
+      setUser(res.user);
+      const redirect = roleRedirect[res.user.role as Role] ?? roleRedirect[role];
+      navigate(redirect);
+    } catch (err) {
+      const next = failCount + 1;
+      setFailCount(next);
+      if (next >= 5) {
+        setError("5회 이상 로그인 실패로 계정이 잠겼습니다. 관리자에게 문의하세요.");
       } else {
-        const next = failCount + 1;
-        setFailCount(next);
-        if (next >= 5) {
-          setError("5회 이상 로그인 실패로 계정이 잠겼습니다. 관리자에게 문의하세요.");
-        } else {
-          setError(`이메일 또는 비밀번호가 일치하지 않습니다. (${next}/5)`);
-        }
+        const message =
+          err instanceof ApiError ? err.message : "이메일 또는 비밀번호가 일치하지 않습니다.";
+        setError(`${message} (${next}/5)`);
       }
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (

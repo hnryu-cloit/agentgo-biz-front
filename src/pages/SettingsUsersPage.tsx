@@ -1,12 +1,13 @@
 import type React from "react";
-import { useState } from "react";
-import { 
-  UserPlus, CheckCircle2, XCircle, Mail, Store, 
+import { useEffect, useState } from "react";
+import {
+  UserPlus, CheckCircle2, XCircle, Mail, Store,
   ShieldCheck, ShieldAlert, Trash2, Edit2,
   Search, Filter, ChevronLeft, ChevronRight,
   Briefcase, Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUsers, setUserActive } from "@/services/settings";
 
 type UserRole = "store_owner" | "supervisor" | "hq_admin" | "marketer";
 
@@ -57,8 +58,35 @@ export const SettingsUsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
 
+  // API 연결: 사용자 목록 로드
+  useEffect(() => {
+    let alive = true;
+    getUsers()
+      .then((res) => {
+        if (!alive || res.items.length === 0) return;
+        setUsers(res.items.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role as UserRole,
+          department: "",
+          lastLogin: u.updated_at.replace("T", " ").slice(0, 16),
+          active: u.is_active,
+        })));
+      })
+      .catch(() => { /* mock 유지 */ });
+    return () => { alive = false; };
+  }, []);
+
   const toggleActive = (id: string) => {
-    setUsers(users.map(u => u.id === id ? { ...u, active: !u.active } : u));
+    const target = users.find((u) => u.id === id);
+    if (!target) return;
+    const next = !target.active;
+    setUsers(users.map(u => u.id === id ? { ...u, active: next } : u));
+    setUserActive(id, next).catch(() => {
+      // 실패 시 롤백
+      setUsers((prev) => prev.map(u => u.id === id ? { ...u, active: target.active } : u));
+    });
   };
 
   const filteredUsers = users.filter(u => 

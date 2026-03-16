@@ -15,7 +15,9 @@ export function generateReport(body: ReportGenerateRequest): Promise<ReportRespo
   return post<ReportResponse>("/reports/generate", body);
 }
 
-export async function downloadReport(report: ReportResponse): Promise<void> {
+export async function downloadReport(
+  report: Pick<ReportResponse, "file_url" | "title">,
+): Promise<void> {
   if (!report.file_url) return;
 
   // file_url may be a relative path like /uploads/... or a full URL
