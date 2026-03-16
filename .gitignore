@@ -7,3 +7,5 @@ dist
 
 *.tsbuildinfo
 /design system/
+/resource/
+.idea/
