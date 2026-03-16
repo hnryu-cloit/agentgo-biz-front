@@ -34,8 +34,8 @@ export const SettingsStoresPage: React.FC = () => {
   useEffect(() => {
     getStores()
       .then((res) => {
-        if (res.items.length === 0) { setConfigs([]); return; }
-        setConfigs(res.items.map((s, i) => ({
+        if (res.length === 0) { setConfigs([]); return; }
+        setConfigs(res.map((s, i) => ({
           id: s.id,
           name: s.name,
           openTime: s.open_time ?? "10:00",

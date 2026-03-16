@@ -182,8 +182,8 @@ export interface ResourceDatasetResponse {
 // Action
 // ---------------------------------------------------------------------------
 
-export type ActionStatus = "pending" | "executed" | "deferred";
-export type ActionPriority = "high" | "medium" | "low";
+export type ActionStatus = "pending" | "executed" | "deferred" | "ignored";
+export type ActionPriority = "P0" | "P1" | "P2" | "high" | "medium" | "low";
 export type ActionCategory = "pricing" | "staffing" | "inventory" | "marketing" | "operations";
 
 export interface ActionResponse {
@@ -283,7 +283,7 @@ export interface AlertUpdateRequest {
 // Escalation
 // ---------------------------------------------------------------------------
 
-export type EscalationSeverity = "high" | "medium" | "low";
+export type EscalationSeverity = "P0" | "P1" | "P2" | "high" | "medium" | "low";
 export type EscalationStatus = "open" | "acknowledged" | "resolved";
 
 export interface EscalationCreateRequest {

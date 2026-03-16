@@ -78,7 +78,7 @@ export const LoginPage: React.FC = () => {
           <p className="mt-1 text-sm text-muted-foreground">역할을 선택하고 계정 정보를 입력하세요.</p>
 
           {/* Role Select */}
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
             {roleOptions.map((r) => (
               <button
                 key={r.value}

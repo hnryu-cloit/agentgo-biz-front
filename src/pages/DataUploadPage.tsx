@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileText, RefreshCcw, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getResourceCatalog, getResourceDataset, getUploadJobs } from "@/services/data";
+import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob } from "@/services/data";
 import type { DataType, ResourceSourceCatalog, UploadJobResponse } from "@/types/api";
 
 type ResourceType = Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "receipt_listing" | "menu_lineup">;
@@ -19,6 +19,7 @@ export const DataUploadPage = () => {
   const [selectedStore, setSelectedStore] = useState("");
   const [preview, setPreview] = useState<{ headers: string[]; rows: Record<string, unknown>[] } | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadJobResponse[]>([]);
+  const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -71,6 +72,16 @@ export const DataUploadPage = () => {
     const nextStore = activeSource?.stores[0]?.store_key ?? "";
     setSelectedStore(nextStore);
   }, [activeSource]);
+
+  const handleRetry = async (jobId: string) => {
+    setRetryingJobId(jobId);
+    try {
+      const updated = await retryUploadJob(jobId);
+      setUploadHistory((current) => current.map((row) => (row.id === jobId ? updated : row)));
+    } finally {
+      setRetryingJobId(null);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-10">
@@ -206,7 +217,11 @@ export const DataUploadPage = () => {
                   </td>
                   <td className="py-4 pl-4 pr-8 text-right">
                     {row.status === "failed" && (
-                      <button className="rounded-xl border border-red-100 bg-white p-2 text-red-400 shadow-sm transition-all hover:bg-red-50 hover:text-red-600">
+                      <button
+                        onClick={() => handleRetry(row.id)}
+                        disabled={retryingJobId === row.id}
+                        className="rounded-xl border border-red-100 bg-white p-2 text-red-400 shadow-sm transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      >
                         <RefreshCcw className="h-4 w-4" />
                       </button>
                     )}

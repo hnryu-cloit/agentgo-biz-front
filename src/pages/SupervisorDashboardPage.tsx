@@ -35,7 +35,7 @@ export const SupervisorDashboardPage: React.FC = () => {
 
   const stats = useMemo(
     () => ({
-      danger: stores.filter((store) => store.risk_score >= 10 || store.cancel_rate >= 4).length,
+      danger: stores.filter((store) => store.risk_score >= 10 || (store.cancel_rate ?? 0) >= 4).length,
       warning: stores.filter((store) => store.risk_score >= 5 && store.risk_score < 10).length,
       normal: stores.filter((store) => store.risk_score < 5).length,
     }),
@@ -44,7 +44,7 @@ export const SupervisorDashboardPage: React.FC = () => {
 
   const avgDelta = useMemo(() => {
     if (stores.length === 0) return "0.0";
-    return (stores.reduce((acc, store) => acc + store.sales_delta_pct, 0) / stores.length).toFixed(1);
+    return (stores.reduce((acc, store) => acc + (store.sales_delta_pct ?? 0), 0) / stores.length).toFixed(1);
   }, [stores]);
 
   const topDangerStores = useMemo(
@@ -52,7 +52,7 @@ export const SupervisorDashboardPage: React.FC = () => {
     [stores],
   );
 
-  const maxSales = Math.max(...stores.map((store) => store.sales_total), 1);
+  const maxSales = Math.max(...stores.map((store) => store.sales_total ?? 0), 1);
 
   return (
     <div className="space-y-6 pb-10">
@@ -173,10 +173,10 @@ export const SupervisorDashboardPage: React.FC = () => {
               <span className="w-24 shrink-0 text-sm font-medium text-slate-700">{store.name}</span>
               <div className="flex-1">
                 <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
-                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(store.sales_total / maxSales) * 100}%` }} />
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(((store.sales_total ?? 0) / maxSales) * 100)}%` }} />
                 </div>
               </div>
-              <span className="w-28 shrink-0 text-right text-sm font-semibold text-slate-900">{store.sales_total.toLocaleString()}원</span>
+              <span className="w-28 shrink-0 text-right text-sm font-semibold text-slate-900">{(store.sales_total ?? 0).toLocaleString()}원</span>
             </div>
           ))}
         </div>
@@ -202,11 +202,11 @@ export const SupervisorDashboardPage: React.FC = () => {
               {stores.map((store) => (
                 <tr key={store.id} className="transition-colors hover:bg-slate-50">
                   <td className="px-3 py-3 font-medium text-slate-900">{store.name}</td>
-                  <td className={cn("px-3 py-3 font-medium", store.sales_delta_pct >= 0 ? "text-emerald-600" : "text-red-600")}>
-                    {store.sales_delta_pct >= 0 ? "+" : ""}{store.sales_delta_pct}%
+                  <td className={cn("px-3 py-3 font-medium", (store.sales_delta_pct ?? 0) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                    {(store.sales_delta_pct ?? 0) >= 0 ? "+" : ""}{store.sales_delta_pct ?? 0}%
                   </td>
-                  <td className="px-3 py-3 text-slate-600">{store.avg_order_value.toLocaleString()}원</td>
-                  <td className="px-3 py-3 text-slate-600">{store.cancel_rate.toFixed(2)}%</td>
+                  <td className="px-3 py-3 text-slate-600">{(store.avg_order_value ?? 0).toLocaleString()}원</td>
+                  <td className="px-3 py-3 text-slate-600">{(store.cancel_rate ?? 0).toFixed(2)}%</td>
                   <td className={cn("px-3 py-3 font-bold", store.risk_score >= 10 ? "text-red-600" : store.risk_score >= 5 ? "text-amber-600" : "text-emerald-600")}>
                     {store.risk_score.toFixed(2)}
                   </td>

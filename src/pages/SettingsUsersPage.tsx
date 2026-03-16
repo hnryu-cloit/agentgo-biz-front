@@ -20,24 +20,6 @@ type User = {
   active: boolean;
 };
 
-const initialUsers: User[] = [
-  { id: "u1", name: "김태호", email: "th.kim@itcen.com", role: "hq_admin", department: "IT운영본부 / 플랫폼팀", lastLogin: "2026-03-09 14:20", active: true },
-  { id: "u2", name: "이민지", email: "mj.lee@itcen.com", role: "marketer", department: "전략기획실 / 브랜드팀", lastLogin: "2026-03-09 11:05", active: true },
-  { id: "u3", name: "김수진", email: "sj.kim@itcen.com", role: "supervisor", department: "영업본부 / 운영 1팀", assignedStores: ["강남역점", "역삼점"], lastLogin: "2026-03-08 18:30", active: true },
-  { id: "u4", name: "박재원", email: "jw.park@itcen.com", role: "supervisor", department: "영업본부 / 운영 1팀", assignedStores: ["홍대점", "합정점"], lastLogin: "2026-03-09 09:45", active: true },
-  { id: "u5", name: "최유리", email: "yr.choi@itcen.com", role: "store_owner", department: "가맹점주 / 강남", assignedStores: ["강남역점"], lastLogin: "2026-03-07 22:10", active: true },
-  { id: "u6", name: "정성훈", email: "sh.jung@itcen.com", role: "marketer", department: "디지털마케팅팀", lastLogin: "2026-02-28 15:20", active: false },
-  { id: "u7", name: "한지혜", email: "jh.han@itcen.com", role: "supervisor", department: "영업본부 / 운영 2팀", assignedStores: ["판교점"], lastLogin: "2026-03-09 13:00", active: true },
-  { id: "u8", name: "오세윤", email: "sy.oh@itcen.com", role: "hq_admin", department: "경영관리본부 / 인사팀", lastLogin: "2026-03-09 10:30", active: true },
-  { id: "u9", name: "강동원", email: "dw.kang@itcen.com", role: "supervisor", department: "영업본부 / 운영 3팀", assignedStores: ["분당점", "수지점"], lastLogin: "2026-03-09 08:50", active: true },
-  { id: "u10", name: "송혜교", email: "hk.song@itcen.com", role: "marketer", department: "전략기획실 / CRM팀", lastLogin: "2026-03-08 17:15", active: true },
-  { id: "u11", name: "현빈", email: "hb.kim@itcen.com", role: "supervisor", department: "영업본부 / 운영 2팀", assignedStores: ["일산점"], lastLogin: "2026-03-09 11:40", active: true },
-  { id: "u12", name: "손예진", email: "yj.son@itcen.com", role: "store_owner", department: "가맹점주 / 경기", assignedStores: ["판교점"], lastLogin: "2026-03-09 10:05", active: true },
-  { id: "u13", name: "조인성", email: "is.cho@itcen.com", role: "hq_admin", department: "경영본부 / 법무팀", lastLogin: "2026-03-06 14:00", active: true },
-  { id: "u14", name: "공유", email: "oo.gong@itcen.com", role: "marketer", department: "컨텐츠팀", lastLogin: "2026-03-09 15:30", active: true },
-  { id: "u15", name: "김고은", email: "ge.kim@itcen.com", role: "supervisor", department: "운영 1팀", assignedStores: ["신촌점"], lastLogin: "2026-03-09 12:20", active: true },
-];
-
 const roleLabel: Record<UserRole, string> = {
   hq_admin: "본사 관리자",
   marketer: "마케팅 담당",
@@ -53,15 +35,15 @@ const roleStyle: Record<UserRole, string> = {
 };
 
 export const SettingsUsersPage: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     let alive = true;
     getUsers()
       .then((res) => {
-        if (!alive || res.items.length === 0) return;
-        setUsers(res.items.map((u) => ({
+        if (!alive || res.length === 0) return;
+        setUsers(res.map((u) => ({
           id: u.id,
           name: u.name,
           email: u.email,

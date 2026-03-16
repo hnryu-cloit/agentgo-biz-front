@@ -2,7 +2,8 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BarChart2, DollarSign, Megaphone, RefreshCw, ShoppingBag, Sparkles, TrendingDown, TrendingUp, Users, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCustomerInsights, getOwnerDashboard, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
+import { getCustomerInsights, getOwnerActions, getOwnerDashboard, updateActionStatus, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
+import type { ActionResponse, ActionStatus } from "@/types/api";
 
 const emptyDashboard: OwnerDashboard = {
   store_key: null,
@@ -44,14 +45,16 @@ const actionTemplates = [
 export const OwnerDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<OwnerDashboard>(emptyDashboard);
   const [insights, setInsights] = useState<CustomerInsights | null>(null);
-  const [done, setDone] = useState<number[]>([]);
+  const [actions, setActions] = useState<ActionResponse[]>([]);
+  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    getOwnerDashboard()
-      .then((response) => {
+    Promise.all([getOwnerDashboard(), getOwnerActions()])
+      .then(([response, actionResponse]) => {
         if (!alive) return;
         setDashboard(response);
+        setActions(actionResponse);
         const key = response.store_key ?? undefined;
         return getCustomerInsights(key, 90);
       })
@@ -72,16 +75,49 @@ export const OwnerDashboardPage: React.FC = () => {
   const achievementRate = dashboard.today_revenue > 0 ? Math.min(100, Math.round((dashboard.today_revenue / Math.max(dashboard.today_revenue - dashboard.revenue_vs_yesterday, 1)) * 100)) : 0;
 
   const actionBoard = useMemo(
-    () => actionTemplates.map((action) => ({
-      ...action,
-      why: action.id === 1
-        ? `전일 대비 매출 변화는 ${dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}${dashboard.revenue_vs_yesterday.toLocaleString()}원 입니다.`
-        : action.id === 2
-          ? `현재 평균 객단가는 ${dashboard.avg_order_value.toLocaleString()}원 입니다.`
-          : `현재 취소율은 ${(dashboard.cancel_rate * 100).toFixed(2)}% 입니다.`,
-    })),
-    [dashboard],
+    () => (
+      actions.length > 0
+        ? actions.map((action) => ({
+            id: action.id,
+            level: action.priority === "P0" ? "P0" : "P1",
+            title: action.title,
+            why: action.ai_basis || action.description,
+            impact: action.expected_impact || "예상 효과 정보 없음",
+            status: action.status,
+          }))
+        : actionTemplates.map((action) => ({
+            ...action,
+            id: String(action.id),
+            status: "pending" as ActionStatus,
+            why: action.id === 1
+              ? `전일 대비 매출 변화는 ${dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}${dashboard.revenue_vs_yesterday.toLocaleString()}원 입니다.`
+              : action.id === 2
+                ? `현재 평균 객단가는 ${dashboard.avg_order_value.toLocaleString()}원 입니다.`
+                : `현재 취소율은 ${(dashboard.cancel_rate * 100).toFixed(2)}% 입니다.`,
+          }))
+    ),
+    [actions, dashboard],
   );
+
+  const completedCount = actionBoard.filter((action) => action.status === "executed").length;
+
+  const handleActionStatus = async (actionId: string, status: ActionStatus) => {
+    const previous = actions;
+    setPendingActionId(actionId);
+    setActions((current) => current.map((action) => (
+      action.id === actionId ? { ...action, status } : action
+    )));
+    try {
+      const updated = await updateActionStatus(actionId, { status });
+      setActions((current) => current.map((action) => (
+        action.id === actionId ? updated : action
+      )));
+    } catch {
+      setActions(previous);
+    } finally {
+      setPendingActionId(null);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-10">
@@ -173,7 +209,7 @@ export const OwnerDashboardPage: React.FC = () => {
           <Zap className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-bold text-slate-900">오늘의 운영 액션 보드</h3>
           <span className="ml-auto rounded border border-[#DCE4F3] bg-[#F7FAFF] px-2 py-0.5 text-xs font-medium text-slate-500">
-            {done.length}/{actionBoard.length} 완료
+            {completedCount}/{actionBoard.length} 완료
           </span>
         </div>
         <div className="mt-4 space-y-3">
@@ -182,7 +218,7 @@ export const OwnerDashboardPage: React.FC = () => {
               key={action.id}
               className={cn(
                 "rounded-xl border p-4 transition-all",
-                done.includes(action.id) ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF]",
+                action.status === "executed" ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF]",
               )}
             >
               <div className="flex items-start justify-between gap-3">
@@ -199,14 +235,36 @@ export const OwnerDashboardPage: React.FC = () => {
                     <span className="text-xs font-semibold text-primary">{action.impact}</span>
                   </div>
                 </div>
-                {!done.includes(action.id) && (
-                  <button
-                    onClick={() => setDone((prev) => [...prev, action.id])}
-                    className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
-                  >
-                    실행
-                  </button>
-                )}
+                <div className="flex flex-col gap-2">
+                  {action.status !== "executed" && actions.length > 0 ? (
+                    <>
+                      <button
+                        onClick={() => handleActionStatus(action.id, "executed")}
+                        disabled={pendingActionId === action.id}
+                        className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9] disabled:opacity-50"
+                      >
+                        실행
+                      </button>
+                      <button
+                        onClick={() => handleActionStatus(action.id, "deferred")}
+                        disabled={pendingActionId === action.id}
+                        className="rounded-lg border border-[#DCE4F3] bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        보류
+                      </button>
+                    </>
+                  ) : action.status === "executed" ? (
+                    <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-emerald-600">
+                      실행 완료
+                    </span>
+                  ) : (
+                    <button
+                      className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
+                    >
+                      실행
+                    </button>
+                  )}
+                </div>
               </div>
             </article>
           ))}

@@ -1,121 +1,96 @@
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock, XCircle, AlertTriangle, Send } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSvStores } from "@/services/supervisor";
-
-type ActionStatus = "completed" | "pending" | "ignored";
-
-type ActionRecord = {
-  id: string;
-  store: string;
-  title: string;
-  level: "P0" | "P1";
-  status: ActionStatus;
-  proposedAt: string;
-  completedAt?: string;
-};
+import { escalateAction, getSvActions, getSvStores } from "@/services/supervisor";
 
 type EscalationForm = {
-  store: string;
+  storeId: string;
   content: string;
   level: "P0" | "P1";
 };
 
-const statusIcon: Record<ActionStatus, React.ReactNode> = {
-  completed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-  pending: <Clock className="h-4 w-4 text-amber-500" />,
-  ignored: <XCircle className="h-4 w-4 text-[#b0bdd4]" />,
-};
-
-const statusLabel: Record<ActionStatus, string> = {
-  completed: "완료",
-  pending: "미이행",
-  ignored: "무시",
-};
-
-const statusClass: Record<ActionStatus, string> = {
-  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  ignored: "border-[#d5deec] bg-card text-[var(--subtle-foreground)]",
+type ComplianceSummary = {
+  store_id: string;
+  store_name: string;
+  total_actions: number;
+  executed: number;
+  deferred: number;
+  execution_rate: number;
 };
 
 export const SvActionsPage: React.FC = () => {
-  const [storeNames, setStoreNames] = useState<string[]>([]);
-  const [actionRecords, setActionRecords] = useState<ActionRecord[]>([]);
+  const [stores, setStores] = useState<Array<{ id: string; name: string }>>([]);
+  const [summaries, setSummaries] = useState<ComplianceSummary[]>([]);
   const [filterStore, setFilterStore] = useState("전체");
-  const [filterStatus, setFilterStatus] = useState<ActionStatus | "전체">("전체");
-  const [escForm, setEscForm] = useState<EscalationForm>({ store: "", content: "", level: "P0" });
+  const [escForm, setEscForm] = useState<EscalationForm>({ storeId: "", content: "", level: "P0" });
   const [escSent, setEscSent] = useState(false);
   const [showEscModal, setShowEscModal] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    getSvStores()
-      .then((stores) => {
+    Promise.all([getSvStores(), getSvActions()])
+      .then(([storeResponse, actionResponse]) => {
         if (!alive) return;
-        const names = stores.map((store) => store.name);
-        setStoreNames(names);
-        setEscForm((prev) => ({ ...prev, store: prev.store || names[0] || "" }));
-        setActionRecords(
-          stores.map((store, index) => ({
-            id: `a-${store.id}`,
-            store: store.name,
-            title: store.risk_score >= 10 ? "긴급 현장 코칭 필요" : store.cancel_rate >= 4 ? "취소율 개선 점검" : "운영 모니터링 유지",
-            level: store.risk_score >= 10 ? "P0" : "P1",
-            status: index % 3 === 0 ? "completed" : index % 3 === 1 ? "pending" : "ignored",
-            proposedAt: "03-16",
-            completedAt: index % 3 === 0 ? "03-16" : undefined,
-          })),
-        );
+        const nextStores = storeResponse.map((store) => ({ id: store.id, name: store.name }));
+        setStores(nextStores);
+        setSummaries(actionResponse);
+        setEscForm((prev) => ({ ...prev, storeId: prev.storeId || nextStores[0]?.id || "" }));
       })
       .catch(() => {
         if (!alive) return;
-        setStoreNames([]);
-        setActionRecords([]);
+        setStores([]);
+        setSummaries([]);
       });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const filtered = useMemo(
-    () => actionRecords.filter((a) => {
-      const storeMatch = filterStore === "전체" || a.store === filterStore;
-      const statusMatch = filterStatus === "전체" || a.status === filterStatus;
-      return storeMatch && statusMatch;
-    }),
-    [filterStore, filterStatus],
+    () => summaries.filter((summary) => filterStore === "전체" || summary.store_name === filterStore),
+    [filterStore, summaries],
   );
 
-  // 이행률 계산
   const rateByStore = useMemo(
-    () => storeNames.map((name) => {
-      const acts = actionRecords.filter((a) => a.store === name);
-      const done = acts.filter((a) => a.status === "completed").length;
-      return { name, done, total: acts.length, rate: acts.length > 0 ? Math.round((done / acts.length) * 100) : 0 };
-    }),
-    [],
+    () => summaries.map((summary) => ({
+      name: summary.store_name,
+      done: summary.executed,
+      total: summary.total_actions,
+      rate: Math.round(summary.execution_rate * 100),
+    })),
+    [summaries],
   );
 
-  const handleEsc = () => {
+  const handleEsc = async () => {
     if (!escForm.content.trim()) return;
-    setEscSent(true);
-    setTimeout(() => {
-      setShowEscModal(false);
+    try {
+      await escalateAction(escForm.storeId, {
+        store_id: escForm.storeId,
+        title: `[${escForm.level}] 현장 리스크 보고`,
+        description: escForm.content,
+        severity: escForm.level,
+      });
+      setEscSent(true);
+      setTimeout(() => {
+        setShowEscModal(false);
+        setEscSent(false);
+        setEscForm((current) => ({ ...current, content: "" }));
+      }, 1500);
+    } catch {
       setEscSent(false);
-      setEscForm((f) => ({ ...f, content: "" }));
-    }, 1500);
+    }
   };
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
         <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-primary">현장 코칭</p>
               <h2 className="text-2xl font-bold text-foreground">운영 액션 관리</h2>
-              <p className="mt-1 text-base text-muted-foreground">점주에게 제안된 AI 액션의 이행 현황을 모니터링하고 이슈를 보고합니다.</p>
+              <p className="mt-1 text-base text-muted-foreground">점주 액션 이행률과 보류 현황을 실제 API 기준으로 확인하고 이슈를 보고합니다.</p>
             </div>
             <button
               onClick={() => setShowEscModal(true)}
@@ -127,38 +102,41 @@ export const SvActionsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* 이행률 Summary */}
         <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
-          <div className="flex items-center gap-2 mb-6">
+          <div className="mb-6 flex items-center gap-2">
             <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
               <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-bold text-foreground">매장별 가이드 이행률</h3>
           </div>
-          
+
           <div className="space-y-5">
-            {rateByStore.map((r) => (
-              <div key={r.name} className="group flex items-center gap-4">
-                <span className="w-20 shrink-0 text-sm font-bold text-[#34415b]">{r.name}</span>
+            {rateByStore.map((rate) => (
+              <div key={rate.name} className="group flex items-center gap-4">
+                <span className="w-20 shrink-0 text-sm font-bold text-[#34415b]">{rate.name}</span>
                 <div className="flex-1">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted)] shadow-inner">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-1000 shadow-sm",
-                        r.rate === 100 ? "bg-emerald-400" : r.rate >= 50 ? "bg-primary" : "bg-red-400"
+                        rate.rate === 100 ? "bg-emerald-400" : rate.rate >= 50 ? "bg-primary" : "bg-red-400",
                       )}
-                      style={{ width: `${r.rate}%` }}
+                      style={{ width: `${rate.rate}%` }}
                     />
                   </div>
                 </div>
                 <div className="flex w-32 shrink-0 items-center justify-end gap-3">
-                  <span className="text-[11px] font-bold text-[var(--subtle-foreground)] font-mono">{r.done}/{r.total} <span className="opacity-60">ACTS</span></span>
+                  <span className="font-mono text-[11px] font-bold text-[var(--subtle-foreground)]">
+                    {rate.done}/{rate.total} <span className="opacity-60">ACTS</span>
+                  </span>
                   <span className={cn(
                     "w-12 text-right text-sm font-black",
-                    r.rate === 100 ? "text-emerald-600" : r.rate >= 50 ? "text-[#2f66ff]" : "text-red-600"
-                  )}>{r.rate}%</span>
-                  {r.rate < 50 && (
-                    <span className="rounded bg-red-50 px-1.5 py-0.5 text-[9px] font-black text-red-600 border border-red-100 shadow-sm animate-pulse">
+                    rate.rate === 100 ? "text-emerald-600" : rate.rate >= 50 ? "text-[#2f66ff]" : "text-red-600",
+                  )}>
+                    {rate.rate}%
+                  </span>
+                  {rate.rate < 50 && (
+                    <span className="animate-pulse rounded border border-red-100 bg-red-50 px-1.5 py-0.5 text-[9px] font-black text-red-600 shadow-sm">
                       RISK
                     </span>
                   )}
@@ -168,39 +146,25 @@ export const SvActionsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Action List */}
         <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="rounded-lg bg-[#eef3ff] p-1.5 shadow-sm">
                 <Clock className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">전체 액션 히스토리</h3>
+              <h3 className="text-lg font-bold text-foreground">매장별 액션 이행 현황</h3>
             </div>
             <div className="flex flex-wrap gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-1.5 shadow-sm">
               <select
                 value={filterStore}
                 onChange={(e) => setFilterStore(e.target.value)}
-                className="h-8 rounded-lg bg-card px-3 text-[11px] font-bold text-[#4a5568] shadow-sm outline-none border border-[var(--border)]"
+                className="h-8 rounded-lg border border-[var(--border)] bg-card px-3 text-[11px] font-bold text-[#4a5568] shadow-sm outline-none"
               >
                 <option value="전체">전체 매장</option>
-                {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                {stores.map((store) => (
+                  <option key={store.id} value={store.name}>{store.name}</option>
+                ))}
               </select>
-              <div className="w-px h-8 bg-[var(--border)] mx-1 hidden sm:block" />
-              {(["전체", "completed", "pending", "ignored"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setFilterStatus(s)}
-                  className={cn(
-                    "rounded-lg px-3 py-1 text-[11px] font-black transition-all",
-                    filterStatus === s
-                      ? "bg-card text-[#2f66ff] shadow-sm"
-                      : "text-[var(--subtle-foreground)] hover:text-[#4a5568]"
-                  )}
-                >
-                  {s === "전체" ? "ALL" : statusLabel[s].toUpperCase()}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -209,48 +173,54 @@ export const SvActionsPage: React.FC = () => {
               <thead className="bg-[#f4f7ff] text-[#4a5568]">
                 <tr>
                   <th className="px-4 py-3 font-bold">매장명</th>
-                  <th className="px-4 py-3 font-bold">액션 타이틀</th>
-                  <th className="px-4 py-3 font-bold text-center">우선순위</th>
-                  <th className="px-4 py-3 font-bold text-center">제안일</th>
-                  <th className="px-4 py-3 font-bold text-center">이행일</th>
+                  <th className="px-4 py-3 text-center font-bold">전체 액션</th>
+                  <th className="px-4 py-3 text-center font-bold">실행 완료</th>
+                  <th className="px-4 py-3 text-center font-bold">보류</th>
+                  <th className="px-4 py-3 text-center font-bold">미이행</th>
                   <th className="px-4 py-3 text-right font-bold">현재 상태</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((a) => (
-                  <tr key={a.id} className="border-t border-border transition-colors hover:bg-[var(--panel-soft)]/50 font-medium">
-                    <td className="px-4 py-4 font-bold text-[#1a2138]">{a.store}</td>
-                    <td className="px-4 py-4 text-[#4a5568] text-[13px]">{a.title}</td>
-                    <td className="px-4 py-4 text-center">
-                      <span className={cn(
-                        "rounded px-2 py-0.5 text-[10px] font-black text-white shadow-sm",
-                        a.level === "P0" ? "bg-red-500" : "bg-amber-500"
-                      )}>
-                        {a.level}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center text-[var(--subtle-foreground)] font-mono text-xs">{a.proposedAt}</td>
-                    <td className="px-4 py-4 text-center text-[var(--subtle-foreground)] font-mono text-xs">{a.completedAt ?? "-"}</td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex justify-end">
-                        <span className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold shadow-sm",
-                          statusClass[a.status]
-                        )}>
-                          {statusIcon[a.status]}
-                          {statusLabel[a.status]}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((summary) => {
+                  const pendingCount = Math.max(summary.total_actions - summary.executed - summary.deferred, 0);
+                  const executionRate = Math.round(summary.execution_rate * 100);
+                  return (
+                    <tr key={summary.store_id} className="border-t border-border transition-colors hover:bg-[var(--panel-soft)]/50 font-medium">
+                      <td className="px-4 py-4 font-bold text-[#1a2138]">{summary.store_name}</td>
+                      <td className="px-4 py-4 text-center text-[#4a5568]">{summary.total_actions}</td>
+                      <td className="px-4 py-4 text-center text-emerald-600">{summary.executed}</td>
+                      <td className="px-4 py-4 text-center text-amber-600">{summary.deferred}</td>
+                      <td className="px-4 py-4 text-center text-[var(--subtle-foreground)]">{pendingCount}</td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end">
+                          <span className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold shadow-sm",
+                            executionRate >= 80
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : executionRate >= 40
+                                ? "border-amber-200 bg-amber-50 text-amber-700"
+                                : "border-[#d5deec] bg-card text-[var(--subtle-foreground)]",
+                          )}>
+                            {executionRate >= 80 ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            ) : executionRate >= 40 ? (
+                              <Clock className="h-4 w-4 text-amber-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-[#b0bdd4]" />
+                            )}
+                            이행률 {executionRate}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </section>
       </div>
 
-      {/* Escalation Modal */}
       {showEscModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/45 p-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl">
@@ -261,25 +231,27 @@ export const SvActionsPage: React.FC = () => {
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#34415b]">대상 매장</label>
                 <select
-                  value={escForm.store}
-                  onChange={(e) => setEscForm((f) => ({ ...f, store: e.target.value }))}
+                  value={escForm.storeId}
+                  onChange={(e) => setEscForm((current) => ({ ...current, storeId: e.target.value }))}
                   className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm"
                 >
-                  {storeNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                  {stores.map((store) => (
+                    <option key={store.id} value={store.id}>{store.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#34415b]">긴급도</label>
                 <div className="flex gap-2">
-                  {(["P0", "P1"] as const).map((l) => (
+                  {(["P0", "P1"] as const).map((level) => (
                     <button
-                      key={l}
-                      onClick={() => setEscForm((f) => ({ ...f, level: l }))}
+                      key={level}
+                      onClick={() => setEscForm((current) => ({ ...current, level }))}
                       className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                        escForm.level === l ? "border-red-300 bg-red-500 text-white" : "border-[#d5deec] bg-card text-[#4a5568]"
+                        escForm.level === level ? "border-red-300 bg-red-500 text-white" : "border-[#d5deec] bg-card text-[#4a5568]"
                       }`}
                     >
-                      {l}
+                      {level}
                     </button>
                   ))}
                 </div>
@@ -288,10 +260,10 @@ export const SvActionsPage: React.FC = () => {
                 <label className="mb-1 block text-sm font-medium text-[#34415b]">보고 내용</label>
                 <textarea
                   value={escForm.content}
-                  onChange={(e) => setEscForm((f) => ({ ...f, content: e.target.value }))}
+                  onChange={(e) => setEscForm((current) => ({ ...current, content: e.target.value }))}
                   placeholder="이슈 내용을 상세히 입력하세요..."
                   rows={4}
-                  className="w-full rounded-xl border border-[#d5deec] bg-card px-3 py-2 text-sm resize-none focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-[#d5deec] bg-card px-3 py-2 text-sm focus:outline-none"
                 />
               </div>
             </div>

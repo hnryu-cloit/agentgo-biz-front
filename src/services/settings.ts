@@ -1,6 +1,5 @@
 import { get, patch, post } from "../lib/apiClient";
 import type {
-  ListResponse,
   StoreResponse,
   StoreUpdateRequest,
   UserCreateRequest,
@@ -11,8 +10,8 @@ import type {
 // Users
 // ---------------------------------------------------------------------------
 
-export function getUsers(): Promise<ListResponse<UserResponse>> {
-  return get<ListResponse<UserResponse>>("/users");
+export function getUsers(): Promise<UserResponse[]> {
+  return get<UserResponse[]>("/users");
 }
 
 export function createUser(body: UserCreateRequest): Promise<UserResponse> {
@@ -27,8 +26,8 @@ export function setUserActive(userId: string, isActive: boolean): Promise<UserRe
 // Stores
 // ---------------------------------------------------------------------------
 
-export function getStores(): Promise<ListResponse<StoreResponse>> {
-  return get<ListResponse<StoreResponse>>("/stores");
+export function getStores(): Promise<StoreResponse[]> {
+  return get<StoreResponse[]>("/stores");
 }
 
 export function getStore(storeId: string): Promise<StoreResponse> {

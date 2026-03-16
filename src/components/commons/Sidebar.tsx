@@ -109,7 +109,7 @@ export const Sidebar: React.FC = () => {
           <img src={Logo} alt="AgentGo" className="h-7 w-auto" />
         </NavLink>
 
-        {/* 역할 선택 */}
+        {/* 역할 선택 셀렉트박스 */}
         <div className="mt-5 relative">
           <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">
             {roleConfig[role].icon}
