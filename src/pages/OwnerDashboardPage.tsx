@@ -1,326 +1,308 @@
 import type React from "react";
-import { useMemo, useState } from "react";
-import {
-  Bot,
-  DollarSign,
-  Users,
-  ShoppingBag,
-  Sparkles,
-  Zap,
-  BarChart2,
-  CheckCircle2,
-  AlertTriangle,
-  Megaphone,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Info,
-  Calendar,
-} from "lucide-react";
-import { storeResources } from "@/data/mockStoreResource";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, BarChart2, DollarSign, Megaphone, RefreshCw, ShoppingBag, Sparkles, TrendingDown, TrendingUp, Users, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCustomerInsights, getOwnerDashboard, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
 
-type ActionItem = {
-  id: number;
-  level: "P0" | "P1";
-  title: string;
-  why: string;
-  impact: string;
-  proof: string[];
+const emptyDashboard: OwnerDashboard = {
+  store_key: null,
+  store_name: "매장",
+  latest_date: null,
+  today_revenue: 0,
+  revenue_vs_yesterday: 0,
+  transaction_count: 0,
+  avg_order_value: 0,
+  cancel_rate: 0,
+  peak_hour: null,
+  kpi_trend: [],
 };
 
-const actions: ActionItem[] = [
+const actionTemplates = [
   {
     id: 1,
-    level: "P0",
-    title: "14~17시 세트A 타임 프로모션 실행",
-    why: "비피크 시간대 고객 수가 전주 대비 31% 낮습니다.",
-    impact: "예상 매출 +₩110,000",
-    proof: ["비피크 방문객 12명 (전주 18명)", "우천 시 배달 주문 평균 +23%", "세트A 적용 시 객단가 +2,100원"],
+    level: "P0" as const,
+    title: "객수 회복 프로모션 점검",
+    why: "전일 대비 매출과 객수 흐름을 함께 확인해야 합니다.",
+    impact: "비피크 시간대 매출 회복",
   },
   {
     id: 2,
-    level: "P0",
-    title: "이탈 징후 고객 42명 쿠폰 발송",
-    why: "미방문 기간 평균이 34일로 증가했습니다.",
-    impact: "예상 복귀 고객 12명",
-    proof: ["30일 이상 미방문 비중 +18%p", "유사 캠페인 복귀율 24%", "예상 ROI 3.8x"],
+    level: "P1" as const,
+    title: "객단가 상향 메뉴 제안",
+    why: "평균 객단가와 결제건수 조합을 기준으로 업셀링 포인트를 확인합니다.",
+    impact: "객단가 개선",
   },
   {
     id: 3,
-    level: "P1",
-    title: "메뉴B 가격 시뮬레이션 검토",
-    why: "원가 상승으로 메뉴B 마진이 18.1%까지 하락했습니다.",
-    impact: "가격 인상안별 손익 비교",
-    proof: ["목표 마진 22% 대비 -3.9%p", "+500원 인상 시 마진 +2.1%p", "판매량 탄력성 위험: 보통"],
+    level: "P1" as const,
+    title: "환불 비중 점검",
+    why: "취소율이 높아지면 운영 품질 이슈로 이어질 수 있습니다.",
+    impact: "취소율 안정화",
   },
 ];
 
-const kpis = [
-  { label: "어제 총 매출", value: "₩870,000", delta: "-12%", sub: "전주 동요일 대비", down: true, icon: DollarSign },
-  { label: "방문 객수", value: "124", delta: "-18%", sub: "전주 동요일 대비", down: true, icon: Users },
-  { label: "평균 객단가", value: "₩7,016", delta: "+2.3%", sub: "전주 동요일 대비", down: false, icon: ShoppingBag },
-];
-
-const dayCurve = [52, 61, 74, 48, 57, 83, 69];
-const avgCurve = [60, 65, 70, 55, 62, 75, 72];
-
-const marginAlerts = [
-  { menu: "메뉴B (아메리카노)", margin: 18.1, target: 22 },
-  { menu: "메뉴F (카페라떼)", margin: 20.4, target: 22 },
-];
-
 export const OwnerDashboardPage: React.FC = () => {
-  const store = storeResources[0];
-  const [proofModal, setProofModal] = useState<number | null>(null);
-  const [confirmModal, setConfirmModal] = useState<number | null>(null);
+  const [dashboard, setDashboard] = useState<OwnerDashboard>(emptyDashboard);
+  const [insights, setInsights] = useState<CustomerInsights | null>(null);
   const [done, setDone] = useState<number[]>([]);
 
-  const currentProof = useMemo(() => actions.find((a) => a.id === proofModal) ?? null, [proofModal]);
-  const currentConfirm = useMemo(() => actions.find((a) => a.id === confirmModal) ?? null, [confirmModal]);
-  const maxCurve = Math.max(...dayCurve, ...avgCurve);
+  useEffect(() => {
+    let alive = true;
+    getOwnerDashboard()
+      .then((response) => {
+        if (!alive) return;
+        setDashboard(response);
+        const key = response.store_key ?? undefined;
+        return getCustomerInsights(key, 90);
+      })
+      .then((ins) => {
+        if (!alive || !ins) return;
+        setInsights(ins);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setDashboard(emptyDashboard);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const trendMax = Math.max(...dashboard.kpi_trend.map((item) => item.revenue), 1);
+  const achievementRate = dashboard.today_revenue > 0 ? Math.min(100, Math.round((dashboard.today_revenue / Math.max(dashboard.today_revenue - dashboard.revenue_vs_yesterday, 1)) * 100)) : 0;
+
+  const actionBoard = useMemo(
+    () => actionTemplates.map((action) => ({
+      ...action,
+      why: action.id === 1
+        ? `전일 대비 매출 변화는 ${dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}${dashboard.revenue_vs_yesterday.toLocaleString()}원 입니다.`
+        : action.id === 2
+          ? `현재 평균 객단가는 ${dashboard.avg_order_value.toLocaleString()}원 입니다.`
+          : `현재 취소율은 ${(dashboard.cancel_rate * 100).toFixed(2)}% 입니다.`,
+    })),
+    [dashboard],
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="live-point" />
-            <span className="ds-eyebrow">Real-time Operations</span>
-          </div>
-          <h1 className="ds-page-title">{store?.name} <span className="text-muted-foreground font-light">|</span> 점주 대시보드</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <Bot className="h-4 w-4 text-primary animate-pulse" />
-            <span className="text-xs font-black uppercase tracking-widest text-foreground">AI Agent Active</span>
-          </div>
-          <button className="ds-button ds-button-outline h-10 px-4">
-            <Calendar className="h-4 w-4 mr-2" />
-            운영 리포트
-          </button>
-        </div>
-      </div>
-
-      {/* AI Morning Briefing */}
-      <section className="ds-ai-panel">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Sparkles className="h-24 w-24 text-primary" />
-        </div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center shadow-xl shadow-primary/30">
-              <Megaphone className="h-7 w-7 text-white" />
+    <div className="space-y-6 pb-10">
+      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
+              <Megaphone className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="ds-section-title text-xl font-black">AI 모닝 브리핑</h2>
-              <p className="text-sm text-muted-foreground font-medium">2026-03-15 · 데이터 기반 최적화 가이드</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">모닝 브리핑</p>
+              <p className="mt-0.5 text-sm font-bold text-slate-900">{dashboard.store_name} 최신 브리핑</p>
             </div>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              { label: "전일 실적", val: "₩870,000", sub: "목표 104% 달성", status: "success", info: "객단가 상승이 긍정적입니다." },
-              { label: "오늘 예측", val: "₩912,000", sub: "배달 주문 +15% 전망", status: "info", info: "오후 2시 비 예보 대응 필요." },
-              { label: "리스크 감지", val: "재고 부족 의심", sub: "미확인 공지 1건", status: "warning", info: "포장재 실사 마감이 임박했습니다." },
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 p-5 shadow-sm group hover:border-primary/20 transition-all">
-                <p className="ds-eyebrow !text-[10px] mb-2">{item.label}</p>
-                <p className="text-xl font-black text-foreground mb-2">{item.val}</p>
-                <span className={cn(
-                  "ds-badge mb-3",
-                  item.status === "success" ? "ds-badge-success" : item.status === "info" ? "ds-badge-info" : "ds-badge-warning"
-                )}>{item.sub}</span>
-                <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5 font-medium">
-                  <Info className="h-3 w-3 mt-0.5 shrink-0" /> {item.info}
-                </p>
-              </div>
-            ))}
+          <span className="shrink-0 text-xs text-slate-400">{dashboard.latest_date ?? "데이터 없음"}</span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
+            <p className="text-xs font-medium text-slate-500">전일 실적</p>
+            <p className="mt-1 text-sm font-bold text-slate-900">매출 {dashboard.today_revenue.toLocaleString()}원</p>
+            <p className={cn("text-xs", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
+              전일 대비 {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}원
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
+            <p className="text-xs font-medium text-slate-500">운영 핵심</p>
+            <p className="mt-1 text-sm font-bold text-slate-900">결제건수 {dashboard.transaction_count.toLocaleString()}건</p>
+            <p className="text-xs text-emerald-600">평균 객단가 {dashboard.avg_order_value.toLocaleString()}원</p>
+          </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
+            <p className="text-xs font-medium text-amber-700">주의 지표</p>
+            <p className="mt-1 text-sm font-bold text-slate-900">취소율 {(dashboard.cancel_rate * 100).toFixed(2)}%</p>
+            <p className="text-xs text-amber-600">매출 피크 포인트 {dashboard.peak_hour ?? "-"}</p>
           </div>
         </div>
       </section>
 
-      {/* KPI Stats */}
-      <section className="grid gap-5 md:grid-cols-4">
-        {kpis.map((kpi) => (
-          <article key={kpi.label} className="ds-kpi-card">
-            <div className="flex items-center justify-between">
-              <p className="ds-kpi-label">{kpi.label}</p>
-              <div className={cn(
-                "ds-kpi-delta shadow-sm",
-                kpi.down ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
-              )}>
-                {kpi.down ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
-                {kpi.delta}
-              </div>
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-3 py-1 text-xs font-semibold text-[#2454C8]">
+                {dashboard.store_name}
+              </span>
+              <span className="text-sm text-slate-400">최신 기준 {dashboard.latest_date ?? "-"}</span>
             </div>
-            <p className="ds-kpi-value">{kpi.value}</p>
-            <p className="text-[11px] font-bold text-subtle-foreground uppercase tracking-widest">{kpi.sub}</p>
-          </article>
-        ))}
-        
-        {/* Target Gauge */}
-        <article className="ds-kpi-card bg-ai-gradient border-none text-white relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform">
-            <Sparkles className="h-16 w-16" />
+            <h2 className="text-2xl font-bold text-slate-900">점주 대시보드</h2>
+            <p className="mt-1 text-base text-slate-500">실제 resource 집계 기준으로 매장 운영 상태를 확인합니다.</p>
           </div>
-          <div className="relative z-10">
-            <p className="ds-kpi-label !text-white/70">AI 예상 달성률</p>
-            <div className="flex items-end gap-2 mt-2">
-              <p className="ds-kpi-value !text-white leading-none">104%</p>
-              <p className="text-[11px] font-black uppercase mb-1.5 opacity-80">Over Target</p>
+          <div className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF]">
+              <Sparkles className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-4 h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full shadow-[0_0_10px_white]" style={{ width: "100%" }} />
+            <div>
+              <p className="text-sm font-semibold text-slate-900">AI 예상 달성률 {achievementRate}%</p>
+              <p className="text-xs text-slate-500">전일 흐름 기준 추정</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-4">
+        {[
+          { label: "매출", value: `${dashboard.today_revenue.toLocaleString()}원`, delta: dashboard.revenue_vs_yesterday >= 0 ? "상승" : "하락", tone: dashboard.revenue_vs_yesterday >= 0 ? "emerald" : "red", icon: DollarSign },
+          { label: "결제건수", value: `${dashboard.transaction_count.toLocaleString()}건`, delta: dashboard.latest_date ?? "-", tone: "blue", icon: Users },
+          { label: "평균 객단가", value: `${dashboard.avg_order_value.toLocaleString()}원`, delta: "AOV", tone: "blue", icon: ShoppingBag },
+          { label: "취소율", value: `${(dashboard.cancel_rate * 100).toFixed(2)}%`, delta: dashboard.cancel_rate > 0.03 ? "주의" : "안정", tone: dashboard.cancel_rate > 0.03 ? "amber" : "emerald", icon: AlertTriangle },
+        ].map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
+                <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+              </div>
+              <p className="mt-3 text-2xl font-bold text-slate-900">{kpi.value}</p>
+              <p className={cn("mt-1.5 text-sm font-medium", kpi.tone === "red" ? "text-red-600" : kpi.tone === "amber" ? "text-amber-600" : kpi.tone === "emerald" ? "text-emerald-600" : "text-slate-500")}>
+                {kpi.delta}
+              </p>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-bold text-slate-900">오늘의 운영 액션 보드</h3>
+          <span className="ml-auto rounded border border-[#DCE4F3] bg-[#F7FAFF] px-2 py-0.5 text-xs font-medium text-slate-500">
+            {done.length}/{actionBoard.length} 완료
+          </span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {actionBoard.map((action) => (
+            <article
+              key={action.id}
+              className={cn(
+                "rounded-xl border p-4 transition-all",
+                done.includes(action.id) ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF]",
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn("rounded px-2 py-0.5 text-xs font-semibold text-white", action.level === "P0" ? "bg-red-500" : "bg-amber-500")}>
+                      {action.level}
+                    </span>
+                    <p className="font-semibold text-slate-900">{action.title}</p>
+                  </div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{action.why}</p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#CFE0FF] bg-white px-2.5 py-1">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    <span className="text-xs font-semibold text-primary">{action.impact}</span>
+                  </div>
+                </div>
+                {!done.includes(action.id) && (
+                  <button
+                    onClick={() => setDone((prev) => [...prev, action.id])}
+                    className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
+                  >
+                    실행
+                  </button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="h-5 w-5 text-slate-400" />
+            <h3 className="text-lg font-bold text-slate-900">매출 트렌드</h3>
+          </div>
+          <div className="mt-4 flex h-44 items-end gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-3 pb-3 pt-4">
+            {dashboard.kpi_trend.map((point) => (
+              <div key={point.label} className="flex flex-1 flex-col items-center gap-1">
+                <div className="w-full rounded-t bg-primary/80" style={{ height: `${(point.revenue / trendMax) * 100}%` }} />
+                <span className="text-[10px] text-slate-400">{point.label}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2">
+            {dashboard.revenue_vs_yesterday >= 0 ? <TrendingUp className="h-5 w-5 text-emerald-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />}
+            <h3 className="text-lg font-bold text-slate-900">운영 해석</h3>
+          </div>
+          <div className="mt-4 space-y-3 text-sm text-slate-600">
+            <p>현재 매출은 <strong className="text-slate-900">{dashboard.today_revenue.toLocaleString()}원</strong> 입니다.</p>
+            <p>전일 대비 변화는 <strong className={dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-600"}>{dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}원</strong> 입니다.</p>
+            <p>결제건수와 객단가를 함께 보면 운영 원인 해석이 더 정확합니다. 현재 객단가는 <strong className="text-slate-900">{dashboard.avg_order_value.toLocaleString()}원</strong> 입니다.</p>
           </div>
         </article>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        {/* Actions Section */}
-        <section className="lg:col-span-7 ds-card">
-          <div className="ds-card-header">
-            <div className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-primary fill-primary" />
-              <h3 className="ds-section-title">운영 최적화 액션</h3>
-            </div>
-            <span className="ds-badge ds-badge-info">{done.length}/{actions.length} Completed</span>
+      {insights && (
+        <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold text-slate-900">고객 인사이트</h3>
+            <span className="ml-auto text-xs text-slate-400">도도포인트 기준 · 최근 90일</span>
           </div>
-          <div className="p-6 space-y-4">
-            {actions.map((action) => (
-              <article key={action.id} className={cn(
-                "p-5 rounded-2xl border transition-all",
-                done.includes(action.id) ? "bg-panel-soft/50 opacity-50 grayscale" : "bg-white border-border hover:border-primary/30 hover:shadow-md"
-              )}>
-                <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm transition-colors",
-                    done.includes(action.id) ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                  )}>
-                    {done.includes(action.id) ? <CheckCircle2 className="h-5 w-5" /> : `0${action.id}`}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={cn("ds-badge", action.level === "P0" ? "ds-badge-danger" : "ds-badge-warning")}>{action.level}</span>
-                      <h4 className="font-bold text-foreground">{action.title}</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground font-medium mb-4 leading-relaxed">{action.why}</p>
-                    {!done.includes(action.id) && (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-primary font-black text-xs uppercase tracking-tighter">
-                          <TrendingUp className="h-3.5 w-3.5" /> {action.impact}
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => setProofModal(action.id)} className="ds-button ds-button-ghost h-9 px-4 !text-[10px] uppercase tracking-widest">Evidence</button>
-                          <button onClick={() => setConfirmModal(action.id)} className="ds-button ds-button-primary h-9 px-4 !text-[10px] uppercase tracking-widest shadow-none">Run Now</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </article>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              { label: "고유 고객수", value: `${insights.unique_customers.toLocaleString()}명`, tone: "blue" },
+              { label: "재방문율", value: `${(insights.return_rate * 100).toFixed(1)}%`, tone: insights.return_rate >= 0.5 ? "emerald" : "amber" },
+              { label: "최근 7일 방문", value: `${insights.recent_7d_visits.toLocaleString()}건`, tone: "blue" },
+              {
+                label: "방문 추세",
+                value: `${insights.visit_trend_delta_pct >= 0 ? "+" : ""}${insights.visit_trend_delta_pct.toFixed(1)}%`,
+                tone: insights.visit_trend_delta_pct >= 0 ? "emerald" : "red",
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
+                <p className="text-xs font-medium text-slate-500">{item.label}</p>
+                <p className={cn("mt-1 text-xl font-bold",
+                  item.tone === "emerald" ? "text-emerald-600" :
+                  item.tone === "red" ? "text-red-500" :
+                  item.tone === "amber" ? "text-amber-600" : "text-slate-900"
+                )}>{item.value}</p>
+              </div>
             ))}
           </div>
-        </section>
 
-        {/* Right Sidebar Charts */}
-        <div className="lg:col-span-5 space-y-8">
-          <article className="ds-card p-6">
-            <div className="flex items-center justify-between mb-8 border-b border-border/50 pb-4">
-              <h3 className="ds-section-title text-base flex items-center gap-2">
-                <BarChart2 className="h-4 w-4 text-muted-foreground" />
-                시간대별 매출 추이
-              </h3>
-              <div className="flex gap-3 text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Today</span>
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-muted" /> Avg</span>
+          {insights.daily_trend.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-slate-500">일별 방문 추이</p>
+              <div className="flex h-20 items-end gap-0.5 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-2 pb-2 pt-3">
+                {(() => {
+                  const maxV = Math.max(...insights.daily_trend.map((d) => d.visit_count), 1);
+                  const step = Math.max(1, Math.floor(insights.daily_trend.length / 30));
+                  const visible = insights.daily_trend.filter((_, i) => i % step === 0).slice(-30);
+                  return visible.map((d) => (
+                    <div
+                      key={d.date}
+                      title={`${d.date}: ${d.visit_count}건`}
+                      className="flex-1 rounded-t bg-primary/70 min-w-0"
+                      style={{ height: `${(d.visit_count / maxV) * 100}%` }}
+                    />
+                  ));
+                })()}
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                <span>{insights.daily_trend[0]?.date}</span>
+                <span>{insights.daily_trend[insights.daily_trend.length - 1]?.date}</span>
               </div>
             </div>
-            <div className="flex h-32 items-end gap-2 px-1">
-              {dayCurve.map((point, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center h-full group">
-                  <div className="relative w-full flex-1 flex items-end justify-center gap-[1px]">
-                    <div className="w-1/2 bg-muted/40 rounded-t-sm" style={{ height: `${(avgCurve[idx] / maxCurve) * 100}%` }} />
-                    <div className="w-1/2 bg-primary rounded-t-sm group-hover:bg-primary-hover transition-colors" style={{ height: `${(point / maxCurve) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4 px-1 text-[10px] font-black text-subtle-foreground font-mono">
-              {["09h", "12h", "15h", "18h", "21h"].map(t => <span key={t}>{t}</span>)}
-            </div>
-          </article>
+          )}
 
-          <article className="ds-card overflow-hidden">
-            <div className="ds-card-header bg-red-50/30">
-              <h3 className="ds-section-title text-base flex items-center gap-2 text-red-600">
-                <AlertTriangle className="h-4 w-4" />
-                마진 가드 경보
-              </h3>
-              <span className="ds-badge ds-badge-danger shadow-none">Attention</span>
-            </div>
-            <div className="p-6 space-y-4">
-              {marginAlerts.map((alert) => (
-                <div key={alert.menu} className="p-4 rounded-2xl bg-panel-soft/50 border border-border/50 flex items-center justify-between group hover:border-red-200 transition-all">
-                  <div>
-                    <p className="text-sm font-black text-foreground">{alert.menu}</p>
-                    <p className="text-[11px] font-bold text-red-500 mt-1 uppercase tracking-tighter">Margin: {alert.margin}% (Target: {alert.target}%)</p>
-                  </div>
-                  <button className="ds-button ds-button-ghost !h-8 !px-3 !text-[10px] uppercase font-black tracking-widest group-hover:text-primary group-hover:bg-white shadow-sm border border-transparent group-hover:border-border">Simulate →</button>
-                </div>
-              ))}
-            </div>
-          </article>
-        </div>
-      </div>
-
-      {/* Proof Modal */}
-      {currentProof && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xl ds-glass p-8 rounded-3xl border-white/20 shadow-2xl animate-in zoom-in-95 duration-200 text-foreground">
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="ds-section-title text-2xl font-black italic">Action Evidence</h4>
-              <button onClick={() => setProofModal(null)} className="ds-button ds-button-ghost !h-10 !w-10 !p-0 rounded-full hover:bg-white/20 transition-colors">✕</button>
-            </div>
-            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 mb-8">
-              <p className="ds-eyebrow mb-2">Target Strategy</p>
-              <p className="text-lg font-black text-primary italic underline underline-offset-4 decoration-primary/30">{currentProof.title}</p>
-            </div>
-            <div className="space-y-4">
-              <p className="ds-eyebrow !text-muted-foreground/60 mb-2">Diagnostic Data Points</p>
-              {currentProof.proof.map((line, i) => (
-                <div key={line} className="flex items-start gap-4 p-4 bg-white/50 rounded-2xl border border-border/50 shadow-sm">
-                  <span className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-black shrink-0 border border-primary/10 font-mono">{i + 1}</span>
-                  <p className="text-sm font-bold leading-relaxed">{line}</p>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setProofModal(null)} className="ds-button ds-button-primary w-full mt-10 h-14 !rounded-2xl shadow-2xl shadow-primary/30 uppercase tracking-[0.2em] font-black">Close Investigation</button>
+          <div className="mt-3 flex items-center gap-4 text-xs text-slate-500 border-t border-[#DCE4F3] pt-3">
+            <span><RefreshCw className="inline h-3 w-3 mr-1" />적립 {insights.earn_count.toLocaleString()}건</span>
+            <span>사용 {insights.use_count.toLocaleString()}건</span>
+            <span className="ml-auto">기준일 {insights.latest_date ?? "-"}</span>
           </div>
-        </div>
-      )}
-
-      {/* Confirm Modal */}
-      {currentConfirm && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md ds-card p-8 shadow-2xl animate-in zoom-in-95 duration-200 border-none">
-            <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8 mx-auto">
-              <Zap className="h-10 w-10 text-primary fill-primary animate-pulse" />
-            </div>
-            <h4 className="ds-section-title text-2xl text-center mb-2 font-black">Confirm Execution?</h4>
-            <p className="text-muted-foreground text-center mb-8 font-medium italic">이 제안을 즉시 가맹점에 적용하시겠습니까?</p>
-            <div className="bg-panel-soft rounded-2xl p-5 mb-10 text-center border border-border/50">
-              <p className="text-sm font-black text-foreground uppercase tracking-tight leading-relaxed">{currentConfirm.title}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => setConfirmModal(null)} className="ds-button ds-button-outline h-14 uppercase tracking-widest font-black">Dismiss</button>
-              <button onClick={() => { setDone((prev) => [...prev, currentConfirm.id]); setConfirmModal(null); }} className="ds-button ds-button-primary bg-ai-gradient border-none h-14 uppercase tracking-widest font-black shadow-2xl shadow-primary/30">Deploy Action</button>
-            </div>
-          </div>
-        </div>
+        </section>
       )}
     </div>
   );

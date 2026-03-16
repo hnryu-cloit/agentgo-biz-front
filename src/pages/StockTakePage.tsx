@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -14,8 +14,9 @@ import {
   AlertCircle,
   Calendar,
 } from "lucide-react";
-import { storeNames } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { getInventoryItems, getInventorySummary, getTheoreticalInventory, getMenuCosts } from "@/services/inventory";
+import { getResourceCatalog } from "@/services/data";
 
 type Category = "전체" | "육류/어패류" | "채소/과일" | "양념/소스" | "건식품/곡류";
 type StockItem = {
@@ -61,8 +62,11 @@ function diffRate(theoretical: number, actual: number | null): number | null {
 
 export const StockTakePage = () => {
   const [selectedMonth, setSelectedMonth] = useState("2026-03");
+  const [selectedStore, setSelectedStore] = useState("소공점");
+  const [storeOptions, setStoreOptions] = useState<string[]>(["소공점"]);
   const [activeCategory, setActiveCategory] = useState<Category>("전체");
   const [items, setItems] = useState<StockItem[]>(initialItems);
+  const [history, setHistory] = useState(historyData);
   const [savedBanner, setSavedBanner] = useState(false);
 
   const filteredItems  = activeCategory === "전체" ? items : items.filter((it) => it.category === activeCategory);
@@ -76,6 +80,75 @@ export const StockTakePage = () => {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, actual: value === "" ? null : parseFloat(value) } : it)));
   };
   const handleSave = () => { setSavedBanner(true); setTimeout(() => setSavedBanner(false), 3000); };
+
+  useEffect(() => {
+    let alive = true;
+    getResourceCatalog()
+      .then((catalog) => {
+        if (!alive) return;
+        const stores = catalog.sources.find((source) => source.source_kind === "menu_lineup")?.stores.map((store) => store.store_key) ?? [];
+        if (stores.length === 0) return;
+        setStoreOptions(stores);
+        setSelectedStore((current) => (stores.includes(current) ? current : stores[0]));
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStoreOptions(["소공점"]);
+      });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      getInventoryItems({ store_id: selectedStore }),
+      getTheoreticalInventory({ store_id: selectedStore }),
+      getInventorySummary({ store_id: selectedStore }),
+    ]).then(([inventoryItems, theoreticalRows, summaryRows]) => {
+      if (!alive) return;
+      if (inventoryItems.length > 0) {
+        const theoreticalById = new Map(theoreticalRows.map((row) => [String(row.item_id), Number(row.theoretical_stock ?? 0)]));
+        setItems(inventoryItems.slice(0, 20).map((item) => ({
+          id: String(item.id),
+          name: item.name,
+          category: (["육류/어패류", "채소/과일", "양념/소스", "건식품/곡류"].includes(item.category) ? item.category : "양념/소스") as Exclude<Category, "전체">,
+          unit: item.unit,
+          theoretical: theoreticalById.get(String(item.id)) ?? item.safety_stock,
+          actual: theoreticalById.get(String(item.id)) ?? item.safety_stock,
+          note: "",
+        })));
+        setHistory([
+          {
+            id: `${selectedStore}-${selectedMonth}`,
+            month: selectedMonth,
+            store: selectedStore,
+            totalItems: inventoryItems.length,
+            normalCount: summaryRows.filter((row) => !row.is_excess).length,
+            shortageCount: summaryRows.filter((row) => row.loss_rate < 0).length,
+            surplusCount: summaryRows.filter((row) => row.is_excess).length,
+            avgLossRate: Number((summaryRows.reduce((acc, row) => acc + Math.abs(row.loss_rate), 0) / Math.max(summaryRows.length, 1) * 100).toFixed(1)),
+            submittedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+          },
+          ...historyData,
+        ]);
+      } else {
+        // 도도포인트 전용 매장(예: 크리스탈제이드) → 메뉴 라인업 원가 데이터로 fallback
+        getMenuCosts(selectedStore).then((menuCosts) => {
+          if (!alive || menuCosts.items.length === 0) return;
+          setItems(menuCosts.items.map((item) => ({
+            id: String(item.id),
+            name: item.menu_name,
+            category: "양념/소스" as Exclude<Category, "전체">,
+            unit: "원",
+            theoretical: item.cost_amount ?? Math.round((item.cost_rate ?? 0) * (item.sales_price ?? 0)),
+            actual: null,
+            note: "",
+          })));
+        }).catch(() => { /* 메뉴 원가 없으면 초기 데이터 유지 */ });
+      }
+    }).catch(() => { /* fallback 유지 */ });
+    return () => { alive = false; };
+  }, [selectedMonth, selectedStore]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -98,6 +171,11 @@ export const StockTakePage = () => {
           <h1 className="ds-page-title">월말 재고 실사 <span className="text-muted-foreground font-light">|</span> 이론 vs 실재고</h1>
         </div>
         <div className="flex items-center gap-3">
+          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
+            <select value={selectedStore} onChange={(e) => setSelectedStore(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none">
+              {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
+            </select>
+          </div>
           <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
             <Calendar className="h-4 w-4 text-primary" />
             <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none" />
@@ -277,7 +355,7 @@ export const StockTakePage = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {historyData.map((log) => (
+          {history.map((log) => (
             <div key={log.id} className="p-6 ds-glass rounded-3xl border-border/40 flex items-center justify-between group hover:border-primary/30 transition-all cursor-pointer">
               <div className="flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-white border border-border shadow-inner flex flex-col items-center justify-center group-hover:bg-primary/5 group-hover:border-primary/20 transition-all">

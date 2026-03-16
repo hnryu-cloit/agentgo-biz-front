@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Users,
   TrendingDown,
@@ -12,8 +12,9 @@ import {
   BarChart3,
   Search,
 } from "lucide-react";
-import { storeNames } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { getAvailableLabor, getLaborProductivity, getLaborSchedule, getHourlyPattern } from "@/services/labor";
+import { getResourceCatalog } from "@/services/data";
 
 type ShiftStatus = "근무중" | "대기" | "미출근" | "퇴근";
 type Staff = {
@@ -62,8 +63,80 @@ const aiRecommendations = [
 
 export const LaborOptimizationPage = () => {
   const [selectedDate, setSelectedDate]   = useState("2026-03-15");
-  const activeStaff = staffList.filter((s) => s.status === "근무중").length;
-  const maxRevenue = Math.max(...hourSlots.map(s => s.revenue));
+  const [selectedStore, setSelectedStore] = useState("광화문점");
+  const [storeOptions, setStoreOptions] = useState<string[]>(["광화문점"]);
+  const [staffRoster, setStaffRoster] = useState(staffList);
+  const [productivitySlots, setProductivitySlots] = useState(hourSlots);
+  const [availableLabor, setAvailableLabor] = useState<Record<string, unknown> | null>(null);
+  const activeStaff = staffRoster.filter((s) => s.status === "근무중").length;
+  const maxRevenue = Math.max(...productivitySlots.map(s => s.revenue));
+
+  useEffect(() => {
+    let alive = true;
+    getResourceCatalog()
+      .then((catalog) => {
+        if (!alive) return;
+        const posStores = catalog.sources.find((s) => s.source_kind === "receipt_listing")?.stores.map((s) => s.store_key) ?? [];
+        const dodoStores = catalog.sources.find((s) => s.source_kind === "dodo_point")?.stores.map((s) => s.store_key) ?? [];
+        const stores = [...new Set([...posStores, ...dodoStores])];
+        if (stores.length === 0) return;
+        setStoreOptions(stores);
+        setSelectedStore((current) => (stores.includes(current) ? current : stores[0]));
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStoreOptions(["광화문점"]);
+      });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      getLaborSchedule({ store_id: selectedStore, date: selectedDate }),
+      getLaborProductivity({ store_id: selectedStore, date: selectedDate }),
+      getAvailableLabor({ store_id: selectedStore, date: selectedDate }),
+    ]).then(([schedule, productivity, available]) => {
+      if (!alive) return;
+      if (schedule.length > 0) {
+        setStaffRoster(schedule.map((entry) => ({
+          id: String(entry.id),
+          name: entry.employee_name,
+          role: (["홀서빙", "주방", "카운터", "매니저"].includes(entry.role) ? entry.role : "주방") as Staff["role"],
+          startTime: entry.start_time.slice(11, 16),
+          endTime: entry.end_time.slice(11, 16),
+          status: entry.status === "actual" ? "근무중" : entry.status === "scheduled" ? "대기" : "미출근",
+          hoursWorked: Math.max(1, Number(((new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / 3600000).toFixed(1))),
+          revenueContrib: 0,
+        })));
+      }
+      if (productivity.length > 0) {
+        setProductivitySlots(productivity.map((slot) => ({
+          hour: String(slot.hour).padStart(2, "0"),
+          revenue: Math.round(slot.sales_per_labor_hour * slot.recommended_staff),
+          staffCount: Math.max(1, Math.round(slot.recommended_staff * slot.attainment_rate)),
+          recommended: slot.recommended_staff,
+          manHourRevenue: Math.round(slot.sales_per_labor_hour),
+        })));
+      } else {
+        // POS 데이터 없는 매장(예: 크리스탈제이드) → 도도포인트 시간대별 방문 패턴으로 fallback
+        getHourlyPattern(selectedStore).then((pattern) => {
+          if (!alive) return;
+          const activeSlots = pattern.hourly_pattern.filter((slot) => slot.visit_count > 0);
+          if (activeSlots.length === 0) return;
+          setProductivitySlots(activeSlots.map((slot) => ({
+            hour: String(slot.hour).padStart(2, "0"),
+            revenue: slot.visit_count * 10_000, // 방문 1건 ≈ ₩10,000 (차트 스케일용 추정치)
+            staffCount: slot.recommended_staff,
+            recommended: slot.recommended_staff,
+            manHourRevenue: slot.recommended_staff > 0 ? Math.round((slot.visit_count * 10_000) / slot.recommended_staff) : 0,
+          })));
+        }).catch(() => { /* fallback 유지 */ });
+      }
+      setAvailableLabor(available);
+    }).catch(() => { /* fallback 유지 */ });
+    return () => { alive = false; };
+  }, [selectedDate, selectedStore]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -79,6 +152,11 @@ export const LaborOptimizationPage = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
+            <select value={selectedStore} onChange={(e) => setSelectedStore(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none">
+              {storeOptions.map((store) => <option key={store} value={store}>{store}</option>)}
+            </select>
+          </div>
+          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
             <Calendar className="h-4 w-4 text-primary" />
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent text-xs font-black focus:outline-none" />
           </div>
@@ -91,11 +169,11 @@ export const LaborOptimizationPage = () => {
 
       {/* KPI Summary */}
       <section className="grid gap-5 md:grid-cols-4">
-        {[
-          { label: "평균 SPLH", val: "₩11.8만", delta: "-9.2%", type: "danger", icon: TrendingDown },
-          { label: "현재 가용 인력", val: `${activeStaff}명`, delta: "Stable", type: "success", icon: Users },
-          { label: "피크 충족률", val: "82%", delta: "Warning", type: "warning", icon: Zap },
-          { label: "총 근무 인시", val: "18.5h", delta: "+1.2h", type: "success", icon: Clock },
+          {[
+          { label: "평균 SPLH", val: `₩${Math.round(productivitySlots.reduce((acc, slot) => acc + slot.manHourRevenue, 0) / Math.max(productivitySlots.length, 1)).toLocaleString()}`, delta: selectedDate, type: "danger", icon: TrendingDown },
+          { label: "현재 가용 인력", val: `${availableLabor?.available_count ?? activeStaff}명`, delta: "Live", type: "success", icon: Users },
+          { label: "피크 충족률", val: `${Math.round(productivitySlots.reduce((acc, slot) => acc + (slot.staffCount / Math.max(slot.recommended, 1)), 0) / Math.max(productivitySlots.length, 1) * 100)}%`, delta: "Data", type: "warning", icon: Zap },
+          { label: "총 근무 인시", val: `${staffRoster.reduce((acc, staff) => acc + staff.hoursWorked, 0).toFixed(1)}h`, delta: selectedStore, type: "success", icon: Clock },
         ].map((kpi, idx) => (
           <article key={idx} className="ds-kpi-card bg-white">
             <div className="flex items-center justify-between">
@@ -169,7 +247,7 @@ export const LaborOptimizationPage = () => {
           
           <div className="p-10 flex-1">
             <div className="flex h-64 items-end gap-4 px-2">
-              {hourSlots.map((slot, idx) => (
+              {productivitySlots.map((slot, idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-4 h-full group">
                   <div className="relative w-full flex-1 flex items-end justify-center gap-1">
                     <div className="absolute w-full rounded-t-xl bg-panel-soft/50 transition-all duration-500" style={{ height: `${(slot.staffCount / 6) * 100}%` }} />
@@ -191,7 +269,7 @@ export const LaborOptimizationPage = () => {
             <button className="ds-button ds-button-ghost !h-9 !w-9 !p-0 rounded-xl"><Search className="h-4 w-4" /></button>
           </div>
           <div className="p-4 space-y-2">
-            {staffList.map((staff) => (
+            {staffRoster.map((staff) => (
               <div key={staff.id} className={cn(
                 "flex items-center justify-between p-4 rounded-2xl border transition-all group hover:border-primary/20",
                 staff.status === "근무중" ? "bg-white border-border" : "bg-panel-soft/30 border-transparent opacity-50"
