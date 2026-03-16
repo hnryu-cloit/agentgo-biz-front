@@ -2,7 +2,6 @@ import { get, patch, post, upload } from "../lib/apiClient";
 import type {
   AlertResponse,
   AlertUpdateRequest,
-  ListResponse,
   NoticeDistributeRequest,
   NoticeResponse,
 } from "../types/api";
@@ -18,22 +17,31 @@ export interface ControlTowerOverview {
   action_compliance_rate: number;
   revenue_total: number;
   revenue_vs_last_week: number;
+  agents: {
+    total: number;
+    healthy: number;
+    degraded: number;
+    down: number;
+  };
 }
 
 export interface AgentStatus {
-  name: string;
-  status: "healthy" | "degraded" | "offline";
-  last_run_at: string | null;
-  success_rate: number;
-  avg_latency_ms: number;
+  id: string;
+  agent_name: string;
+  display_name: string;
+  status: "healthy" | "degraded" | "down";
+  latency_ms: number;
+  error_rate: number;
+  last_heartbeat: string | null;
+  error_message?: string | null;
 }
 
 export function getControlTowerOverview(): Promise<ControlTowerOverview> {
   return get<ControlTowerOverview>("/hq/control-tower/overview");
 }
 
-export function getAgentStatuses(): Promise<ListResponse<AgentStatus>> {
-  return get<ListResponse<AgentStatus>>("/hq/control-tower/agents");
+export function getAgentStatuses(): Promise<AgentStatus[]> {
+  return get<AgentStatus[]>("/hq/control-tower/agents");
 }
 
 export function refreshAgent(agentName: string): Promise<{ message: string }> {
@@ -48,11 +56,11 @@ export function getAlerts(params?: {
   severity?: string;
   status?: string;
   store_id?: string;
-}): Promise<ListResponse<AlertResponse>> {
+}): Promise<AlertResponse[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<AlertResponse>>(`/hq/alerts${qs ? `?${qs}` : ""}`);
+  return get<AlertResponse[]>(`/hq/alerts${qs ? `?${qs}` : ""}`);
 }
 
 export function getAlert(alertId: string): Promise<AlertResponse> {
@@ -67,8 +75,8 @@ export function updateAlert(alertId: string, body: AlertUpdateRequest): Promise<
 // Notices (OCR)
 // ---------------------------------------------------------------------------
 
-export function getNotices(): Promise<ListResponse<NoticeResponse>> {
-  return get<ListResponse<NoticeResponse>>("/hq/notices");
+export function getNotices(): Promise<NoticeResponse[]> {
+  return get<NoticeResponse[]>("/hq/notices");
 }
 
 export function uploadNotice(file: File, title: string): Promise<NoticeResponse> {

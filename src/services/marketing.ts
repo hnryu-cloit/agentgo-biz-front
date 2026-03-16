@@ -2,7 +2,6 @@ import { get, post } from "../lib/apiClient";
 import type {
   CampaignCreateRequest,
   CampaignResponse,
-  ListResponse,
 } from "../types/api";
 
 // ---------------------------------------------------------------------------
@@ -26,12 +25,12 @@ export interface ChurnRiskCustomer {
   recommended_offer: string;
 }
 
-export function getRfmSegments(): Promise<ListResponse<RfmSegment>> {
-  return get<ListResponse<RfmSegment>>("/marketing/rfm/segments");
+export function getRfmSegments(): Promise<RfmSegment[]> {
+  return get<RfmSegment[]>("/marketing/rfm/segments");
 }
 
-export function getChurnRisks(): Promise<ListResponse<ChurnRiskCustomer>> {
-  return get<ListResponse<ChurnRiskCustomer>>("/marketing/rfm/churn-risks");
+export function getChurnRisks(): Promise<ChurnRiskCustomer[]> {
+  return get<ChurnRiskCustomer[]>("/marketing/rfm/churn-risks");
 }
 
 export function excludeChurnRisk(customerId: string): Promise<{ message: string }> {
@@ -45,11 +44,11 @@ export function excludeChurnRisk(customerId: string): Promise<{ message: string 
 export function getCampaigns(params?: {
   status?: string;
   channel?: string;
-}): Promise<ListResponse<CampaignResponse>> {
+}): Promise<CampaignResponse[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<CampaignResponse>>(`/marketing/campaigns${qs ? `?${qs}` : ""}`);
+  return get<CampaignResponse[]>(`/marketing/campaigns${qs ? `?${qs}` : ""}`);
 }
 
 export function createCampaign(body: CampaignCreateRequest): Promise<CampaignResponse> {
@@ -65,14 +64,25 @@ export function sendCampaign(campaignId: string): Promise<CampaignResponse> {
 // ---------------------------------------------------------------------------
 
 export interface CampaignPerformanceSummary {
+  id: string;
+  name: string;
   channel: string;
-  sent: number;
+  target_segment: string;
+  sent_count: number;
+  opened_count: number;
+  used_count: number;
   open_rate: number;
   use_rate: number;
-  revisit_rate: number;
+  sent_at: string | null;
   revenue_attributed: number;
 }
 
-export function getCampaignPerformance(): Promise<ListResponse<CampaignPerformanceSummary>> {
-  return get<ListResponse<CampaignPerformanceSummary>>("/marketing/performance");
+export function getCampaignPerformance(params?: {
+  channel?: string;
+  period?: string;
+}): Promise<CampaignPerformanceSummary[]> {
+  const qs = new URLSearchParams(
+    Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
+  ).toString();
+  return get<CampaignPerformanceSummary[]>(`/marketing/performance${qs ? `?${qs}` : ""}`);
 }

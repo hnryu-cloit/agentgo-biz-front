@@ -33,10 +33,21 @@ export interface BenchmarkStoreSummary {
   store_id: string;
   store_name: string;
   region: string;
+  data_source: "pos" | "dodo_point";
   similarity_score: number;
-  sales_total: number;
-  margin_rate: number;
-  review_score: number;
+  // POS 기반
+  sales_total: number | null;
+  margin_rate: number | null;
+  review_score: number | null;
+  // 도도포인트 기반
+  dodo_total_events?: number;
+  dodo_unique_customers?: number;
+}
+
+export interface BenchmarkGap {
+  metric: string;
+  gap: number;
+  unit: string;
 }
 
 export interface BenchmarkAction {
@@ -46,16 +57,23 @@ export interface BenchmarkAction {
   priority: "high" | "medium" | "low";
 }
 
+export interface BenchmarkActionResponse {
+  store_id: string;
+  store_name: string;
+  benchmark_gaps: BenchmarkGap[];
+  recommended_actions: BenchmarkAction[];
+}
+
 export function getBenchmarkStores(params?: {
   store_id?: string;
   region?: string;
-}): Promise<{ items: BenchmarkStoreSummary[]; total: number }> {
+}): Promise<BenchmarkStoreSummary[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get(`/analysis/benchmark/stores${qs ? `?${qs}` : ""}`);
+  return get<BenchmarkStoreSummary[]>(`/analysis/benchmark/stores${qs ? `?${qs}` : ""}`);
 }
 
-export function getBenchmarkActions(storeId: string): Promise<{ items: BenchmarkAction[]; total: number }> {
-  return get(`/analysis/benchmark/stores/${storeId}/actions`);
+export function getBenchmarkActions(storeId: string): Promise<BenchmarkActionResponse> {
+  return get<BenchmarkActionResponse>(`/analysis/benchmark/stores/${storeId}/actions`);
 }

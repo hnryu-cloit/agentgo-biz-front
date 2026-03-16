@@ -9,6 +9,7 @@
 export interface LoginRequest {
   email: string;
   password: string;
+  role?: "store_owner" | "supervisor" | "hq_admin" | "marketer";
 }
 
 export interface UserInToken {
@@ -98,7 +99,16 @@ export interface ListResponse<T> {
 // Data Upload
 // ---------------------------------------------------------------------------
 
-export type DataType = "sales" | "cost" | "customer" | "review";
+export type DataType =
+  | "sales"
+  | "cost"
+  | "customer"
+  | "review"
+  | "pos_daily_sales"
+  | "bo_point_usage"
+  | "dodo_point"
+  | "receipt_listing"
+  | "menu_lineup";
 export type UploadStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface PipelineStages {
@@ -124,8 +134,8 @@ export interface UploadJobResponse {
   file_path: string;
   file_size_bytes: number;
   status: UploadStatus;
-  pipeline_stages: PipelineStages;
-  error_detail: string | null;
+  pipeline_stages: PipelineStages | null;
+  error_detail: Record<string, unknown> | null;
   quality_score: number | null;
   preview_rows: Record<string, unknown>[] | null;
   period_start: string | null;
@@ -137,8 +147,35 @@ export interface UploadJobResponse {
 export interface UploadMappingRequest {
   job_id: string;
   store_id: string;
-  period_start: string;
-  period_end: string;
+  period_start?: string;
+  period_end?: string;
+}
+
+export interface ResourceStoreSummary {
+  store_key: string;
+  latest_file_name: string | null;
+  file_count: number;
+  date_start: string | null;
+  date_end: string | null;
+}
+
+export interface ResourceSourceCatalog {
+  source_kind: Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "dodo_point" | "receipt_listing" | "menu_lineup">;
+  label: string;
+  description: string;
+  stores: ResourceStoreSummary[];
+}
+
+export interface ResourceCatalogResponse {
+  sources: ResourceSourceCatalog[];
+}
+
+export interface ResourceDatasetResponse {
+  source_kind: Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "dodo_point" | "receipt_listing" | "menu_lineup">;
+  store_key: string;
+  headers: string[];
+  rows: Record<string, unknown>[];
+  summary: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -333,14 +370,14 @@ export type ReportStatus = "pending" | "generating" | "completed" | "failed";
 
 export interface ReportGenerateRequest {
   report_type: ReportType;
-  store_id: string;
+  store_id?: string;
   period_label: string;
 }
 
 export interface ReportResponse {
   id: string;
   report_type: ReportType;
-  store_id: string;
+  store_id?: string | null;
   created_by: string;
   title: string;
   status: ReportStatus;

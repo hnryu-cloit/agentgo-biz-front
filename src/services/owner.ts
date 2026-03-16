@@ -1,23 +1,56 @@
 import { get, patch, post } from "../lib/apiClient";
-import type { ActionResponse, ActionUpdateRequest, ListResponse } from "../types/api";
+import type { ActionResponse, ActionUpdateRequest } from "../types/api";
 
 // ---------------------------------------------------------------------------
 // Dashboard KPIs & summary
 // ---------------------------------------------------------------------------
 
 export interface OwnerDashboard {
-  store_id: string;
-  period_label: string;
-  sales_total: number;
-  sales_vs_last_week: number;
-  margin_rate: number;
-  margin_guard_triggered: boolean;
-  review_sentiment_score: number;
-  top_alerts: string[];
+  store_key?: string | null;
+  store_name: string;
+  latest_date: string | null;
+  today_revenue: number;
+  revenue_vs_yesterday: number;
+  transaction_count: number;
+  avg_order_value: number;
+  cancel_rate: number;
+  peak_hour: string | null;
+  kpi_trend: Array<{ label: string; revenue: number }>;
 }
 
-export function getOwnerDashboard(): Promise<OwnerDashboard> {
-  return get<OwnerDashboard>("/owner/dashboard");
+export function getOwnerDashboard(storeKey?: string): Promise<OwnerDashboard> {
+  const qs = storeKey ? `?store_key=${encodeURIComponent(storeKey)}` : "";
+  return get<OwnerDashboard>(`/owner/dashboard${qs}`);
+}
+
+// ---------------------------------------------------------------------------
+// Customer Insights (도도포인트 기반)
+// ---------------------------------------------------------------------------
+
+export interface DailyTrendPoint {
+  date: string;
+  visit_count: number;
+  unique_customers: number;
+}
+
+export interface CustomerInsights {
+  store_key: string;
+  period_days: number;
+  latest_date: string | null;
+  total_events: number;
+  unique_customers: number;
+  return_rate: number;
+  earn_count: number;
+  use_count: number;
+  recent_7d_visits: number;
+  visit_trend_delta_pct: number;
+  daily_trend: DailyTrendPoint[];
+}
+
+export function getCustomerInsights(storeKey?: string, days = 90): Promise<CustomerInsights> {
+  const params = new URLSearchParams({ days: String(days) });
+  if (storeKey) params.set("store_key", storeKey);
+  return get<CustomerInsights>(`/owner/customer-insights?${params}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -27,11 +60,11 @@ export function getOwnerDashboard(): Promise<OwnerDashboard> {
 export function getOwnerActions(params?: {
   status?: string;
   category?: string;
-}): Promise<ListResponse<ActionResponse>> {
+}): Promise<ActionResponse[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<ActionResponse>>(`/owner/actions${qs ? `?${qs}` : ""}`);
+  return get<ActionResponse[]>(`/owner/actions${qs ? `?${qs}` : ""}`);
 }
 
 export function updateActionStatus(
@@ -46,7 +79,7 @@ export function updateActionStatus(
 // ---------------------------------------------------------------------------
 
 export interface QnaSuggestResponse {
-  suggestions: string[];
+  questions: string[];
 }
 
 export function getQnaSuggestions(): Promise<QnaSuggestResponse> {

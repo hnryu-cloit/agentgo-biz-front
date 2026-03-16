@@ -1,14 +1,14 @@
 import { get, post, download, resolveUrl } from "../lib/apiClient";
-import type { ListResponse, ReportGenerateRequest, ReportResponse } from "../types/api";
+import type { ReportGenerateRequest, ReportResponse } from "../types/api";
 
 export function getReports(params?: {
   report_type?: string;
   store_id?: string;
-}): Promise<ListResponse<ReportResponse>> {
+}): Promise<ReportResponse[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<ReportResponse>>(`/reports${qs ? `?${qs}` : ""}`);
+  return get<ReportResponse[]>(`/reports${qs ? `?${qs}` : ""}`);
 }
 
 export function generateReport(body: ReportGenerateRequest): Promise<ReportResponse> {

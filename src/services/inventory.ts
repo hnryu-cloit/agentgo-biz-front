@@ -5,17 +5,41 @@ import type {
   InventoryLoss,
   ItemMaster,
   ItemMasterCreate,
-  ListResponse,
 } from "../types/api";
+
+// ---------------------------------------------------------------------------
+// 메뉴 원가 (MenuLineupSnapshot 기반)
+// ---------------------------------------------------------------------------
+
+export interface MenuCostItem {
+  id: string;
+  menu_name: string;
+  menu_category: string | null;
+  sales_price: number | null;
+  cost_amount: number | null;
+  cost_rate: number | null;
+}
+
+export interface MenuCostsResponse {
+  store_key: string;
+  item_count: number;
+  items: MenuCostItem[];
+}
+
+export function getMenuCosts(storeKey: string, category?: string): Promise<MenuCostsResponse> {
+  const params = new URLSearchParams({ store_key: storeKey });
+  if (category) params.set("category", category);
+  return get<MenuCostsResponse>(`/inventory/menu-costs?${params}`);
+}
 
 export function getInventoryItems(params?: {
   store_id?: string;
   category?: string;
-}): Promise<ListResponse<ItemMaster>> {
+}): Promise<ItemMaster[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<ItemMaster>>(`/inventory/items${qs ? `?${qs}` : ""}`);
+  return get<ItemMaster[]>(`/inventory/items${qs ? `?${qs}` : ""}`);
 }
 
 export function createInventoryItem(body: ItemMasterCreate): Promise<ItemMaster> {
@@ -28,18 +52,18 @@ export function submitInventoryAudit(body: InventoryAuditCreate): Promise<Invent
 
 export function getTheoreticalInventory(params?: {
   store_id?: string;
-}): Promise<ListResponse<Record<string, unknown>>> {
+}): Promise<Array<Record<string, unknown>>> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<Record<string, unknown>>>(`/inventory/theoretical${qs ? `?${qs}` : ""}`);
+  return get<Array<Record<string, unknown>>>(`/inventory/theoretical${qs ? `?${qs}` : ""}`);
 }
 
 export function getInventorySummary(params?: {
   store_id?: string;
-}): Promise<ListResponse<InventoryLoss>> {
+}): Promise<InventoryLoss[]> {
   const qs = new URLSearchParams(
     Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][],
   ).toString();
-  return get<ListResponse<InventoryLoss>>(`/inventory/summary${qs ? `?${qs}` : ""}`);
+  return get<InventoryLoss[]>(`/inventory/summary${qs ? `?${qs}` : ""}`);
 }
