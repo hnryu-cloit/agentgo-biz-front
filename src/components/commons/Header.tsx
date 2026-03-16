@@ -1,9 +1,8 @@
 import type React from "react";
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, X, Settings, LogOut } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Bell, X } from "lucide-react";
 import { sessionUser } from "@/data/sessionUser";
-import { cn } from "@/lib/utils";
 
 type Crumb = { label: string };
 
@@ -11,6 +10,9 @@ const breadcrumbMap: Record<string, Crumb[]> = {
   "/":                        [{ label: "대시보드" }],
   "/overview":                [{ label: "대시보드" }],
   "/owner/dashboard":         [{ label: "점주" }, { label: "점주 홈" }],
+  "/owner/labor":             [{ label: "점주" }, { label: "인력 최적화" }],
+  "/owner/stock-take":        [{ label: "점주" }, { label: "재고 실사 관리" }],
+  "/owner/qna":               [{ label: "점주" }, { label: "AI Q&A" }],
   "/supervisor/dashboard":    [{ label: "SV" }, { label: "SV 홈" }],
   "/supervisor/analysis":     [{ label: "SV" }, { label: "SV 분석" }],
   "/supervisor/actions":      [{ label: "SV" }, { label: "액션 관리" }],
@@ -27,8 +29,6 @@ const breadcrumbMap: Record<string, Crumb[]> = {
   "/settings/users":          [{ label: "리포트 / 설정" }, { label: "사용자 관리" }],
   "/settings/stores":         [{ label: "리포트 / 설정" }, { label: "매장 설정" }],
   "/data/upload":             [{ label: "데이터" }, { label: "데이터 업로드" }],
-  "/owner/stock-take":        [{ label: "점주" }, { label: "재고 실사" }],
-  "/owner/labor":             [{ label: "점주" }, { label: "인력 최적화" }],
 };
 
 type Notification = {
@@ -56,10 +56,8 @@ const notifIcon: Record<Notification["type"], string> = {
 
 export const Header: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const crumbs = breadcrumbMap[location.pathname] ?? [{ label: "대시보드" }];
   const [notifOpen, setNotifOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -76,10 +74,7 @@ export const Header: React.FC = () => {
           {crumbs.map((crumb, i) => (
             <span key={crumb.label} className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[16px] text-slate-300">chevron_right</span>
-              <span className={cn(
-                "transition-colors",
-                i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-400"
-              )}>
+              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-slate-800" : "text-sm font-medium text-slate-400"}>
                 {crumb.label}
               </span>
             </span>
@@ -87,7 +82,7 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Notification Bell */}
+          {/* 알림 */}
           <div className="relative">
             <button
               onClick={() => setNotifOpen((v) => !v)}
@@ -110,10 +105,7 @@ export const Header: React.FC = () => {
                     <p className="text-sm font-bold text-slate-900">알림 인박스</p>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
-                        <button
-                          onClick={markAllRead}
-                          className="text-xs text-primary hover:underline"
-                        >
+                        <button onClick={markAllRead} className="text-xs text-primary hover:underline">
                           전체 읽음
                         </button>
                       )}
@@ -126,26 +118,15 @@ export const Header: React.FC = () => {
                     {notifications.map((n) => (
                       <div
                         key={n.id}
-                        className={cn(
-                          "flex items-start gap-3 border-b border-border/40 px-4 py-3 last:border-0",
-                          n.read ? "bg-white" : "bg-[#F7FAFF]"
-                        )}
+                        className={`flex items-start gap-3 border-b border-border/40 px-4 py-3 last:border-0 ${n.read ? "bg-white" : "bg-[#F7FAFF]"}`}
                       >
-                        <div className={cn(
-                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-                          n.type === "alert" ? "bg-red-50" : "bg-[#EEF4FF]"
-                        )}>
-                          <span className={cn(
-                            "material-symbols-outlined text-[14px]",
-                            n.type === "alert" ? "text-red-500" : "text-primary"
-                          )}>
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${n.type === "alert" ? "bg-red-50" : "bg-[#EEF4FF]"}`}>
+                          <span className={`material-symbols-outlined text-[14px] ${n.type === "alert" ? "text-red-500" : "text-primary"}`}>
                             {notifIcon[n.type]}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={cn("text-xs font-semibold", n.read ? "text-slate-600" : "text-slate-900")}>
-                            {n.title}
-                          </p>
+                          <p className={`text-xs font-semibold ${n.read ? "text-slate-600" : "text-slate-900"}`}>{n.title}</p>
                           <p className="text-xs text-slate-400">{n.desc}</p>
                         </div>
                         <span className="shrink-0 text-[10px] text-slate-400">{n.time}</span>
@@ -157,51 +138,22 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* User Info Card */}
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen((v) => !v)}
-              className="hidden h-[42px] min-w-[180px] max-w-[270px] items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-[10px] transition-colors hover:border-[#BFD1ED] md:flex"
-            >
-              <div className="size-[28px] overflow-hidden rounded-full border border-[#CCDAF0] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
-                {sessionUser.avatarUrl ? (
-                  <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
-                ) : (
-                  <div className="grid size-full place-items-center text-[12px] font-bold">{sessionUser.initials}</div>
-                )}
-              </div>
-              <div className="mx-2 flex-1 truncate text-left">
-                <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">{sessionUser.name}</p>
-                <p className="truncate text-[11px] leading-tight text-slate-500">{sessionUser.email}</p>
-              </div>
-              <span className="material-symbols-outlined text-[18px] text-slate-400">expand_more</span>
+          {/* 사용자 정보 */}
+          <div className="hidden h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-[10px] md:flex">
+            <div className="size-[28px] overflow-hidden rounded-full border border-[#CCDAF0] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
+              {sessionUser.avatarUrl ? (
+                <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
+              ) : (
+                <div className="grid size-full place-items-center text-[12px] font-bold">{sessionUser.initials}</div>
+              )}
+            </div>
+            <div className="mx-2 flex-1 truncate">
+              <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">{sessionUser.name}</p>
+              <p className="truncate text-[11px] leading-tight text-slate-500">{sessionUser.email}</p>
+            </div>
+            <button className="text-slate-400" aria-label="user menu">
+              <span className="material-symbols-outlined text-[18px]">more_vert</span>
             </button>
-
-            {userMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                <div className="absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-xl border border-border bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="border-b border-border/50 px-4 py-3 bg-slate-50">
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Authenticated</p>
-                    <p className="text-xs font-semibold text-slate-900 truncate">{sessionUser.email}</p>
-                  </div>
-                  <div className="p-1">
-                    <button
-                      onClick={() => { setUserMenuOpen(false); navigate("/admin/settings"); }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      <Settings className="h-4 w-4" /> 계정 설정
-                    </button>
-                    <button
-                      onClick={() => { setUserMenuOpen(false); navigate("/login"); }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
-                    >
-                      <LogOut className="h-4 w-4" /> 로그아웃
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>

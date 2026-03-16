@@ -1,17 +1,10 @@
 import type React from "react";
-import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import Logo from "@/assets/logo.svg";
-import { ChevronDown, User, ShieldCheck, Building2 } from "lucide-react";
 
-type Persona = "owner" | "sv" | "hq";
-
-const personaInfo = {
-  owner: { label: "가맹점주", icon: User, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  sv: { label: "슈퍼바이저", icon: ShieldCheck, color: "text-blue-500", bg: "bg-blue-500/10" },
-  hq: { label: "본사 관리자", icon: Building2, color: "text-purple-500", bg: "bg-purple-500/10" },
-};
+type Role = "owner" | "sv" | "hq";
 
 type MenuItem = {
   to: string;
@@ -22,113 +15,123 @@ type MenuItem = {
 type MenuSection = {
   section?: string;
   items: MenuItem[];
-  persona?: Persona;
+  roles?: Role[]; // undefined = 모든 역할에 표시
 };
 
 const menuSections: MenuSection[] = [
   {
-    items: [{ to: "/", label: "홈", icon: "home" }],
-  },
-  {
-    section: "운영 관리",
-    persona: "owner",
     items: [
-      { to: "/owner/dashboard", label: "매장 대시보드", icon: "dashboard" },
-      { to: "/owner/stock-take", label: "재고 실사", icon: "inventory_2" },
-      { to: "/owner/labor", label: "인력 최적화", icon: "groups" },
+      { to: "/", label: "홈", icon: "home" },
     ],
   },
   {
-    section: "구역 관리",
-    persona: "sv",
+    section: "점주",
+    roles: ["owner"],
     items: [
-      { to: "/supervisor/dashboard", label: "구역 통합 허브", icon: "analytics" },
-      { to: "/supervisor/analysis", label: "리스크 분석", icon: "compare" },
-      { to: "/supervisor/actions", label: "액션 센터", icon: "task_alt" },
-      { to: "/supervisor/visit-log", label: "방문 일지", icon: "map" },
+      { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
+      { to: "/owner/labor", label: "인력 최적화", icon: "group" },
+      { to: "/owner/stock-take", label: "재고 실사 관리", icon: "inventory_2" },
     ],
   },
   {
-    section: "전략 관제",
-    persona: "hq",
+    section: "마케팅",
+    roles: ["owner", "hq"],
     items: [
-      { to: "/hq/control-tower", label: "본사 컨트롤타워", icon: "monitoring" },
-      { to: "/marketing/campaigns", label: "캠페인 관리", icon: "campaign" },
+      { to: "/marketing/campaigns", label: "캠페인 설계", icon: "campaign" },
+      { to: "/marketing/rfm", label: "고객 세그먼트", icon: "group" },
+      { to: "/marketing/performance", label: "캠페인 성과", icon: "bar_chart" },
+    ],
+  },
+  {
+    section: "분석",
+    roles: ["owner", "sv", "hq"],
+    items: [
       { to: "/analysis/roi", label: "프로모션 ROI", icon: "trending_up" },
-      { to: "/hq/notices", label: "비전 AI 공지", icon: "document_scanner" },
+      { to: "/analysis/benchmark", label: "매장 벤치마크", icon: "leaderboard" },
     ],
   },
   {
-    section: "시스템",
+    section: "SV",
+    roles: ["sv"],
     items: [
-      { to: "/reports", label: "통합 리포트", icon: "description" },
+      { to: "/supervisor/dashboard", label: "SV 홈", icon: "analytics" },
+      { to: "/supervisor/analysis", label: "SV 분석", icon: "compare" },
+      { to: "/supervisor/actions", label: "액션 관리", icon: "task_alt" },
+      { to: "/supervisor/visit-log", label: "방문 기록", icon: "map" },
+    ],
+  },
+  {
+    section: "본사",
+    roles: ["hq"],
+    items: [
+      { to: "/hq/control-tower", label: "본사 관제", icon: "monitoring" },
+      { to: "/hq/notices", label: "공지 OCR", icon: "scan" },
+      { to: "/hq/alerts/detail", label: "이상 경보", icon: "notification_important" },
+    ],
+  },
+  {
+    section: "리포트 / 설정",
+    roles: ["sv", "hq"],
+    items: [
+      { to: "/reports", label: "리포트", icon: "description" },
       { to: "/settings/users", label: "사용자 관리", icon: "manage_accounts" },
-      { to: "/data/upload", label: "데이터 파이프라인", icon: "upload_file" },
+      { to: "/settings/stores", label: "매장 설정", icon: "store" },
+    ],
+  },
+  {
+    section: "데이터",
+    roles: ["hq"],
+    items: [
+      { to: "/data/upload", label: "데이터 업로드", icon: "upload_file" },
     ],
   },
 ];
 
+const roleConfig: Record<Role, { label: string; icon: string }> = {
+  owner: { label: "가맹점주", icon: "storefront" },
+  sv: { label: "수퍼바이저", icon: "shield_person" },
+  hq: { label: "본사", icon: "corporate_fare" },
+};
+
 export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
-  const [activePersona, setActivePersona] = useState<Persona>("owner");
-  const [showPersonaMenu, setShowPersonaMenu] = useState(false);
+  const [role, setRole] = useState<Role>("owner");
 
-  const filteredSections = menuSections.filter(
-    (s) => !s.persona || s.persona === activePersona
+  const visibleSections = menuSections.filter(
+    (s) => !s.roles || s.roles.includes(role)
   );
 
-  const CurrentPersonaIcon = personaInfo[activePersona].icon;
-
   return (
-    <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-border bg-white lg:flex flex-col">
-      <div className="flex w-full flex-col p-5 flex-1 overflow-hidden">
-        <NavLink to="/" className="inline-flex items-center px-1 mb-8">
+    <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-border bg-white lg:flex">
+      <div className="flex w-full flex-col p-5">
+        {/* 로고 */}
+        <NavLink to="/" className="inline-flex items-center px-1">
           <img src={Logo} alt="AgentGo" className="h-7 w-auto" />
         </NavLink>
 
-        {/* Persona Selector */}
-        <div className="relative mb-6">
-          <button
-            onClick={() => setShowPersonaMenu(!showPersonaMenu)}
-            className="flex w-full items-center justify-between rounded-xl border border-border bg-[#F7FAFF] p-3 transition-all hover:border-primary/30 active:scale-95 group"
+        {/* 역할 선택 */}
+        <div className="mt-5 relative">
+          <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">
+            {roleConfig[role].icon}
+          </span>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            className="w-full appearance-none rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] py-2.5 pl-9 pr-8 text-[13px] font-semibold text-slate-700 focus:outline-none focus:border-primary cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className={cn("rounded-lg p-1.5", personaInfo[activePersona].bg)}>
-                <CurrentPersonaIcon className={cn("h-4 w-4", personaInfo[activePersona].color)} />
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 leading-none">접근 권한</p>
-                <p className="text-sm font-bold text-slate-800 leading-none">{personaInfo[activePersona].label}</p>
-              </div>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-300", showPersonaMenu && "rotate-180")} />
-          </button>
-
-          {showPersonaMenu && (
-            <div className="absolute top-full left-0 z-50 mt-2 w-full overflow-hidden rounded-xl border border-border bg-white p-1 shadow-lg animate-in fade-in slide-in-from-top-1">
-              {(Object.keys(personaInfo) as Persona[]).map((p) => {
-                const PIcon = personaInfo[p].icon;
-                return (
-                  <button
-                    key={p}
-                    onClick={() => { setActivePersona(p); setShowPersonaMenu(false); }}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                      activePersona === p ? "bg-[#EEF4FF] text-primary" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                    )}
-                  >
-                    <PIcon className="h-4 w-4" />
-                    <span>{personaInfo[p].label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+            {(Object.keys(roleConfig) as Role[]).map((r) => (
+              <option key={r} value={r}>{roleConfig[r].label}</option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">
+            expand_more
+          </span>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto pb-6 scrollbar-hide">
-          {filteredSections.map((section, sIdx) => {
-            const hasActive = section.items.some((item) => 
+        {/* 네비게이션 */}
+        <nav className="mt-5 flex-1 space-y-5 overflow-y-auto pb-6 scrollbar-hide">
+          {visibleSections.map((section, sIdx) => {
+            const hasActive = section.items.some((item) =>
               item.to === "/" ? pathname === "/" : pathname.startsWith(item.to)
             );
 
@@ -165,14 +168,12 @@ export const Sidebar: React.FC = () => {
                     >
                       {({ isActive }) => (
                         <>
-                          {/* Active Indicator Bar */}
                           {isActive && (
                             <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-[#2454C8]" />
                           )}
-                          
                           <span className={cn(
                             "material-symbols-outlined text-[20px] transition-colors",
-                            isActive ? "text-[#2454C8] font-variation-fill" : "text-slate-400 group-hover:text-slate-600"
+                            isActive ? "text-[#2454C8]" : "text-slate-400 group-hover:text-slate-600"
                           )}>
                             {item.icon}
                           </span>
