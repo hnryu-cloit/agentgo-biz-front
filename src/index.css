@@ -12,375 +12,213 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* ── 주요 색상 ── */
+  /* ── Core Colors (Design System Baseline) ── */
   --primary:              #2f66ff;
-  --primary-hover:        #2356e0;
+  --primary-hover:        #1e56e0;
   --primary-foreground:   #ffffff;
-  --primary-light-bg:     #eef3ff;
-  --primary-light-bg2:    #f4f7ff;
-  --primary-light-border: #c9d8ff;
-  --primary-active-border:#b8ccff;
-  --primary-active-text:  #1f48b8;
-  --brand-strong:         #1f48b8;
+  --primary-soft:         #eef3ff;
+  --primary-border:       #c9d8ff;
 
-  /* ── 배경 / 서피스 ── */
-  --background:     #f5f7fb;
+  --background:     #f8fafc;
   --card:           #ffffff;
-  --panel-soft:     #f1f4fa;
-  --surface-hover:  #edf1f8;
-  --surface-active: #e5ecfb;
+  --panel-soft:     #f1f5f9;
+  --surface-hover:  #f8fafc;
+  --surface-active: #f1f5f9;
   --popover:        #ffffff;
 
-  /* ── 텍스트 ── */
-  --foreground:          #1a2138;
-  --card-foreground:     #1a2138;
-  --popover-foreground:  #1a2138;
-  --muted-foreground:    #6d7890;
-  --subtle-foreground:   #8f9cb6;
+  --foreground:          #0f172a;
+  --card-foreground:     #0f172a;
+  --popover-foreground:  #0f172a;
+  --muted-foreground:    #64748b;
+  --subtle-foreground:   #94a3b8;
 
-  /* ── 보더 ── */
-  --border:        #d5deec;
-  --border-strong: #cfd9e8;
-  --border-hover:  #bac9e3;
-  --input:         transparent;
-  --input-background: #f2f5fb;
+  --border:        #e2e8f0;
+  --border-strong: #cbd5e1;
+  --input:         #f8fafc;
   --ring:          #93aeea;
 
-  /* ── 보조 색상 ── */
-  --secondary:             #ebf0f8;
-  --secondary-foreground:  #34415b;
-  --muted:                 #e9eff7;
-  --accent:                #eef3fb;
-  --accent-foreground:     #34415b;
+  --success:       #10b981;
+  --success-soft:  #ecfdf5;
+  --warning:       #f59e0b;
+  --warning-soft:  #fffbeb;
+  --destructive:   #ef4444;
+  --destructive-soft: #fef2f2;
+  --info:          #3b82f6;
+  --info-soft:     #eff6ff;
 
-  /* ── 상태 색상 ── */
-  --destructive:            #ef4444;
-  --destructive-foreground: #ffffff;
-  --success:                #22b573;
-  --success-light:          #d9f7e8;
-  --warning:                #f2a000;
-  --warning-light:          #fdf1cf;
-  --info:                   #1f8ecf;
-  --info-light:             #dff0fb;
+  /* ── Geometry & Shadows ── */
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 
-  /* ── 그림자 ── */
-  --shadow-sm:       0 2px 8px rgba(17, 32, 72, 0.06);
-  --shadow-md:       0 10px 24px rgba(17, 32, 72, 0.09);
-  --shadow-lg:       0 18px 40px rgba(17, 32, 72, 0.14);
-  --shadow-elevated: var(--shadow-sm);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-ds: 0 6px 18px rgba(30, 59, 109, 0.08); /* Standard Design System Shadow */
 
-  /* ── 기하학 ── */
-  --radius: 0.72rem;
+  /* ── AI & Digital Twin Specials ── */
+  --ai-gradient: linear-gradient(135deg, #2f66ff 0%, #8a3ffc 100%);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
 
-  /* ── 차트 ── */
-  --chart-1: #2f66ff;
-  --chart-2: #4f83ff;
-  --chart-3: #22b573;
-  --chart-4: #f2a000;
-  --chart-5: #ef4444;
+.dark {
+  --background:     #0f172a;
+  --card:           #1e293b;
+  --panel-soft:     #334155;
+  --foreground:     #f8fafc;
+  --border:         #334155;
+  --border-strong:  #475569;
+  --input:          #0f172a;
+  --glass-bg:       rgba(15, 23, 42, 0.8);
 }
 
 @theme inline {
   --radius-sm:  calc(var(--radius) - 4px);
   --radius-md:  var(--radius);
-  --radius-lg:  calc(var(--radius) + 2px);
-  --radius-xl:  calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-lg:  var(--radius-lg);
+  --radius-xl:  var(--radius-xl);
+  --radius-2xl: calc(var(--radius-xl) + 4px);
 
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
   --color-background:            var(--background);
   --color-foreground:            var(--foreground);
   --color-card:                  var(--card);
   --color-card-foreground:       var(--card-foreground);
-  --color-popover:               var(--popover);
-  --color-popover-foreground:    var(--popover-foreground);
-  --color-primary:               var(--primary);
-  --color-primary-foreground:    var(--primary-foreground);
-  --color-secondary:             var(--secondary);
-  --color-secondary-foreground:  var(--secondary-foreground);
-  --color-muted:                 var(--muted);
-  --color-muted-foreground:      var(--muted-foreground);
-  --color-accent:                var(--accent);
-  --color-accent-foreground:     var(--accent-foreground);
-  --color-destructive:           var(--destructive);
-  --color-destructive-foreground:var(--destructive-foreground);
   --color-border:                var(--border);
-  --color-input:                 var(--input);
-  --color-ring:                  var(--ring);
-  --color-chart-1:               var(--chart-1);
-  --color-chart-2:               var(--chart-2);
-  --color-chart-3:               var(--chart-3);
-  --color-chart-4:               var(--chart-4);
-  --color-chart-5:               var(--chart-5);
-  --shadow-elevated:             var(--shadow-sm);
-  --font-title: "Pretendard", "Inter", sans-serif;
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-panel-soft:            var(--panel-soft);
 }
 
-/* ────────────────────────────────────────────────────────────────
-   Base
-──────────────────────────────────────────────────────────────── */
 @layer base {
-  * {
-    @apply border-border outline-ring/40;
-  }
-
-  html,
-  body,
-  #root {
-    min-height: 100%;
-  }
-
-  /* ★ Key Visual — 바디 그라디언트 배경 */
+  * { @apply border-border; }
   body {
-    color: var(--foreground);
-    background:
-      radial-gradient(circle at top left, rgba(47, 102, 255, 0.055), transparent 26%),
-      linear-gradient(180deg, #f8faff 0%, #f5f7fb 28%, #edf2fa 100%);
+    @apply bg-background text-foreground;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(47, 102, 255, 0.03) 0, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(138, 63, 252, 0.02) 0, transparent 50%);
     background-attachment: fixed;
-    font-size: 16px;
-  }
-
-  button {
-    @apply cursor-pointer;
-  }
-
-  .material-symbols-outlined {
-    font-variation-settings:
-      "FILL" 0,
-      "wght" 500,
-      "GRAD" 0,
-      "opsz" 24;
-    line-height: 1;
   }
 }
 
-/* ────────────────────────────────────────────────────────────────
-   Design System 유틸리티
-──────────────────────────────────────────────────────────────── */
 @layer components {
-
-  /* ── 카드 ── */
-  .app-card {
-    background: var(--card);
-    border-radius: calc(var(--radius) + 8px);
-    border: 1px solid color-mix(in srgb, var(--border) 90%, white);
-    box-shadow: var(--shadow-sm);
-  }
-  .app-card:hover {
-    box-shadow: var(--shadow-md);
+  /* ── DS Layout ── */
+  .ds-main-container {
+    @apply mx-auto w-full max-w-[1440px] px-6 md:px-10 py-8 space-y-8;
   }
 
-  /* ── 소프트 패널 (카드 내부 서브 컨테이너) ── */
-  .app-soft {
-    background: var(--panel-soft);
-    border-radius: calc(var(--radius) + 4px);
-    border: 1px solid var(--border-strong);
+  /* ── DS Card (card.png) ── */
+  .ds-card {
+    @apply bg-card rounded-2xl border border-border shadow-ds overflow-hidden;
+  }
+  .ds-card-header {
+    @apply px-6 py-5 border-b border-border/50 flex items-center justify-between bg-card/50;
+  }
+  .ds-card-content {
+    @apply p-6;
   }
 
-  /* ── 섹션 래퍼 ── */
-  .app-section {
-    background: var(--card);
-    border-radius: calc(var(--radius) + 8px);
-    border: 1px solid color-mix(in srgb, var(--border) 90%, white);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
+  /* ── DS KPI Card (KPI.png) ── */
+  .ds-kpi-card {
+    @apply ds-card p-6 flex flex-col gap-4 transition-all hover:shadow-lg hover:-translate-y-1;
+  }
+  .ds-kpi-label {
+    @apply text-xs font-black uppercase tracking-[0.15em] text-muted-foreground;
+  }
+  .ds-kpi-value {
+    @apply text-2xl md:text-3xl font-black tracking-tight text-foreground;
+  }
+  .ds-kpi-delta {
+    @apply inline-flex items-center gap-1 text-[11px] font-black px-2 py-0.5 rounded-lg;
   }
 
-  /* ── 섹션 헤더 (테이블 상단 타이틀 바) ── */
-  .app-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    background: rgba(255, 255, 255, 0.7);
+  /* ── DS Table (Table.png) ── */
+  .ds-table-container {
+    @apply ds-card overflow-x-auto;
+  }
+  .ds-table {
+    @apply w-full text-left text-sm border-collapse;
+  }
+  .ds-table-thead {
+    @apply bg-panel-soft/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border;
+  }
+  .ds-table-th {
+    @apply px-6 py-4;
+  }
+  .ds-table-tr {
+    @apply border-b border-border/50 transition-colors hover:bg-panel-soft/30;
+  }
+  .ds-table-td {
+    @apply px-6 py-4 font-medium;
   }
 
-  /* ── 입력 필드 ── */
-  .app-input {
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
-    height: 2.5rem;
-    padding: 0 0.75rem;
-    font-size: 0.875rem;
-    color: var(--foreground);
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    width: 100%;
+  /* ── DS Button (button.png) ── */
+  .ds-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-black transition-all active:scale-95 disabled:opacity-50 cursor-pointer;
   }
-  .app-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(47, 102, 255, 0.08);
+  .ds-button-primary {
+    @apply bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-hover;
+  }
+  .ds-button-outline {
+    @apply border-2 border-border bg-white text-foreground hover:border-primary/30 hover:bg-primary-soft/30;
+  }
+  .ds-button-ghost {
+    @apply text-muted-foreground hover:text-foreground hover:bg-panel-soft;
   }
 
-  /* ── 버튼 — primary ── */
-  .app-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    border-radius: calc(var(--radius) + 4px);
-    background: var(--primary);
-    color: var(--primary-foreground);
-    font-size: 0.875rem;
-    font-weight: 600;
-    height: 2.25rem;
-    padding: 0 1rem;
-    transition: background 0.15s, box-shadow 0.15s;
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
+  /* ── DS Badge (badge.png, chip.png) ── */
+  .ds-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter;
   }
-  .app-btn:hover {
-    background: var(--primary-hover);
-    box-shadow: 0 4px 12px rgba(47, 102, 255, 0.24);
+  .ds-badge-success { @apply bg-success-soft text-success; }
+  .ds-badge-warning { @apply bg-warning-soft text-warning; }
+  .ds-badge-danger  { @apply bg-destructive-soft text-destructive; }
+  .ds-badge-info    { @apply bg-info-soft text-info; }
+
+  /* ── DS Input (input.png) ── */
+  .ds-input {
+    @apply rounded-xl border border-border bg-input h-11 px-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 placeholder:text-subtle-foreground;
   }
 
-  /* ── 버튼 — outline ── */
-  .app-btn-outline {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    border-radius: calc(var(--radius) + 4px);
-    background: var(--card);
-    color: var(--secondary-foreground);
-    font-size: 0.875rem;
-    font-weight: 600;
-    height: 2.25rem;
-    padding: 0 1rem;
-    border: 1px solid var(--border);
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    cursor: pointer;
-    white-space: nowrap;
+  /* ── DS Typography (Typography.png) ── */
+  .ds-page-title {
+    @apply text-[28px] md:text-[32px] font-black tracking-tight text-foreground leading-tight;
   }
-  .app-btn-outline:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--primary-light-bg);
+  .ds-section-title {
+    @apply text-lg font-black text-foreground tracking-tight;
+  }
+  .ds-eyebrow {
+    @apply text-[11px] font-black uppercase tracking-[0.2em] text-primary;
   }
 
-  /* ── 배지 ── */
-  .app-badge {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 9999px;
-    border: 1px solid transparent;
-    padding: 0.15rem 0.625rem;
-    font-size: 10px;
-    font-weight: 700;
-    white-space: nowrap;
-    letter-spacing: 0.02em;
+  /* ── AI Features ── */
+  .ds-ai-panel {
+    @apply relative overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-8;
   }
-  .app-badge-primary {
-    background: var(--primary-light-bg);
-    color: var(--primary-active-text);
-    border-color: var(--primary-light-border);
+  .ds-ai-gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--ai-gradient);
   }
-  .app-badge-success {
-    background: var(--success-light);
-    color: #15734a;
-    border-color: #a7f3c9;
-  }
-  .app-badge-warning {
-    background: var(--warning-light);
-    color: #926000;
-    border-color: #fcd97a;
-  }
-  .app-badge-danger {
-    background: #fef2f2;
-    color: #b91c1c;
-    border-color: #fecaca;
-  }
-  .app-badge-muted {
-    background: var(--muted);
-    color: var(--muted-foreground);
-    border-color: var(--border);
+  .ds-glass {
+    @apply bg-glass-bg backdrop-blur-xl border border-glass-border shadow-lg;
   }
 
-  /* ── 테이블 행 호버 ── */
-  .app-tr {
-    transition: background 0.1s;
+  /* ── Live Animation (live-point) ── */
+  .live-point {
+    @apply relative inline-flex h-2 w-2 rounded-full bg-success;
   }
-  .app-tr:hover {
-    background: color-mix(in srgb, var(--muted) 45%, transparent);
+  .live-point::after {
+    @apply absolute inset-0 rounded-full bg-success animate-ping;
+    content: "";
   }
+}
 
-  /* ── 페이지 아이웨어 타이포 ── */
-  .app-eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--primary);
-  }
-  .app-page-title {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--foreground);
-  }
-  .app-page-desc {
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--muted-foreground);
-  }
-
-  /* ── KPI 카드 아이콘 홀더 ── */
-  .app-kpi-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: calc(var(--radius) + 4px);
-    border: 1px solid color-mix(in srgb, var(--border) 80%, white);
-    background: var(--card);
-  }
-
-  /* ── 탭 버튼 ── */
-  .app-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    border-radius: calc(var(--radius) + 2px);
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--muted-foreground);
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    transition: all 0.15s;
-    cursor: pointer;
-  }
-  .app-tab:hover {
-    background: var(--primary-light-bg2);
-    color: var(--foreground);
-    border-color: var(--primary-light-border);
-  }
-  .app-tab-active {
-    background: var(--primary-light-bg);
-    color: var(--primary-active-text);
-    border-color: var(--primary-light-border);
-  }
-
-  /* ── AI 패널 ── */
-  .app-ai-panel {
-    background: linear-gradient(135deg, var(--primary-light-bg2) 0%, #f0f5ff 100%);
-    border: 1px solid var(--primary-light-border);
-    border-radius: calc(var(--radius) + 8px);
-    box-shadow: var(--shadow-sm);
-  }
-
-  /* ── 스크롤바 숨김 ── */
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+/* ── Custom Utilities ── */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState } from "react";
-import { TrendingUp, TrendingDown, BarChart2, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart2, Info, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Layers, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type PeriodKey = "before" | "during" | "after";
@@ -16,7 +16,7 @@ type MetricRow = {
 
 const metrics: MetricRow[] = [
   { label: "일평균 매출", before: 870000, during: 1240000, after: 1050000, unit: "원", higherIsBetter: true },
-  { label: "순이익", before: 157000, during: 198000, after: 180000, unit: "원", higherIsBetter: true },
+  { label: "순이익 (Net Profit)", before: 157000, during: 198000, after: 180000, unit: "원", higherIsBetter: true },
   { label: "일평균 객수", before: 124, during: 178, after: 152, unit: "명", higherIsBetter: true },
   { label: "객단가", before: 7016, during: 6966, after: 6908, unit: "원", higherIsBetter: true },
   { label: "마진율", before: 18.1, during: 15.9, after: 17.1, unit: "%", higherIsBetter: true },
@@ -24,249 +24,210 @@ const metrics: MetricRow[] = [
 ];
 
 const contributions = [
-  { label: "객수 증가", value: 43, positive: true },
-  { label: "시간대 효과 (저녁)", value: 28, positive: true },
-  { label: "채널 효과 (앱푸시)", value: 19, positive: true },
-  { label: "객단가 하락", value: -15, positive: false },
-  { label: "마진 희생", value: -22, positive: false },
+  { label: "객수 증가 (Quantity)", value: 43, positive: true },
+  { label: "시간대 집중 효과", value: 28, positive: true },
+  { label: "채널 활성화", value: 19, positive: true },
+  { label: "객단가 희생 (Discount)", value: -15, positive: false },
+  { label: "마진율 하락", value: -22, positive: false },
 ];
 
 const periodLabels: Record<PeriodKey, string> = {
-  before: "프로모션 전",
-  during: "프로모션 기간",
-  after: "프로모션 후",
+  before: "Baseline (전)",
+  during: "Campaign (중)",
+  after: "Post (후)",
 };
 
 export const PromoRoiPage: React.FC = () => {
   const [compareBase, setCompareBase] = useState<PeriodKey>("before");
 
   const getValue = (row: MetricRow, period: PeriodKey) => row[period];
-
   const getDelta = (row: MetricRow, period: PeriodKey) => {
     const base = row[compareBase];
     const target = row[period];
     return ((target - base) / base) * 100;
   };
-
-  const isGood = (row: MetricRow, delta: number) => {
-    return row.higherIsBetter ? delta >= 0 : delta <= 0;
-  };
+  const isGood = (row: MetricRow, delta: number) => row.higherIsBetter ? delta >= 0 : delta <= 0;
 
   const totalRoi = (() => {
     const beforeProfit = metrics[1].before * 7;
     const duringProfit = metrics[1].during * 7;
-    const cost = 350000; // mock 프로모션 비용
+    const cost = 350000;
     return (((duringProfit - beforeProfit) / cost) * 100).toFixed(0);
   })();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      
       {/* Header */}
-      <section className="app-card p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-primary">성과 분석</p>
-            <h2 className="text-2xl font-bold text-foreground">프로모션 ROI 분석</h2>
-            <p className="mt-1 text-base text-muted-foreground">
-              프로모션 전·후·기간의 핵심 지표를 비교하고 기여요인을 분해합니다.
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <span className="ds-eyebrow">Financial Impact Analysis</span>
+          </div>
+          <h1 className="ds-page-title">프로모션 성과 (ROI) <span className="text-muted-foreground font-light">|</span> Profit Verification</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
+            <Calendar className="h-4 w-4 text-primary" />
+            <span className="text-[11px] font-black text-foreground uppercase tracking-widest">Period: 2026-03</span>
+          </div>
+          <button className="ds-button ds-button-primary h-11 shadow-xl shadow-primary/20">
+            <BarChart2 className="h-4 w-4 mr-2" /> Download Full Report
+          </button>
+        </div>
+      </div>
+
+      {/* Primary Summary Grid */}
+      <section className="grid gap-5 md:grid-cols-3">
+        <article className="ds-kpi-card bg-ai-gradient border-none text-white relative overflow-hidden group p-8">
+          <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform">
+            <TrendingUp className="h-24 w-24" />
+          </div>
+          <div className="relative z-10">
+            <p className="ds-eyebrow !text-white/70 !text-[9px] mb-4">Total Promotion ROI</p>
+            <div className="flex items-end gap-3">
+              <p className="text-6xl font-black italic leading-none">{totalRoi}%</p>
+              <ArrowUpRight className="h-10 w-10 mb-1 opacity-80" />
+            </div>
+            <p className="mt-8 text-sm font-bold opacity-90 leading-relaxed italic">
+              집행 비용 ₩350,000 대비<br />₩{((metrics[1].during - metrics[1].before) * 7).toLocaleString()} 수익 순증
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-1 shadow-sm">
-            {(["before", "during", "after"] as PeriodKey[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setCompareBase(p)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                  compareBase === p
-                    ? "bg-card text-[#2f66ff] shadow-sm"
-                    : "text-[var(--subtle-foreground)] hover:text-[#4a5568]"
-                )}
-              >
-                {periodLabels[p]} <span className="text-[9px] opacity-60">기준</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Period Info Cards */}
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          {(["before", "during", "after"] as PeriodKey[]).map((p) => {
-            const dateMap: Record<PeriodKey, string> = {
-              before: "2026-02-16 ~ 2026-02-28",
-              during: "2026-03-01 ~ 2026-03-07",
-              after: "2026-03-08 ~ 2026-03-09",
-            };
-            const isDuring = p === "during";
-            return (
-              <div key={p} className={cn(
-                "rounded-xl border p-3.5 shadow-sm transition-all",
-                isDuring ? "border-[#c9d8ff] bg-[#eef3ff]" : "border-[#d5deec] bg-card"
-              )}>
-                <p className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.1em]",
-                  isDuring ? "text-[#2f66ff]" : "text-[var(--subtle-foreground)]"
-                )}>
-                  {periodLabels[p]}
-                </p>
-                <p className={cn(
-                  "mt-1 text-xs font-bold font-mono",
-                  isDuring ? "text-[#2f66ff]" : "text-[#4a5568]"
-                )}>{dateMap[p]}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ROI Summary */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-2xl border border-[#c9d8ff] bg-[#f4f7ff] p-5 shadow-elevated transition-all hover:shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Promotion ROI</p>
-            <div className="rounded-lg bg-card p-1 shadow-sm">
-              <TrendingUp className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <p className="text-4xl font-black text-[#2f66ff] leading-none">{totalRoi}<span className="text-lg ml-1">%</span></p>
-          <p className="mt-2 text-xs font-medium text-[var(--subtle-foreground)] leading-snug">프로모션 비용 대비 발생한<br />순이익의 실질 증가분입니다.</p>
         </article>
 
-        <article className="app-card p-5">
-          <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">매출 증가율</p>
-          <p className="text-4xl font-black text-emerald-600 leading-none">
-            +{Math.round(((metrics[0].during - metrics[0].before) / metrics[0].before) * 100)}<span className="text-lg ml-1">%</span>
+        <article className="ds-kpi-card p-8">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+            <p className="ds-eyebrow !text-[9px]">Incremental Sales</p>
+            <span className="ds-badge ds-badge-success border-none">High Gain</span>
+          </div>
+          <p className="text-4xl font-black text-foreground italic mb-2 tracking-tighter">
+            +₩{((metrics[0].during - metrics[0].before) * 7).toLocaleString()}
           </p>
-          <p className="mt-2 text-xs font-medium text-[var(--subtle-foreground)]">캠페인 집행 기간 평균 기준</p>
-        </article>
-
-        <article className="app-card p-5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">유의성 지표</p>
-              <Info className="h-3 w-3 text-[#b0bdd4]" />
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex-1 h-1.5 bg-panel-soft rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: "42.5%" }} />
             </div>
-            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 shadow-sm border border-emerald-100">STABLE</span>
+            <span className="text-[11px] font-black text-emerald-600 uppercase italic">+42.5%</span>
           </div>
-          <p className="text-4xl font-black text-foreground leading-none">p <span className="text-2xl font-bold">&lt; 0.05</span></p>
-          <p className="mt-2 text-xs font-bold text-emerald-600">결과가 통계적으로 매우 유의함</p>
+        </article>
+
+        <article className="ds-kpi-card p-8">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+            <p className="ds-eyebrow !text-[9px]">Model Significance</p>
+            <Info className="h-4 w-4 text-muted-foreground/30" />
+          </div>
+          <p className="text-4xl font-black text-foreground italic mb-2 tracking-tighter">p &lt; 0.05</p>
+          <div className="flex items-center gap-3 mt-4">
+            <div className="live-point" />
+            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] italic">Validated Index</span>
+          </div>
         </article>
       </section>
 
-      {/* Metric Comparison Table */}
-      <section className="app-card p-5 md:p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
-            <BarChart2 className="h-5 w-5 text-muted-foreground" />
+      {/* Detail Analysis Grid */}
+      <div className="grid gap-8 lg:grid-cols-12">
+        {/* Table Column */}
+        <section className="lg:col-span-8 ds-card overflow-hidden">
+          <div className="ds-card-header !bg-panel-soft/30">
+            <div className="flex items-center gap-3">
+              <Layers className="h-5 w-5 text-primary" />
+              <h3 className="ds-section-title">지표별 성과 분석 (Deep Dive)</h3>
+            </div>
+            <div className="flex bg-muted p-1 rounded-xl">
+              {(["before", "during", "after"] as PeriodKey[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCompareBase(p)}
+                  className={cn(
+                    "px-4 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest",
+                    compareBase === p ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {periodLabels[p].split(' ')[0]}
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-foreground">지표 전후 비교 상세</h3>
-            <p className="text-xs font-medium text-[var(--subtle-foreground)]">순이익 우선 기준으로 정렬된 주요 지표 변화입니다.</p>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
-          <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-[#f4f7ff] text-[#4a5568]">
-              <tr>
-                <th className="px-4 py-3 font-bold">지표</th>
-                {(["before", "during", "after"] as PeriodKey[]).map((p) => (
-                  <th key={p} className={cn(
-                    "px-4 py-3 text-right font-bold transition-colors",
-                    p === compareBase ? "bg-primary/5 text-primary" : ""
-                  )}>
-                    {periodLabels[p]}
-                    {p === compareBase && <span className="ml-1 text-[9px] font-black tracking-tighter opacity-60">(기준)</span>}
-                  </th>
-                ))}
-                <th className="px-4 py-3 text-right font-bold text-foreground">기간 중 증감</th>
-              </tr>
-            </thead>
-            <tbody>
-              {metrics.map((row) => {
-                const delta = getDelta(row, "during");
-                const good = isGood(row, delta);
-                return (
-                  <tr key={row.label} className="border-t border-border transition-colors hover:bg-[var(--panel-soft)]/50 font-medium">
-                    <td className="px-4 py-3 font-bold text-[#1a2138]">{row.label}</td>
-                    {(["before", "during", "after"] as PeriodKey[]).map((p) => (
-                      <td key={p} className={cn(
-                        "px-4 py-3 text-right text-[#4a5568] font-mono text-[13px]",
-                        p === compareBase ? "bg-primary/[0.02]" : ""
-                      )}>
-                        {typeof getValue(row, p) === "number" && row.unit === "원"
-                          ? getValue(row, p).toLocaleString()
-                          : getValue(row, p)}
-                        <span className="text-[10px] ml-0.5 text-[var(--subtle-foreground)] font-medium">{row.unit !== "원" ? row.unit : "원"}</span>
+          
+          <div className="overflow-x-auto">
+            <table className="ds-table">
+              <thead className="ds-table-thead">
+                <tr>
+                  <th className="ds-table-th">Financial Metric</th>
+                  <th className="ds-table-th text-right">Campaign (Target)</th>
+                  <th className="ds-table-th text-right">Baseline ({compareBase})</th>
+                  <th className="ds-table-th text-right w-36 italic">Variance (%)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {metrics.map((row) => {
+                  const delta = getDelta(row, "during");
+                  const good = isGood(row, delta);
+                  return (
+                    <tr key={row.label} className="ds-table-tr font-bold group">
+                      <td className="ds-table-td italic text-foreground tracking-tight">{row.label}</td>
+                      <td className="ds-table-td text-right font-mono font-black text-foreground italic tracking-tighter">
+                        {getValue(row, "during").toLocaleString()}<span className="text-[10px] ml-1 font-black text-muted-foreground/40">{row.unit}</span>
                       </td>
-                    ))}
-                    <td className="px-4 py-3 text-right">
-                      <span className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-black shadow-sm",
-                        good ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                      )}>
-                        {good ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Contribution Decomposition */}
-      <section className="app-card p-5 md:p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-foreground">효과 기여요인 분해</h3>
-            <p className="text-xs font-medium text-[var(--subtle-foreground)] mt-0.5">ROI 증감에 영향을 준 하위 요인별 분석</p>
+                      <td className="ds-table-td text-right font-mono font-bold text-muted-foreground/40 italic">
+                        {getValue(row, compareBase).toLocaleString()}<span className="text-[10px] ml-1">{row.unit}</span>
+                      </td>
+                      <td className="ds-table-td text-right">
+                        <div className={cn(
+                          "inline-flex items-center gap-1 font-black text-xs italic transition-all px-3 py-1.5 rounded-xl shadow-inner",
+                          good ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"
+                        )}>
+                          {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
+                          {good ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <span className="rounded-lg border border-[#d5deec] bg-[#f4f7ff] px-2.5 py-1 text-[10px] font-bold text-muted-foreground shadow-sm">AI Decomposition Model v2.1</span>
-        </div>
+        </section>
 
-        <div className="space-y-5">
-          {contributions.map((c) => {
-            const abs = Math.abs(c.value);
-            return (
-              <div key={c.label} className="flex items-center gap-4">
-                <span className="w-32 shrink-0 text-sm font-bold text-[#4a5568] leading-tight">{c.label}</span>
-                <div className="flex flex-1 items-center gap-3">
-                  <div className="flex-1">
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-[var(--muted)] shadow-inner">
-                      <div
-                        className={cn(
-                          "absolute h-full rounded-full shadow-sm transition-all duration-1000",
-                          c.positive ? "bg-emerald-400" : "bg-red-400"
-                        )}
+        {/* Breakdown Sidebar */}
+        <section className="lg:col-span-4 space-y-8">
+          <article className="ds-card p-8 border-primary/5">
+            <div className="flex items-center justify-between mb-10 pb-4 border-b border-border/50">
+              <h3 className="ds-section-title text-sm uppercase tracking-widest text-muted-foreground italic flex items-center gap-2">
+                <Target className="h-4 w-4" /> Impact Decomposition
+              </h3>
+            </div>
+            
+            <div className="space-y-8">
+              {contributions.map((c) => {
+                const abs = Math.abs(c.value);
+                return (
+                  <div key={c.label} className="space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest italic">
+                      <span className="text-foreground/60">{c.label}</span>
+                      <span className={c.positive ? "text-emerald-600" : "text-red-500"}>{c.value > 0 ? "+" : ""}{c.value}%</span>
+                    </div>
+                    <div className="h-1 w-full bg-panel-soft rounded-full overflow-hidden">
+                      <div 
+                        className={cn("h-full transition-all duration-1000", c.positive ? "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" : "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]")}
                         style={{ width: `${abs}%` }}
                       />
                     </div>
                   </div>
-                  <span className={cn(
-                    "w-14 shrink-0 text-right text-sm font-black font-mono",
-                    c.positive ? "text-emerald-600" : "text-red-600"
-                  )}>
-                    {c.value > 0 ? "+" : ""}{c.value}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        <div className="mt-6 rounded-xl border border-[#c9d8ff] bg-[#f4f7ff] p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Info className="h-4 w-4 text-[#2f66ff]" />
-            <p className="text-sm font-bold text-[#2f66ff]">AI 해석 가이드</p>
-          </div>
-          <p className="text-sm font-medium text-[#4a5568] leading-relaxed">
-            객수 증가와 시간대 효과가 주요 기여 요인입니다. 객단가 하락과 마진 희생이 부분 상쇄되었으나 <span className="font-bold text-foreground underline decoration-[#c9d8ff] decoration-2">전체 ROI는 매우 긍정적</span>으로 분석됩니다.
-          </p>
-        </div>
-      </section>
+            <div className="mt-12 p-6 ds-ai-panel border-none shadow-none relative">
+              <div className="absolute -top-3 left-6 bg-primary text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] italic">AI Strategic Verdict</div>
+              <p className="text-sm text-foreground font-black leading-relaxed italic mt-2">
+                객수 증가(+43%)가 단가 희생을 완벽히 상쇄하며 <span className="text-primary underline decoration-primary/30 decoration-4 underline-offset-4">역대 최고 수준의 순증</span>을 달성했습니다. 해당 채널 믹스 전략을 표준으로 채택하세요.
+              </p>
+            </div>
+          </article>
+        </section>
+      </div>
     </div>
   );
 };

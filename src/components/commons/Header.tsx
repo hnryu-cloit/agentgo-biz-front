@@ -1,34 +1,28 @@
 import type React from "react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, X, Settings, LogOut } from "lucide-react";
+import { Bell, X, Settings, LogOut, ChevronRight } from "lucide-react";
 import { sessionUser } from "@/data/sessionUser";
+import { cn } from "@/lib/utils";
 
 type Crumb = { label: string };
 
 const breadcrumbMap: Record<string, Crumb[]> = {
-  "/":                        [{ label: "대시보드" }],
-  "/overview":                [{ label: "대시보드" }],
-  "/owner/dashboard":         [{ label: "점주" }, { label: "점주 홈" }],
-  "/supervisor/dashboard":    [{ label: "SV" }, { label: "SV 홈" }],
-  "/supervisor/analysis":     [{ label: "SV" }, { label: "SV 분석" }],
-  "/supervisor/actions":      [{ label: "SV" }, { label: "액션 관리" }],
-  "/supervisor/visit-log":    [{ label: "SV" }, { label: "방문 기록" }],
-  "/hq/control-tower":        [{ label: "본사" }, { label: "컨트롤 타워" }],
-  "/hq/notices":              [{ label: "본사" }, { label: "공지 OCR" }],
-  "/hq/alerts/detail":        [{ label: "본사" }, { label: "이상 경보 상세" }],
-  "/marketing/campaigns":     [{ label: "마케팅" }, { label: "캠페인 설계" }],
-  "/marketing/rfm":           [{ label: "마케팅" }, { label: "고객 세그먼트" }],
-  "/marketing/performance":   [{ label: "마케팅" }, { label: "캠페인 성과" }],
-  "/analysis/roi":            [{ label: "분석" }, { label: "프로모션 ROI" }],
-  "/analysis/benchmark":      [{ label: "분석" }, { label: "매장 벤치마크" }],
-  "/reports":                 [{ label: "리포트 / 설정" }, { label: "리포트" }],
-  "/settings/users":          [{ label: "리포트 / 설정" }, { label: "사용자 관리" }],
-  "/settings/stores":         [{ label: "리포트 / 설정" }, { label: "매장 설정" }],
-  "/data/upload":             [{ label: "데이터" }, { label: "데이터 업로드" }],
-  "/admin/settings":          [{ label: "관리자" }, { label: "설정" }],
-  "/owner/stock-take":        [{ label: "점주" }, { label: "재고 실사" }],
-  "/owner/labor":             [{ label: "점주" }, { label: "인력 최적화" }],
+  "/":                        [{ label: "Dashboard" }],
+  "/overview":                [{ label: "Dashboard" }],
+  "/owner/dashboard":         [{ label: "Owner" }, { label: "Home" }],
+  "/supervisor/dashboard":    [{ label: "SV" }, { label: "Home" }],
+  "/supervisor/analysis":     [{ label: "SV" }, { label: "Risk Analysis" }],
+  "/supervisor/actions":      [{ label: "SV" }, { label: "Action Management" }],
+  "/supervisor/visit-log":    [{ label: "SV" }, { label: "Visit Logs" }],
+  "/hq/control-tower":        [{ label: "HQ" }, { label: "Control Tower" }],
+  "/hq/notices":              [{ label: "HQ" }, { label: "Vision Automation" }],
+  "/hq/alerts/detail":        [{ label: "HQ" }, { label: "Alert Detail" }],
+  "/marketing/campaigns":     [{ label: "Marketing" }, { label: "Campaign Designer" }],
+  "/marketing/rfm":           [{ label: "Marketing" }, { label: "RFM Matrix" }],
+  "/analysis/roi":            [{ label: "Analysis" }, { label: "Promo ROI" }],
+  "/owner/stock-take":        [{ label: "Owner" }, { label: "Inventory Audit" }],
+  "/owner/labor":             [{ label: "Owner" }, { label: "Labor Force" }],
 };
 
 type Notification = {
@@ -43,57 +37,48 @@ type Notification = {
 const mockNotifications: Notification[] = [
   { id: 1, type: "alert", title: "이상 결제 탐지", desc: "A매장 취소율 급증 (P0)", time: "방금 전", read: false },
   { id: 2, type: "workflow", title: "AI 분석 완료", desc: "전략 에이전트 실행 완료", time: "3분 전", read: false },
-  { id: 3, type: "notice", title: "공지 OCR 완료", desc: "3월 운영 공지 처리 완료", time: "14분 전", read: true },
-  { id: 4, type: "upload", title: "데이터 업로드 완료", desc: "매출 데이터 248개 매장 반영", time: "1시간 전", read: true },
 ];
-
-const notifIcon: Record<Notification["type"], string> = {
-  alert: "notification_important",
-  workflow: "account_tree",
-  notice: "scan",
-  upload: "upload_file",
-};
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const crumbs = breadcrumbMap[location.pathname] ?? [{ label: "대시보드" }];
+  const crumbs = breadcrumbMap[location.pathname] ?? [{ label: "Dashboard" }];
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications] = useState(mockNotifications);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
   return (
-    <header className="fixed left-0 right-0 top-0 z-30 h-[68px] border-b border-border bg-white/90 backdrop-blur-sm lg:left-64">
-      <div className="flex h-full items-center justify-between px-5 md:px-8">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-[var(--subtle-foreground)]">AgentGo Biz</span>
-          {crumbs.map((crumb, i) => (
-            <span key={crumb.label} className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px] text-[#b0bdd4]">chevron_right</span>
-              <span className={i === crumbs.length - 1 ? "text-base font-semibold text-[#1a2138]" : "text-sm font-medium text-[var(--subtle-foreground)]"}>
-                {crumb.label}
-              </span>
-            </span>
-          ))}
+    <header className="fixed left-0 right-0 top-0 z-30 h-[68px] border-b border-border/50 bg-white/80 backdrop-blur-xl lg:left-64">
+      <div className="flex h-full items-center justify-between px-6 md:px-10">
+        <div className="flex items-center gap-3">
+          <span className="ds-eyebrow !text-subtle-foreground/40">AgentGo Biz</span>
+          <div className="flex items-center gap-2">
+            {crumbs.map((crumb, i) => (
+              <div key={crumb.label} className="flex items-center gap-2">
+                <ChevronRight className="h-3.5 w-3.5 text-border-strong" />
+                <span className={cn(
+                  "text-[13px] font-black tracking-tight transition-colors uppercase",
+                  i === crumbs.length - 1 ? "text-foreground" : "text-muted-foreground/60"
+                )}>
+                  {crumb.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Notification Bell */}
+        <div className="flex items-center gap-4">
+          {/* Notification */}
           <div className="relative">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#d5deec] bg-[#f4f7ff] text-muted-foreground transition-colors hover:border-[#bac9e3] hover:text-[#34415b]"
-              aria-label="알림"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-muted-foreground transition-all hover:border-primary/30 hover:text-primary active:scale-90"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-black text-white ring-2 ring-white">
                   {unreadCount}
                 </span>
               )}
@@ -102,47 +87,22 @@ export const Header: React.FC = () => {
             {notifOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
-                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-                    <p className="text-sm font-bold text-foreground">알림 인박스</p>
-                    <div className="flex items-center gap-2">
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={markAllRead}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          전체 읽음
-                        </button>
-                      )}
-                      <button onClick={() => setNotifOpen(false)}>
-                        <X className="h-4 w-4 text-[var(--subtle-foreground)]" />
-                      </button>
-                    </div>
+                <div className="absolute right-0 top-12 z-50 w-80 overflow-hidden ds-card !p-0 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between border-b border-border/50 px-5 py-4 bg-panel-soft/30">
+                    <p className="text-xs font-black uppercase tracking-widest text-foreground">Inbox</p>
+                    <button onClick={() => setNotifOpen(false)}><X className="h-4 w-4 text-muted-foreground hover:text-foreground" /></button>
                   </div>
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="max-h-80 overflow-y-auto divide-y divide-border/40 scrollbar-hide">
                     {notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`flex items-start gap-3 border-b border-border/40 px-4 py-3 last:border-0 ${
-                          n.read ? "bg-white" : "bg-[#f4f7ff]"
-                        }`}
-                      >
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                          n.type === "alert" ? "bg-red-50" : "bg-[#eef3ff]"
-                        }`}>
-                          <span className={`material-symbols-outlined text-[14px] ${
-                            n.type === "alert" ? "text-red-500" : "text-primary"
-                          }`}>
-                            {notifIcon[n.type]}
-                          </span>
+                      <div key={n.id} className={cn("px-5 py-4 transition-colors hover:bg-panel-soft/30", !n.read && "bg-primary/[0.02]")}>
+                        <div className="flex items-start gap-3">
+                          <div className={cn("h-2 w-2 rounded-full mt-1.5 shrink-0", n.type === "alert" ? "bg-destructive" : "bg-primary")} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-foreground italic leading-tight">{n.title}</p>
+                            <p className="text-[11px] text-muted-foreground font-medium mt-1">{n.desc}</p>
+                            <p className="text-[9px] text-subtle-foreground font-black uppercase mt-2 tracking-tighter italic">{n.time}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-semibold ${n.read ? "text-[#4a5568]" : "text-foreground"}`}>
-                            {n.title}
-                          </p>
-                          <p className="text-xs text-[var(--subtle-foreground)]">{n.desc}</p>
-                        </div>
-                        <span className="shrink-0 text-[10px] text-[var(--subtle-foreground)]">{n.time}</span>
                       </div>
                     ))}
                   </div>
@@ -151,52 +111,41 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* User Info */}
-          <div className="relative hidden md:block">
-            <div className="flex h-[42px] w-[270px] items-center justify-between rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-[10px]">
-              <div className="size-[28px] overflow-hidden rounded-full border border-[#c9d8ff] bg-[linear-gradient(135deg,#316BFF_0%,#4AA2FF_100%)] text-white">
-                {sessionUser.avatarUrl ? (
-                  <img src={sessionUser.avatarUrl} alt={sessionUser.name} className="size-full object-cover" />
-                ) : (
-                  <div className="grid size-full place-items-center text-[12px] font-bold">{sessionUser.initials}</div>
-                )}
+          {/* User Profile */}
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen((v) => !v)}
+              className="flex h-10 items-center gap-3 rounded-xl border border-border bg-white pl-2.5 pr-3 transition-all hover:border-primary/30 active:scale-95"
+            >
+              <div className="h-7 w-7 overflow-hidden rounded-lg bg-primary flex items-center justify-center text-white text-[10px] font-black uppercase italic shadow-lg shadow-primary/20">
+                {sessionUser.initials}
               </div>
-              <div className="mx-2 flex-1 truncate">
-                <p className="truncate text-[13px] font-semibold leading-tight text-[#1a2138]">{sessionUser.name}</p>
-                <p className="truncate text-[11px] leading-tight text-muted-foreground">{sessionUser.email}</p>
+              <div className="text-left hidden lg:block">
+                <p className="text-[11px] font-black text-foreground leading-none">{sessionUser.name}</p>
+                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">{sessionUser.roleLabel}</p>
               </div>
-              <button
-                onClick={() => setUserMenuOpen((v) => !v)}
-                className="rounded-lg p-1 text-[var(--subtle-foreground)] transition-colors hover:bg-slate-200/60 hover:text-[#4a5568]"
-                aria-label="user menu"
-              >
-                <span className="material-symbols-outlined text-[18px]">more_vert</span>
-              </button>
-            </div>
+            </button>
 
-            {/* 유저 드롭다운 */}
             {userMenuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
-                  <div className="border-b border-border/60 px-4 py-3">
-                    <p className="text-xs font-bold text-[#1a2138]">{sessionUser.name}</p>
-                    <p className="text-[11px] text-[var(--subtle-foreground)]">{sessionUser.roleLabel}</p>
+                <div className="absolute right-0 top-12 z-50 w-52 overflow-hidden ds-card !p-0 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="border-b border-border/50 px-5 py-4 bg-panel-soft/30">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Authenticated</p>
+                    <p className="text-xs font-black text-foreground">{sessionUser.email}</p>
                   </div>
-                  <div className="py-1">
+                  <div className="p-2 space-y-1">
                     <button
                       onClick={() => { setUserMenuOpen(false); navigate("/admin/settings"); }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#34415b] transition-colors hover:bg-[#f4f7ff]"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-black uppercase tracking-widest text-muted-foreground transition-colors hover:bg-panel-soft hover:text-foreground italic"
                     >
-                      <Settings className="h-4 w-4 text-[var(--subtle-foreground)]" />
-                      설정
+                      <Settings className="h-3.5 w-3.5" /> Account Settings
                     </button>
                     <button
                       onClick={() => { setUserMenuOpen(false); navigate("/login"); }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-black uppercase tracking-widest text-destructive transition-colors hover:bg-destructive-soft italic"
                     >
-                      <LogOut className="h-4 w-4" />
-                      로그아웃
+                      <LogOut className="h-3.5 w-3.5" /> System Signout
                     </button>
                   </div>
                 </div>

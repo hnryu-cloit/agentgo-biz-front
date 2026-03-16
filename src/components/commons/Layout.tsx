@@ -7,14 +7,14 @@ import { FloatingAiChat } from "./FloatingAiChat";
 
 export const Layout: React.FC = () => {
   return (
-    <div className="min-h-screen text-foreground">
+    <div className="min-h-screen text-foreground selection:bg-primary/10 selection:text-primary">
       <Sidebar />
       <Header />
       <GlobalFilterBar />
 
       <div className="lg:ml-64 min-h-screen flex flex-col">
-        <main className="mx-auto w-full flex-1 px-5 pb-14 pt-[132px] md:px-8 lg:max-w-none lg:px-10">
-          <div className="mx-auto w-full max-w-[1280px]">
+        <main className="flex-1 pt-[132px]">
+          <div className="ds-main-container">
             <Outlet />
           </div>
         </main>
