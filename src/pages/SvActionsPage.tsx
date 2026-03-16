@@ -110,7 +110,7 @@ export const SvActionsPage: React.FC = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <section className="app-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-primary">현장 코칭</p>
@@ -128,7 +128,7 @@ export const SvActionsPage: React.FC = () => {
         </section>
 
         {/* 이행률 Summary */}
-        <section className="app-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
               <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
@@ -169,7 +169,7 @@ export const SvActionsPage: React.FC = () => {
         </section>
 
         {/* Action List */}
-        <section className="app-card p-5 md:p-6">
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2">
               <div className="rounded-lg bg-[#eef3ff] p-1.5 shadow-sm">

@@ -51,7 +51,7 @@ export const SvAnalysisPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">구역 분석</p>
@@ -75,7 +75,7 @@ export const SvAnalysisPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-[var(--muted)] p-1.5 shadow-sm">
@@ -127,7 +127,7 @@ export const SvAnalysisPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <h3 className="text-lg font-bold text-foreground">매장 성과 격차 분석 (Top vs Bottom)</h3>
         <p className="mb-6 mt-1 text-sm text-muted-foreground">선택한 KPI 기준 상위 매장과 하위 매장의 실질적인 격차입니다.</p>
 

@@ -196,7 +196,7 @@ export const SvVisitLogPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-primary">현장 코칭</p>

@@ -25,7 +25,7 @@ export const AlertDetailPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
-      <section className="app-card p-5 md:p-6">
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
         <div>
           <p className="text-sm font-semibold text-primary">본사 관제</p>
           <h2 className="mt-1 text-2xl font-bold text-foreground">이상 경보 상세</h2>
