@@ -1,6 +1,7 @@
 import type React from "react";
-import { useRef, useState } from "react";
-import { Send, Bot, User, Copy, ThumbsUp, ThumbsDown, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bot, Copy, RotateCcw, Send, ThumbsDown, ThumbsUp, User } from "lucide-react";
+import { getQnaSuggestions, parseCommand, simulateCommand, validateCommand } from "@/services/owner";
 
 type Message = {
   id: number;
@@ -15,72 +16,106 @@ const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
-    content:
-      "안녕하세요! AgentGo Biz입니다. 매장 운영에 관해 궁금한 것을 자유롭게 질문해 주세요. 매출, 고객, 마진, 캠페인 등 다양한 주제를 분석해 드립니다.",
+    content: "안녕하세요. 현재 DB에 적재된 실데이터 기준으로 매출, 취소율, 메뉴 마진, 가격 시뮬레이션을 답변합니다.",
     timestamp: "07:00",
   },
 ];
 
-const mockResponses: Record<string, Message> = {
-  default: {
-    id: 0,
-    role: "assistant",
-    content:
-      "지난주 대비 매출이 12% 감소했습니다. 주요 원인은 비피크 시간대(14~17시) 객수 감소(-31%)와 우천 영향입니다. 금일 배달 주문이 +23% 예상되므로 세트A 타임 프로모션을 권장드립니다.",
-    evidence: [
-      { label: "분석 기간", value: "2026-02-28 ~ 2026-03-07" },
-      { label: "비교 기준", value: "전주 동요일 평균" },
-      { label: "신뢰도 기반 데이터", value: "POS 매출 + 날씨 API" },
-    ],
-    confidence: 91,
-    timestamp: "",
-  },
-  매출: {
-    id: 0,
-    role: "assistant",
-    content:
-      "이번 주 누적 매출은 870,000원으로 전주 대비 -12%입니다. 객수(-18%)가 주 원인이며 객단가는 +2.3% 개선되었습니다. 피크타임(12~13시)은 전주 수준을 유지하고 있으나 오후 슬롯이 취약합니다.",
-    evidence: [
-      { label: "분석 기간", value: "2026-03-01 ~ 2026-03-07" },
-      { label: "피크타임 매출 비중", value: "34%" },
-      { label: "객단가 추이", value: "7,016원 (+2.3%)" },
-    ],
-    confidence: 94,
-    timestamp: "",
-  },
-  이탈: {
-    id: 0,
-    role: "assistant",
-    content:
-      "이탈 징후 고객이 42명 탐지되었습니다. 평균 미방문 기간이 34일로 증가했으며, 이 중 60일 이상 미방문 고객이 18명입니다. 유사 캠페인 복귀율 24% 기준으로 쿠폰 발송 시 약 12명 복귀가 예상됩니다.",
-    evidence: [
-      { label: "이탈 기준", value: "30일 이상 미방문" },
-      { label: "탐지 고객 수", value: "42명" },
-      { label: "예상 ROI", value: "3.8x" },
-    ],
-    confidence: 87,
-    timestamp: "",
-  },
-};
-
-function getResponse(input: string): Message {
-  const lower = input.toLowerCase();
-  if (lower.includes("매출") || lower.includes("실적")) return mockResponses["매출"];
-  if (lower.includes("이탈") || lower.includes("고객")) return mockResponses["이탈"];
-  return mockResponses["default"];
-}
-
 const MAX_CHARS = 500;
+
+function formatAssistantMessage(
+  intent: string,
+  details: Record<string, unknown>,
+  recommendation: string,
+  confidence: number,
+): Pick<Message, "content" | "evidence" | "confidence"> {
+  if (intent === "query_sales") {
+    return {
+      content: `${String(details.store_name ?? "매장")}의 최신 매출은 ${Number(details.today_revenue ?? 0).toLocaleString()}원이며, 전일 대비 ${Number(details.revenue_vs_yesterday ?? 0).toLocaleString()}원 변화했습니다.`,
+      evidence: [
+        { label: "기준 일자", value: String(details.latest_date ?? "-") },
+        { label: "결제건수", value: `${Number(details.transaction_count ?? 0).toLocaleString()}건` },
+        { label: "평균 객단가", value: `${Number(details.avg_order_value ?? 0).toLocaleString()}원` },
+        { label: "권장 해석", value: recommendation },
+      ],
+      confidence,
+    };
+  }
+
+  if (intent === "query_cancel_rate") {
+    return {
+      content: `${String(details.store_name ?? "매장")}의 최신 취소율은 ${(Number(details.cancel_rate ?? 0) * 100).toFixed(2)}%입니다.`,
+      evidence: [
+        { label: "기준 일자", value: String(details.latest_date ?? "-") },
+        { label: "매출", value: `${Number(details.today_revenue ?? 0).toLocaleString()}원` },
+        { label: "결제건수", value: `${Number(details.transaction_count ?? 0).toLocaleString()}건` },
+        { label: "권장 해석", value: recommendation },
+      ],
+      confidence,
+    };
+  }
+
+  if (intent === "query_menu_margin") {
+    return {
+      content: `${String(details.menu_name ?? "메뉴")}의 원가율은 ${(Number(details.cost_rate ?? 0) * 100).toFixed(2)}%이며, 판매가는 ${Number(details.sales_price ?? 0).toLocaleString()}원입니다.`,
+      evidence: [
+        { label: "원가", value: `${Number(details.cost_amount ?? 0).toLocaleString()}원` },
+        { label: "판매가", value: `${Number(details.sales_price ?? 0).toLocaleString()}원` },
+        { label: "원가율", value: `${(Number(details.cost_rate ?? 0) * 100).toFixed(2)}%` },
+        { label: "권장 해석", value: recommendation },
+      ],
+      confidence,
+    };
+  }
+
+  if (intent === "simulate_price_update") {
+    return {
+      content: `${String(details.menu_name ?? "메뉴")} 가격을 ${Number(details.target_price ?? 0).toLocaleString()}원으로 조정하면 예상 마진 변화는 ${(Number(details.predicted_margin_rate ?? 0) * 100).toFixed(2)}% 수준입니다.`,
+      evidence: [
+        { label: "현재 가격", value: `${Number(details.current_price ?? 0).toLocaleString()}원` },
+        { label: "목표 가격", value: `${Number(details.target_price ?? 0).toLocaleString()}원` },
+        { label: "현재 마진율", value: `${(Number(details.current_margin_rate ?? 0) * 100).toFixed(2)}%` },
+        { label: "예상 마진율", value: `${(Number(details.predicted_margin_rate ?? 0) * 100).toFixed(2)}%` },
+        { label: "권장 해석", value: recommendation },
+      ],
+      confidence,
+    };
+  }
+
+  return {
+    content: recommendation,
+    evidence: [],
+    confidence,
+  };
+}
 
 export const QnaPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "어제 매출 왜 줄었어?",
+    "취소율이 얼마나 돼?",
+    "마진이 가장 낮은 메뉴는?",
+  ]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(2);
 
-  const send = () => {
+  useEffect(() => {
+    let alive = true;
+    getQnaSuggestions()
+      .then((response) => {
+        if (!alive || response.questions.length === 0) return;
+        setSuggestions(response.questions);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const send = async () => {
     const text = input.trim();
     if (!text || loading) return;
 
@@ -94,23 +129,68 @@ export const QnaPage: React.FC = () => {
     setInput("");
     setLoading(true);
 
-    setTimeout(() => {
-      const res = getResponse(text);
-      const aiMsg: Message = {
-        ...res,
-        id: nextId.current++,
-        timestamp: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+    try {
+      const parsed = await parseCommand({ command: text });
+      const validation = await validateCommand({
+        intent: parsed.intent,
+        entities: parsed.entities,
+      });
+
+      let assistantMessage: Message;
+      if (!validation.is_valid) {
+        assistantMessage = {
+          id: nextId.current++,
+          role: "assistant",
+          content: validation.errors.join(" "),
+          evidence: validation.warnings.map((warning, index) => ({
+            label: `주의 ${index + 1}`,
+            value: warning,
+          })),
+          confidence: Math.round(parsed.confidence * 100),
+          timestamp: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }),
+        };
+      } else {
+        const simulation = await simulateCommand({
+          intent: parsed.intent,
+          entities: parsed.entities,
+        });
+        const formatted = formatAssistantMessage(
+          parsed.intent,
+          simulation.details,
+          simulation.recommendation,
+          Math.round(parsed.confidence * 100),
+        );
+        assistantMessage = {
+          id: nextId.current++,
+          role: "assistant",
+          content: formatted.content,
+          evidence: formatted.evidence,
+          confidence: formatted.confidence,
+          timestamp: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }),
+        };
+      }
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId.current++,
+          role: "assistant",
+          content: "현재 실데이터 답변을 생성하지 못했습니다. DB 적재 상태와 API 연결을 확인하세요.",
+          timestamp: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } finally {
       setLoading(false);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-    }, 1400);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void send();
     }
   };
 
@@ -129,13 +209,10 @@ export const QnaPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-68px-48px)] flex-col gap-0">
-      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">AI QnA</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            AgentGo Biz에게 자유롭게 질문하세요. 근거 데이터와 함께 답변드립니다.
-          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">AgentGo Biz에게 질문하면 DB 적재 실데이터 기준으로 답변합니다.</p>
         </div>
         <button
           onClick={resetSession}
@@ -146,45 +223,22 @@ export const QnaPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Chat Window */}
       <div className="flex-1 overflow-y-auto rounded-2xl border border-border/90 bg-card">
         <div className="space-y-1 p-5">
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-            >
-              {/* Avatar */}
-              <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  msg.role === "assistant" ? "bg-[#eef3ff]" : "bg-[var(--muted)]"
-                }`}
-              >
-                {msg.role === "assistant" ? (
-                  <Bot className="h-4 w-4 text-primary" />
-                ) : (
-                  <User className="h-4 w-4 text-muted-foreground" />
-                )}
+            <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${msg.role === "assistant" ? "bg-[#eef3ff]" : "bg-[var(--muted)]"}`}>
+                {msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-muted-foreground" />}
               </div>
 
-              {/* Bubble */}
-              <div className={`max-w-[75%] space-y-2 ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
-                <div
-                  className={`rounded-2xl px-4 py-3 ${
-                    msg.role === "user"
-                      ? "rounded-tr-sm bg-primary text-white"
-                      : "rounded-tl-sm border border-[#d5deec] bg-[#f4f7ff] text-[#1a2138]"
-                  }`}
-                >
+              <div className={`flex max-w-[75%] flex-col space-y-2 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                <div className={`rounded-2xl px-4 py-3 ${msg.role === "user" ? "rounded-tr-sm bg-primary text-white" : "rounded-tl-sm border border-[#d5deec] bg-[#f4f7ff] text-[#1a2138]"}`}>
                   <p className="text-sm leading-relaxed">{msg.content}</p>
                 </div>
 
-                {/* Evidence */}
-                {msg.evidence && (
+                {msg.evidence && msg.evidence.length > 0 && (
                   <div className="w-full rounded-xl border border-[#d5deec] bg-card p-3">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--subtle-foreground)]">
-                      근거 데이터
-                    </p>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--subtle-foreground)]">근거 데이터</p>
                     <div className="space-y-1.5">
                       {msg.evidence.map((ev) => (
                         <div key={ev.label} className="flex items-center justify-between text-xs">
@@ -196,10 +250,7 @@ export const QnaPage: React.FC = () => {
                     {msg.confidence !== undefined && (
                       <div className="mt-2 flex items-center gap-2">
                         <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#d5deec]">
-                          <div
-                            className="h-full rounded-full bg-emerald-400"
-                            style={{ width: `${msg.confidence}%` }}
-                          />
+                          <div className="h-full rounded-full bg-emerald-400" style={{ width: `${msg.confidence}%` }} />
                         </div>
                         <span className="text-[10px] text-muted-foreground">신뢰도 {msg.confidence}%</span>
                       </div>
@@ -207,7 +258,6 @@ export const QnaPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Actions */}
                 {msg.role === "assistant" && msg.id !== 1 && (
                   <div className="flex items-center gap-1">
                     <button
@@ -231,7 +281,6 @@ export const QnaPage: React.FC = () => {
             </div>
           ))}
 
-          {/* Loading */}
           {loading && (
             <div className="flex gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef3ff]">
@@ -240,11 +289,7 @@ export const QnaPage: React.FC = () => {
               <div className="rounded-2xl rounded-tl-sm border border-[#d5deec] bg-[#f4f7ff] px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className="h-2 w-2 animate-bounce rounded-full bg-primary/50"
-                      style={{ animationDelay: `${i * 0.15}s` }}
-                    />
+                    <span key={i} className="h-2 w-2 animate-bounce rounded-full bg-primary/50" style={{ animationDelay: `${i * 0.15}s` }} />
                   ))}
                 </div>
               </div>
@@ -254,24 +299,21 @@ export const QnaPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Input Bar */}
       <div className="mt-3 rounded-2xl border border-[#d5deec] bg-card p-3">
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+              onChange={(event) => setInput(event.target.value.slice(0, MAX_CHARS))}
               onKeyDown={handleKeyDown}
               placeholder="질문을 입력하세요 (Enter로 전송, Shift+Enter 줄바꿈)"
               rows={2}
               className="w-full resize-none text-sm text-[#1a2138] placeholder-slate-300 focus:outline-none"
             />
-            <div className="mt-1 text-right text-[10px] text-[#b0bdd4]">
-              {input.length}/{MAX_CHARS}
-            </div>
+            <div className="mt-1 text-right text-[10px] text-[#b0bdd4]">{input.length}/{MAX_CHARS}</div>
           </div>
           <button
-            onClick={send}
+            onClick={() => void send()}
             disabled={!input.trim() || loading}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           >
@@ -279,15 +321,14 @@ export const QnaPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Suggestion chips */}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {["어제 매출 왜 줄었어?", "이탈 고객은 몇 명이야?", "마진이 가장 낮은 메뉴는?"].map((q) => (
+          {suggestions.map((question) => (
             <button
-              key={q}
-              onClick={() => setInput(q)}
+              key={question}
+              onClick={() => setInput(question)}
               className="rounded-full border border-[#d5deec] bg-[#f4f7ff] px-3 py-1 text-xs text-[#4a5568] hover:border-[#b8ccff] hover:text-primary"
             >
-              {q}
+              {question}
             </button>
           ))}
         </div>

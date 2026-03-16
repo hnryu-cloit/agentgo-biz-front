@@ -1,7 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Store, CheckCircle2, ChevronDown, FileText, Upload, Trash2, Download, Paperclip } from "lucide-react";
-import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
 import { getStores, updateStore } from "@/services/settings";
 
@@ -33,26 +32,9 @@ export const SettingsStoresPage: React.FC = () => {
   const [configs, setConfigs] = useState<StoreConfig[]>([]);
 
   useEffect(() => {
-    const fallback = storeResources.map((s, i) => ({
-      id: s?.id ?? `s${i}`,
-      name: s?.name ?? `매장 ${i + 1}`,
-      openTime: "10:00",
-      closeTime: "22:00",
-      breakStart: "15:00",
-      breakEnd: "16:30",
-      seats: 42,
-      serviceType: "전체" as const,
-      files: [
-        { id: "f1", name: "2026_여름_메뉴북.pdf", type: "application/pdf", size: "2.4MB", uploadedAt: "2026-03-01" },
-        { id: "f2", name: "매장_평면도_v2.jpg", type: "image/jpeg", size: "1.1MB", uploadedAt: "2026-02-15" }
-      ],
-      expanded: i === 0,
-      saved: false,
-    }));
-
     getStores()
       .then((res) => {
-        if (res.items.length === 0) { setConfigs(fallback); return; }
+        if (res.items.length === 0) { setConfigs([]); return; }
         setConfigs(res.items.map((s, i) => ({
           id: s.id,
           name: s.name,
@@ -67,7 +49,7 @@ export const SettingsStoresPage: React.FC = () => {
           saved: false,
         })));
       })
-      .catch(() => setConfigs(fallback));
+      .catch(() => setConfigs([]));
   }, []);
 
   const toggleExpand = (id: string) => {

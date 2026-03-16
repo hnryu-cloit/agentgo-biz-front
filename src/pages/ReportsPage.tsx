@@ -60,8 +60,8 @@ export const ReportsPage: React.FC = () => {
     let alive = true;
     getReports()
       .then((res) => {
-        if (!alive || res.items.length === 0) return;
-        setReportList(res.items.map(apiToReport));
+        if (!alive || res.length === 0) return;
+        setReportList(res.map(apiToReport));
       })
       .catch(() => { /* mock 유지 */ });
     return () => { alive = false; };
@@ -84,7 +84,6 @@ export const ReportsPage: React.FC = () => {
 
     generateReport({
       report_type: type === "daily_owner" ? "daily" : "weekly",
-      store_id: "default",
       period_label: newReport.period,
     })
       .then((res) => {
@@ -110,7 +109,6 @@ export const ReportsPage: React.FC = () => {
     setRetrying(id);
     generateReport({
       report_type: target.type === "daily_owner" ? "daily" : "weekly",
-      store_id: "default",
       period_label: target.period,
     })
       .then((res) => {

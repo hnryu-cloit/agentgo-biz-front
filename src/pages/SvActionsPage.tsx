@@ -1,8 +1,8 @@
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock, XCircle, AlertTriangle, Send } from "lucide-react";
-import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
+import { getSvStores } from "@/services/supervisor";
 
 type ActionStatus = "completed" | "pending" | "ignored";
 
@@ -15,19 +15,6 @@ type ActionRecord = {
   proposedAt: string;
   completedAt?: string;
 };
-
-const storeNames = storeResources.slice(0, 5).map((s, i) => s?.name ?? `${String.fromCharCode(65 + i)}매장`);
-
-const actionRecords: ActionRecord[] = [
-  { id: "a1", store: storeNames[0], title: "14~17시 타임 프로모션 실행", level: "P0", status: "completed", proposedAt: "03-05", completedAt: "03-05" },
-  { id: "a2", store: storeNames[0], title: "이탈 고객 42명 쿠폰 발송", level: "P0", status: "pending", proposedAt: "03-06" },
-  { id: "a3", store: storeNames[0], title: "메뉴B 마진 경보 확인", level: "P1", status: "ignored", proposedAt: "03-04" },
-  { id: "a4", store: storeNames[1], title: "직원 서비스 교육 일정 조율", level: "P1", status: "pending", proposedAt: "03-06" },
-  { id: "a5", store: storeNames[1], title: "포장재 입고 확인", level: "P0", status: "completed", proposedAt: "03-05", completedAt: "03-07" },
-  { id: "a6", store: storeNames[2], title: "주말 취소율 모니터링 강화", level: "P0", status: "pending", proposedAt: "03-07" },
-  { id: "a7", store: storeNames[3], title: "비피크 프로모션 시뮬레이션 검토", level: "P1", status: "completed", proposedAt: "03-03", completedAt: "03-04" },
-  { id: "a8", store: storeNames[4], title: "VIP 고객 감사 오퍼 발송", level: "P1", status: "completed", proposedAt: "03-02", completedAt: "03-03" },
-];
 
 type EscalationForm = {
   store: string;
@@ -54,11 +41,41 @@ const statusClass: Record<ActionStatus, string> = {
 };
 
 export const SvActionsPage: React.FC = () => {
+  const [storeNames, setStoreNames] = useState<string[]>([]);
+  const [actionRecords, setActionRecords] = useState<ActionRecord[]>([]);
   const [filterStore, setFilterStore] = useState("전체");
   const [filterStatus, setFilterStatus] = useState<ActionStatus | "전체">("전체");
-  const [escForm, setEscForm] = useState<EscalationForm>({ store: storeNames[0], content: "", level: "P0" });
+  const [escForm, setEscForm] = useState<EscalationForm>({ store: "", content: "", level: "P0" });
   const [escSent, setEscSent] = useState(false);
   const [showEscModal, setShowEscModal] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    getSvStores()
+      .then((stores) => {
+        if (!alive) return;
+        const names = stores.map((store) => store.name);
+        setStoreNames(names);
+        setEscForm((prev) => ({ ...prev, store: prev.store || names[0] || "" }));
+        setActionRecords(
+          stores.map((store, index) => ({
+            id: `a-${store.id}`,
+            store: store.name,
+            title: store.risk_score >= 10 ? "긴급 현장 코칭 필요" : store.cancel_rate >= 4 ? "취소율 개선 점검" : "운영 모니터링 유지",
+            level: store.risk_score >= 10 ? "P0" : "P1",
+            status: index % 3 === 0 ? "completed" : index % 3 === 1 ? "pending" : "ignored",
+            proposedAt: "03-16",
+            completedAt: index % 3 === 0 ? "03-16" : undefined,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStoreNames([]);
+        setActionRecords([]);
+      });
+    return () => { alive = false; };
+  }, []);
 
   const filtered = useMemo(
     () => actionRecords.filter((a) => {

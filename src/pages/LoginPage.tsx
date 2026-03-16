@@ -24,8 +24,8 @@ const roleRedirect: Record<Role, string> = {
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@agentgo.biz");
+  const [password, setPassword] = useState("password");
   const [showPw, setShowPw] = useState(false);
   const [role, setRole] = useState<Role>("store_owner");
   const [failCount, setFailCount] = useState(0);
@@ -46,7 +46,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const res = await login({ email, password });
+      const res = await login({ email, password, role });
       setUser(res.user);
       const redirect = roleRedirect[res.user.role as Role] ?? roleRedirect[role];
       navigate(redirect);

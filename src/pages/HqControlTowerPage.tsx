@@ -23,6 +23,7 @@ import {
   Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAgentStatuses, getControlTowerOverview } from "@/services/hq";
 
 type TabKey = "agents" | "workflows" | "simulation" | "data" | "risk";
 
@@ -70,17 +71,27 @@ const regions = [
 export const HqControlTowerPage = () => {
   const [tab, setTab] = useState<TabKey>("agents");
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  const [overview, setOverview] = useState<Awaited<ReturnType<typeof getControlTowerOverview>> | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAgents((prev) =>
-        prev.map((a) => ({
-          ...a,
-          health: Math.min(100, Math.max(0, a.health + (Math.random() * 2 - 1))),
-        }))
-      );
-    }, 5000);
-    return () => clearInterval(interval);
+    let alive = true;
+    getControlTowerOverview().then((response) => {
+      if (!alive) return;
+      setOverview(response);
+    }).catch(() => { /* fallback 유지 */ });
+    getAgentStatuses().then((response) => {
+      if (!alive || response.length === 0) return;
+      setAgents(response.map((agent) => ({
+        id: agent.id,
+        name: agent.display_name,
+        health: Math.max(0, Math.round(100 - (agent.error_rate * 100))),
+        lastRun: agent.last_heartbeat ?? "N/A",
+        dailyTasks: 0,
+        status: agent.status === "healthy" ? "정상" : agent.status === "degraded" ? "주의" : "장애",
+        type: agent.agent_name,
+      })));
+    }).catch(() => { /* fallback 유지 */ });
+    return () => { alive = false; };
   }, []);
 
   return (
@@ -110,10 +121,10 @@ export const HqControlTowerPage = () => {
       {/* Global KPI Grid */}
       <section className="grid gap-5 md:grid-cols-4">
         {[
-          { label: "전국 총 매출", val: "₩42.5억", delta: "+5.2%", icon: Activity, type: "primary" },
-          { label: "운영 가맹점", val: "248개", delta: "+12개", icon: Building2, type: "primary" },
-          { label: "통합 회원 수", val: "125만", delta: "+1.8만", icon: Users, type: "primary" },
-          { label: "에스컬레이션", val: "14건", delta: "P0 3건", icon: ShieldAlert, type: "danger" },
+          { label: "전국 총 매출", val: `₩${(((overview?.revenue_total ?? 425000000) / 100000000)).toFixed(2)}억`, delta: `Δ ₩${Math.abs(Math.round(overview?.revenue_vs_last_week ?? 0)).toLocaleString()}`, icon: Activity, type: "primary" },
+          { label: "운영 가맹점", val: `${overview?.total_stores ?? 248}개`, delta: `${overview?.period_label ?? "N/A"}`, icon: Building2, type: "primary" },
+          { label: "정상 에이전트", val: `${overview?.agents.healthy ?? agents.filter((agent) => agent.status === "정상").length}개`, delta: `전체 ${overview?.agents.total ?? agents.length}개`, icon: Users, type: "primary" },
+          { label: "에스컬레이션", val: `${overview?.active_alerts ?? 14}건`, delta: `Down ${overview?.agents.down ?? 0}개`, icon: ShieldAlert, type: "danger" },
         ].map((kpi, idx) => (
           <article key={idx} className="ds-kpi-card bg-white hover:border-primary/20">
             <div className="flex items-center justify-between">

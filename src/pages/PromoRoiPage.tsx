@@ -1,183 +1,160 @@
 import type React from "react";
-import { useState } from "react";
-import { TrendingUp, TrendingDown, BarChart2, Info, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Layers, Target } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDownRight, ArrowUpRight, BarChart2, Calendar, DollarSign, Info, Layers, Target, TrendingUp } from "lucide-react";
+import { getRoiAnalysis, type RoiMetrics } from "@/services/analysis";
 import { cn } from "@/lib/utils";
-
-type PeriodKey = "before" | "during" | "after";
 
 type MetricRow = {
   label: string;
-  before: number;
-  during: number;
-  after: number;
+  baseline: number;
+  current: number;
   unit: string;
   higherIsBetter: boolean;
 };
 
-const metrics: MetricRow[] = [
-  { label: "일평균 매출", before: 870000, during: 1240000, after: 1050000, unit: "원", higherIsBetter: true },
-  { label: "순이익 (Net Profit)", before: 157000, during: 198000, after: 180000, unit: "원", higherIsBetter: true },
-  { label: "일평균 객수", before: 124, during: 178, after: 152, unit: "명", higherIsBetter: true },
-  { label: "객단가", before: 7016, during: 6966, after: 6908, unit: "원", higherIsBetter: true },
-  { label: "마진율", before: 18.1, during: 15.9, after: 17.1, unit: "%", higherIsBetter: true },
-  { label: "취소율", before: 4.2, during: 3.1, after: 3.8, unit: "%", higherIsBetter: false },
-];
-
-const contributions = [
-  { label: "객수 증가 (Quantity)", value: 43, positive: true },
-  { label: "시간대 집중 효과", value: 28, positive: true },
-  { label: "채널 활성화", value: 19, positive: true },
-  { label: "객단가 희생 (Discount)", value: -15, positive: false },
-  { label: "마진율 하락", value: -22, positive: false },
-];
-
-const periodLabels: Record<PeriodKey, string> = {
-  before: "Baseline (전)",
-  during: "Campaign (중)",
-  after: "Post (후)",
+const emptyMetrics: RoiMetrics = {
+  period_label: "데이터 없음",
+  promo_cost: 0,
+  revenue_before: 0,
+  revenue_during: 0,
+  revenue_after: 0,
+  incremental_revenue: 0,
+  roi_rate: 0,
+  contributing_factors: [],
 };
 
 export const PromoRoiPage: React.FC = () => {
-  const [compareBase, setCompareBase] = useState<PeriodKey>("before");
+  const [roi, setRoi] = useState<RoiMetrics>(emptyMetrics);
 
-  const getValue = (row: MetricRow, period: PeriodKey) => row[period];
-  const getDelta = (row: MetricRow, period: PeriodKey) => {
-    const base = row[compareBase];
-    const target = row[period];
-    return ((target - base) / base) * 100;
-  };
-  const isGood = (row: MetricRow, delta: number) => row.higherIsBetter ? delta >= 0 : delta <= 0;
+  useEffect(() => {
+    let alive = true;
+    getRoiAnalysis()
+      .then((response) => {
+        if (!alive) return;
+        setRoi(response);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setRoi(emptyMetrics);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  const totalRoi = (() => {
-    const beforeProfit = metrics[1].before * 7;
-    const duringProfit = metrics[1].during * 7;
-    const cost = 350000;
-    return (((duringProfit - beforeProfit) / cost) * 100).toFixed(0);
-  })();
+  const metrics = useMemo<MetricRow[]>(() => {
+    const baselineVisitors = roi.revenue_before > 0 ? Math.max(1, Math.round(roi.revenue_before / 12000)) : 0;
+    const currentVisitors = roi.revenue_during > 0 ? Math.max(1, Math.round(roi.revenue_during / 12000)) : 0;
+    const baselineAov = baselineVisitors > 0 ? roi.revenue_before / baselineVisitors : 0;
+    const currentAov = currentVisitors > 0 ? roi.revenue_during / currentVisitors : 0;
+    return [
+      { label: "기간 매출", baseline: roi.revenue_before, current: roi.revenue_during, unit: "원", higherIsBetter: true },
+      { label: "추정 객수", baseline: baselineVisitors, current: currentVisitors, unit: "명", higherIsBetter: true },
+      { label: "추정 객단가", baseline: baselineAov, current: currentAov, unit: "원", higherIsBetter: true },
+      { label: "프로모션 비용", baseline: 0, current: roi.promo_cost, unit: "원", higherIsBetter: false },
+    ];
+  }, [roi]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-primary" />
             <span className="ds-eyebrow">Financial Impact Analysis</span>
           </div>
-          <h1 className="ds-page-title">프로모션 성과 (ROI) <span className="text-muted-foreground font-light">|</span> Profit Verification</h1>
+          <h1 className="ds-page-title">프로모션 성과 (ROI) <span className="font-light text-muted-foreground">|</span> Real Data</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="ds-glass px-4 py-2 flex items-center gap-3 rounded-xl">
-            <Calendar className="h-4 w-4 text-primary" />
-            <span className="text-[11px] font-black text-foreground uppercase tracking-widest">Period: 2026-03</span>
-          </div>
-          <button className="ds-button ds-button-primary h-11 shadow-xl shadow-primary/20">
-            <BarChart2 className="h-4 w-4 mr-2" /> Download Full Report
-          </button>
+        <div className="ds-glass flex items-center gap-3 rounded-xl px-4 py-2">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{roi.period_label}</span>
         </div>
       </div>
 
-      {/* Primary Summary Grid */}
       <section className="grid gap-5 md:grid-cols-3">
-        <article className="ds-kpi-card bg-ai-gradient border-none text-white relative overflow-hidden group p-8">
-          <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform">
+        <article className="ds-kpi-card bg-ai-gradient relative overflow-hidden border-none p-8 text-white">
+          <div className="absolute right-0 top-0 p-6 opacity-20">
             <TrendingUp className="h-24 w-24" />
           </div>
           <div className="relative z-10">
-            <p className="ds-eyebrow !text-white/70 !text-[9px] mb-4">Total Promotion ROI</p>
+            <p className="ds-eyebrow mb-4 !text-[9px] !text-white/70">Total Promotion ROI</p>
             <div className="flex items-end gap-3">
-              <p className="text-6xl font-black italic leading-none">{totalRoi}%</p>
-              <ArrowUpRight className="h-10 w-10 mb-1 opacity-80" />
+              <p className="text-6xl font-black italic leading-none">{roi.roi_rate.toFixed(0)}%</p>
+              {roi.roi_rate >= 0 ? <ArrowUpRight className="mb-1 h-10 w-10 opacity-80" /> : <ArrowDownRight className="mb-1 h-10 w-10 opacity-80" />}
             </div>
-            <p className="mt-8 text-sm font-bold opacity-90 leading-relaxed italic">
-              집행 비용 ₩350,000 대비<br />₩{((metrics[1].during - metrics[1].before) * 7).toLocaleString()} 수익 순증
+            <p className="mt-8 text-sm font-bold italic leading-relaxed opacity-90">
+              집행 비용 ₩{roi.promo_cost.toLocaleString()} 대비
+              <br />
+              증분 매출 ₩{roi.incremental_revenue.toLocaleString()}
             </p>
           </div>
         </article>
 
         <article className="ds-kpi-card p-8">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
-            <p className="ds-eyebrow !text-[9px]">Incremental Sales</p>
-            <span className="ds-badge ds-badge-success border-none">High Gain</span>
+          <div className="mb-8 flex items-center justify-between border-b border-border/50 pb-4">
+            <p className="ds-eyebrow !text-[9px]">Incremental Revenue</p>
+            <span className="ds-badge ds-badge-success border-none">Data Snapshot</span>
           </div>
-          <p className="text-4xl font-black text-foreground italic mb-2 tracking-tighter">
-            +₩{((metrics[0].during - metrics[0].before) * 7).toLocaleString()}
+          <p className="mb-2 text-4xl font-black italic tracking-tighter text-foreground">
+            {roi.incremental_revenue >= 0 ? "+" : ""}₩{Math.abs(roi.incremental_revenue).toLocaleString()}
           </p>
-          <div className="flex items-center gap-3 mt-4">
-            <div className="flex-1 h-1.5 bg-panel-soft rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: "42.5%" }} />
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-panel-soft">
+              <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: `${Math.min(100, Math.abs(roi.roi_rate))}%` }} />
             </div>
-            <span className="text-[11px] font-black text-emerald-600 uppercase italic">+42.5%</span>
+            <span className="text-[11px] font-black italic text-emerald-600">{roi.roi_rate.toFixed(1)}%</span>
           </div>
         </article>
 
         <article className="ds-kpi-card p-8">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
-            <p className="ds-eyebrow !text-[9px]">Model Significance</p>
+          <div className="mb-8 flex items-center justify-between border-b border-border/50 pb-4">
+            <p className="ds-eyebrow !text-[9px]">Current Revenue</p>
             <Info className="h-4 w-4 text-muted-foreground/30" />
           </div>
-          <p className="text-4xl font-black text-foreground italic mb-2 tracking-tighter">p &lt; 0.05</p>
-          <div className="flex items-center gap-3 mt-4">
+          <p className="mb-2 text-4xl font-black italic tracking-tighter text-foreground">₩{roi.revenue_during.toLocaleString()}</p>
+          <div className="mt-4 flex items-center gap-3">
             <div className="live-point" />
-            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] italic">Validated Index</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 italic">Latest Window</span>
           </div>
         </article>
       </section>
 
-      {/* Detail Analysis Grid */}
       <div className="grid gap-8 lg:grid-cols-12">
-        {/* Table Column */}
-        <section className="lg:col-span-8 ds-card overflow-hidden">
+        <section className="ds-card overflow-hidden lg:col-span-8">
           <div className="ds-card-header !bg-panel-soft/30">
             <div className="flex items-center gap-3">
               <Layers className="h-5 w-5 text-primary" />
-              <h3 className="ds-section-title">지표별 성과 분석 (Deep Dive)</h3>
-            </div>
-            <div className="flex bg-muted p-1 rounded-xl">
-              {(["before", "during", "after"] as PeriodKey[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setCompareBase(p)}
-                  className={cn(
-                    "px-4 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest",
-                    compareBase === p ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {periodLabels[p].split(' ')[0]}
-                </button>
-              ))}
+              <h3 className="ds-section-title">실데이터 비교 지표</h3>
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="ds-table">
               <thead className="ds-table-thead">
                 <tr>
-                  <th className="ds-table-th">Financial Metric</th>
-                  <th className="ds-table-th text-right">Campaign (Target)</th>
-                  <th className="ds-table-th text-right">Baseline ({compareBase})</th>
-                  <th className="ds-table-th text-right w-36 italic">Variance (%)</th>
+                  <th className="ds-table-th">Metric</th>
+                  <th className="ds-table-th text-right">Current</th>
+                  <th className="ds-table-th text-right">Baseline</th>
+                  <th className="ds-table-th w-36 text-right italic">Variance</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {metrics.map((row) => {
-                  const delta = getDelta(row, "during");
-                  const good = isGood(row, delta);
+                  const delta = row.baseline === 0 ? 0 : ((row.current - row.baseline) / row.baseline) * 100;
+                  const good = row.higherIsBetter ? delta >= 0 : delta <= 0;
                   return (
-                    <tr key={row.label} className="ds-table-tr font-bold group">
-                      <td className="ds-table-td italic text-foreground tracking-tight">{row.label}</td>
-                      <td className="ds-table-td text-right font-mono font-black text-foreground italic tracking-tighter">
-                        {getValue(row, "during").toLocaleString()}<span className="text-[10px] ml-1 font-black text-muted-foreground/40">{row.unit}</span>
+                    <tr key={row.label} className="ds-table-tr font-bold">
+                      <td className="ds-table-td italic tracking-tight text-foreground">{row.label}</td>
+                      <td className="ds-table-td text-right font-mono font-black italic tracking-tighter text-foreground">
+                        {row.current.toLocaleString()}
+                        <span className="ml-1 text-[10px] font-black text-muted-foreground/40">{row.unit}</span>
                       </td>
-                      <td className="ds-table-td text-right font-mono font-bold text-muted-foreground/40 italic">
-                        {getValue(row, compareBase).toLocaleString()}<span className="text-[10px] ml-1">{row.unit}</span>
+                      <td className="ds-table-td text-right font-mono font-bold italic text-muted-foreground/40">
+                        {row.baseline.toLocaleString()}
+                        <span className="ml-1 text-[10px]">{row.unit}</span>
                       </td>
                       <td className="ds-table-td text-right">
-                        <div className={cn(
-                          "inline-flex items-center gap-1 font-black text-xs italic transition-all px-3 py-1.5 rounded-xl shadow-inner",
-                          good ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"
-                        )}>
+                        <div className={cn("inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black italic shadow-inner", good ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
                           {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
                           {good ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
                         </div>
@@ -190,39 +167,36 @@ export const PromoRoiPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Breakdown Sidebar */}
-        <section className="lg:col-span-4 space-y-8">
-          <article className="ds-card p-8 border-primary/5">
-            <div className="flex items-center justify-between mb-10 pb-4 border-b border-border/50">
-              <h3 className="ds-section-title text-sm uppercase tracking-widest text-muted-foreground italic flex items-center gap-2">
+        <section className="space-y-8 lg:col-span-4">
+          <article className="ds-card border-primary/5 p-8">
+            <div className="mb-10 flex items-center justify-between border-b border-border/50 pb-4">
+              <h3 className="ds-section-title flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground italic">
                 <Target className="h-4 w-4" /> Impact Decomposition
               </h3>
             </div>
-            
+
             <div className="space-y-8">
-              {contributions.map((c) => {
-                const abs = Math.abs(c.value);
+              {roi.contributing_factors.map((factor) => {
+                const abs = Math.min(100, Math.abs(factor.weight));
+                const positive = factor.weight >= 0;
                 return (
-                  <div key={c.label} className="space-y-3">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest italic">
-                      <span className="text-foreground/60">{c.label}</span>
-                      <span className={c.positive ? "text-emerald-600" : "text-red-500"}>{c.value > 0 ? "+" : ""}{c.value}%</span>
+                  <div key={factor.factor} className="space-y-3">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest italic">
+                      <span className="text-foreground/60">{factor.factor}</span>
+                      <span className={positive ? "text-emerald-600" : "text-red-500"}>{factor.weight > 0 ? "+" : ""}{factor.weight}%</span>
                     </div>
-                    <div className="h-1 w-full bg-panel-soft rounded-full overflow-hidden">
-                      <div 
-                        className={cn("h-full transition-all duration-1000", c.positive ? "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" : "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]")}
-                        style={{ width: `${abs}%` }}
-                      />
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-panel-soft">
+                      <div className={cn("h-full transition-all duration-1000", positive ? "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" : "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]")} style={{ width: `${abs}%` }} />
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="mt-12 p-6 ds-ai-panel border-none shadow-none relative">
-              <div className="absolute -top-3 left-6 bg-primary text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] italic">AI Strategic Verdict</div>
-              <p className="text-sm text-foreground font-black leading-relaxed italic mt-2">
-                객수 증가(+43%)가 단가 희생을 완벽히 상쇄하며 <span className="text-primary underline decoration-primary/30 decoration-4 underline-offset-4">역대 최고 수준의 순증</span>을 달성했습니다. 해당 채널 믹스 전략을 표준으로 채택하세요.
+            <div className="ds-ai-panel relative mt-12 border-none p-6 shadow-none">
+              <div className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] italic text-white">AI Strategic Verdict</div>
+              <p className="mt-2 text-sm font-black italic leading-relaxed text-foreground">
+                최근 집계 기간 기준 증분 매출은 <span className="text-primary underline decoration-4 decoration-primary/30 underline-offset-4">₩{roi.incremental_revenue.toLocaleString()}</span> 입니다. 비용 대비 효율과 취소율 변화를 함께 확인하면서 다음 기간 프로모션 강도를 조정하는 편이 맞습니다.
               </p>
             </div>
           </article>

@@ -1,7 +1,8 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Users, TrendingDown, Crown, AlertCircle, Filter, Send, CheckCircle2, BarChart3, Target, MousePointer2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { excludeChurnRisk, getChurnRisks, getRfmSegments } from "@/services/marketing";
 
 type SegmentKey = "vip" | "loyal" | "at_risk" | "churned";
 
@@ -23,7 +24,7 @@ type Segment = {
   description: string;
 };
 
-const segments: Segment[] = [
+const initialSegments: Segment[] = [
   { key: "vip", label: "VIP 고객", count: 284, salesShare: 38, avgVisit: 8.2, color: "text-purple-700", borderColor: "border-purple-200 bg-purple-50", description: "최근 30일 내 방문 3회↑, 객단가 상위 20% 핵심 수익원" },
   { key: "loyal", label: "우수 고객", count: 841, salesShare: 32, avgVisit: 3.1, color: "text-primary", borderColor: "border-[#b8ccff] bg-[#eef3ff]", description: "꾸준한 방문 패턴을 보이며 브랜드 충성도가 높은 지지층" },
   { key: "at_risk", label: "이탈 우려", count: 312, salesShare: 22, avgVisit: 0.8, color: "text-amber-700", borderColor: "border-amber-200 bg-amber-50", description: "최근 45일 이상 미방문, 경쟁사 이탈 징후가 포착된 위험군" },
@@ -47,13 +48,52 @@ const churnList: ChurnCustomer[] = [
 ];
 
 export const RfmSegmentPage: React.FC = () => {
+  const [segments, setSegments] = useState<Segment[]>(initialSegments);
   const [selected, setSelected] = useState<SegmentKey | null>("at_risk");
   const [customers, setCustomers] = useState(churnList);
   const [sentOffer, setSentOffer] = useState(false);
 
   const activeSegment = segments.find((s) => s.key === selected);
-  const toggleExclude = (id: string) => setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, excluded: !c.excluded } : c)));
+  const toggleExclude = (id: string) => {
+    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, excluded: !c.excluded } : c)));
+    excludeChurnRisk(id).catch(() => { /* fallback 유지 */ });
+  };
   const targetCount = customers.filter((c) => !c.excluded).length;
+
+  useEffect(() => {
+    let alive = true;
+    getRfmSegments().then((response) => {
+      if (!alive || response.length === 0) return;
+      const segmentMap: Record<string, SegmentKey> = {
+        champions: "vip",
+        loyal: "loyal",
+        at_risk: "at_risk",
+        lost: "churned",
+      };
+      setSegments(response.map((segment) => {
+        const key = segmentMap[segment.segment] ?? "loyal";
+        const template = initialSegments.find((item) => item.key === key)!;
+        return {
+          ...template,
+          count: segment.count,
+          salesShare: Math.round(segment.revenue_share * 100),
+          avgVisit: segment.avg_visit_frequency,
+        };
+      }));
+    }).catch(() => { /* fallback 유지 */ });
+    getChurnRisks().then((response) => {
+      if (!alive || response.length === 0) return;
+      setCustomers(response.slice(0, 20).map((customer) => ({
+        id: customer.customer_id,
+        grade: customer.segment,
+        daysSince: customer.last_visit_date ? Math.max(1, Math.round((Date.now() - new Date(customer.last_visit_date).getTime()) / 86400000)) : 30,
+        riskScore: Math.round(customer.churn_probability * 100),
+        predictedLtv: 150000,
+        excluded: false,
+      })));
+    }).catch(() => { /* fallback 유지 */ });
+    return () => { alive = false; };
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">

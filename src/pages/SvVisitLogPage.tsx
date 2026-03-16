@@ -6,9 +6,8 @@ import {
   User, Calendar, Trash2, Send, LayoutGrid,
   Edit3, Save, X, AlertCircle
 } from "lucide-react";
-import { storeResources } from "@/data/mockStoreResource";
 import { cn } from "@/lib/utils";
-import { getVisitLogs, createVisitLog } from "@/services/supervisor";
+import { getVisitLogs, createVisitLog, getSvStores } from "@/services/supervisor";
 
 type VisitCategory = "운영" | "위생" | "서비스" | "데이터";
 type ItemStatus = "pass" | "warn" | "fail";
@@ -35,12 +34,10 @@ type VisitRecord = {
   isEditing: boolean;
 };
 
-const storeNames = storeResources.slice(0, 5).map((s, i) => s?.name ?? `${String.fromCharCode(65 + i)}매장`);
-
 const initialVisits: VisitRecord[] = [
   {
     id: "v1",
-    store: storeNames[0],
+    store: "매장",
     visitDate: "2026-03-07",
     supervisor: "김수진 SV",
     aiBriefing: "최근 2주간 12시~13시 피크타임 취소율이 평균 대비 15% 높음. 인력 배치 및 주방 동선 확인 필요.",
@@ -62,7 +59,7 @@ const initialVisits: VisitRecord[] = [
   },
   {
     id: "v2",
-    store: storeNames[1],
+    store: "매장",
     visitDate: "2026-02-28",
     supervisor: "박재원 SV",
     aiBriefing: "매출은 안정적이나 객단가가 구역 평균 대비 12% 낮음. 세트 메뉴 추천 및 업셀링 교육 강화 요망.",
@@ -83,9 +80,10 @@ const initialVisits: VisitRecord[] = [
 
 export const SvVisitLogPage: React.FC = () => {
   const [visits, setVisits] = useState(initialVisits);
+  const [storeNames, setStoreNames] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newLog, setNewLog] = useState({
-    store: storeNames[0],
+    store: "",
     visitDate: new Date().toISOString().split("T")[0],
     notes: "",
     ownerFeedback: "",
@@ -95,10 +93,14 @@ export const SvVisitLogPage: React.FC = () => {
   // API 연결: 방문 기록 로드
   useEffect(() => {
     let alive = true;
-    getVisitLogs()
-      .then((res) => {
-        if (!alive || res.items.length === 0) return;
-        setVisits(res.items.map((v) => ({
+    Promise.all([getVisitLogs(), getSvStores()])
+      .then(([res, stores]) => {
+        if (!alive) return;
+        const names = stores.map((store) => store.name);
+        setStoreNames(names);
+        setNewLog((prev) => ({ ...prev, store: prev.store || names[0] || "" }));
+        if (res.length === 0) return;
+        setVisits(res.map((v) => ({
           id: v.id,
           store: v.store_id,
           visitDate: v.visit_date,
@@ -177,7 +179,7 @@ export const SvVisitLogPage: React.FC = () => {
     };
     setVisits([record, ...visits]);
     setShowForm(false);
-    setNewLog({ store: storeNames[0], visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
+    setNewLog({ store: storeNames[0] ?? "", visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
 
     // API 저장 (실패 시 로컬 상태 유지)
     createVisitLog({
