@@ -123,3 +123,13 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.live-point {
+  @apply relative inline-flex h-2 w-2 rounded-full bg-emerald-500;
+}
+.live-point::after {
+  @apply absolute inset-0 rounded-full bg-emerald-500 animate-ping;
+  content: "";
+}
+
+
