@@ -27,10 +27,12 @@ import { SvActionsPage } from "@/pages/SvActionsPage";
 import { SvAnalysisPage } from "@/pages/SvAnalysisPage";
 import { SvVisitLogPage } from "@/pages/SvVisitLogPage";
 
+import { LoadingState } from "@/components/commons/LoadingState";
+
 const PrivateRoute: React.FC = () => {
   const { isLoading } = useAuth();
   const token = authStorage.getAccessToken();
-  if (isLoading) return null;
+  if (isLoading) return <LoadingState />;
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
