@@ -1,5 +1,5 @@
 import type React from "react";
-import { AlertOctagon, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const causes = [

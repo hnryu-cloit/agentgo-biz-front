@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import Logo from "@/assets/logo.svg";
 import { login } from "@/services/auth";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { ApiError } from "@/lib/apiClient";
 
 type Role = "store_owner" | "supervisor" | "hq_admin";

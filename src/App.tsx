@@ -1,7 +1,7 @@
 import type React from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Layout } from "@/components/commons/Layout";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { authStorage } from "@/lib/apiClient";
 import { AdminSettingsPage } from "@/pages/AdminSettingsPage";
 import { AlertDetailPage } from "@/pages/AlertDetailPage";

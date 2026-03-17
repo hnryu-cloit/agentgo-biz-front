@@ -1,284 +1,424 @@
 import type React from "react";
-import { useEffect, useState } from "react";
-import { Users, TrendingDown, Crown, AlertCircle, Filter, Send, CheckCircle2, BarChart3, Target, MousePointer2 } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import {
+  Users,
+  TrendingDown,
+  Crown,
+  AlertCircle,
+  Send,
+  CheckCircle2,
+  BarChart3,
+  Target,
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  History,
+  Download,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { excludeChurnRisk, getChurnRisks, getRfmSegments } from "@/services/marketing";
+import {
+  excludeChurnRisk,
+  getChurnRisks,
+  getRfmSegments,
+  type ChurnRiskCustomer,
+} from "@/services/marketing";
 
 type SegmentKey = "vip" | "loyal" | "at_risk" | "churned";
 
-const segmentIcons: Record<SegmentKey, React.ReactNode> = {
-  vip: <Crown className="h-5 w-5 text-purple-600" />,
-  loyal: <Users className="h-5 w-5 text-primary" />,
-  at_risk: <AlertCircle className="h-5 w-5 text-amber-600" />,
-  churned: <TrendingDown className="h-5 w-5 text-red-500" />,
+const segmentMeta: Record<SegmentKey, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bgColor: string; borderColor: string; desc: string }> = {
+  vip: {
+    label: "VIP 고객",
+    icon: Crown,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-100",
+    desc: "최근 30일 내 고빈도·고단가 방문 핵심 고객군",
+  },
+  loyal: {
+    label: "우수 고객",
+    icon: Users,
+    color: "text-primary",
+    bgColor: "bg-[#eef3ff]",
+    borderColor: "border-[#d5deec]",
+    desc: "꾸준한 방문 패턴을 보이며 브랜드 충성도가 높은 지지층",
+  },
+  at_risk: {
+    label: "이탈 우려",
+    icon: AlertCircle,
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-100",
+    desc: "최근 45일 이상 미방문, 경쟁사 이탈 징후 포착",
+  },
+  churned: {
+    label: "이탈 고객",
+    icon: TrendingDown,
+    color: "text-red-500",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-100",
+    desc: "60일 이상 장기 미방문, 강력한 재활성화 오퍼 필요",
+  },
 };
 
-type Segment = {
+type DisplaySegment = {
   key: SegmentKey;
-  label: string;
   count: number;
-  salesShare: number;
-  avgVisit: number;
-  color: string;
-  borderColor: string;
-  description: string;
+  revenueShare: number;
+  avgFrequency: number;
 };
-
-const initialSegments: Segment[] = [
-  { key: "vip", label: "VIP 고객", count: 284, salesShare: 38, avgVisit: 8.2, color: "text-purple-700", borderColor: "border-purple-200 bg-purple-50", description: "최근 30일 내 방문 3회↑, 객단가 상위 20% 핵심 수익원" },
-  { key: "loyal", label: "우수 고객", count: 841, salesShare: 32, avgVisit: 3.1, color: "text-primary", borderColor: "border-[#b8ccff] bg-[#eef3ff]", description: "꾸준한 방문 패턴을 보이며 브랜드 충성도가 높은 지지층" },
-  { key: "at_risk", label: "이탈 우려", count: 312, salesShare: 22, avgVisit: 0.8, color: "text-amber-700", borderColor: "border-amber-200 bg-amber-50", description: "최근 45일 이상 미방문, 경쟁사 이탈 징후가 포착된 위험군" },
-  { key: "churned", label: "이탈 고객", count: 198, salesShare: 8, avgVisit: 0, color: "text-red-700", borderColor: "border-red-200 bg-red-50", description: "60일 이상 장기 미방문, 강력한 재활성화 오퍼가 필요한 그룹" },
-];
-
-type ChurnCustomer = {
-  id: string;
-  grade: string;
-  daysSince: number;
-  riskScore: number;
-  predictedLtv: number;
-  excluded: boolean;
-};
-
-const churnList: ChurnCustomer[] = [
-  { id: "C-1042", grade: "VIP", daysSince: 38, riskScore: 94, predictedLtv: 420000, excluded: false },
-  { id: "C-2817", grade: "우수", daysSince: 44, riskScore: 87, predictedLtv: 280000, excluded: false },
-  { id: "C-0391", grade: "일반", daysSince: 52, riskScore: 81, predictedLtv: 95000, excluded: false },
-  { id: "C-1765", grade: "VIP", daysSince: 61, riskScore: 76, predictedLtv: 540000, excluded: false },
-];
 
 export const RfmSegmentPage: React.FC = () => {
-  const [segments, setSegments] = useState<Segment[]>(initialSegments);
-  const [selected, setSelected] = useState<SegmentKey | null>("at_risk");
-  const [customers, setCustomers] = useState(churnList);
+  const [segments, setSegments] = useState<DisplaySegment[]>([]);
+  const [selected, setSelected] = useState<SegmentKey>("at_risk");
+  const [customers, setCustomers] = useState<(ChurnRiskCustomer & { excluded: boolean })[]>([]);
   const [sentOffer, setSentOffer] = useState(false);
-
-  const activeSegment = segments.find((s) => s.key === selected);
-  const toggleExclude = (id: string) => {
-    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, excluded: !c.excluded } : c)));
-    excludeChurnRisk(id).catch(() => { /* fallback 유지 */ });
-  };
-  const targetCount = customers.filter((c) => !c.excluded).length;
 
   useEffect(() => {
     let alive = true;
-    getRfmSegments().then((response) => {
-      if (!alive || response.length === 0) return;
-      const segmentMap: Record<string, SegmentKey> = {
-        champions: "vip",
-        loyal: "loyal",
-        at_risk: "at_risk",
-        lost: "churned",
-      };
-      setSegments(response.map((segment) => {
-        const key = segmentMap[segment.segment] ?? "loyal";
-        const template = initialSegments.find((item) => item.key === key)!;
-        return {
-          ...template,
-          count: segment.count,
-          salesShare: Math.round(segment.revenue_share * 100),
-          avgVisit: segment.avg_visit_frequency,
-        };
-      }));
-    }).catch(() => { /* fallback 유지 */ });
-    getChurnRisks().then((response) => {
-      if (!alive || response.length === 0) return;
-      setCustomers(response.slice(0, 20).map((customer) => ({
-        id: customer.customer_id,
-        grade: customer.segment,
-        daysSince: customer.last_visit_date ? Math.max(1, Math.round((Date.now() - new Date(customer.last_visit_date).getTime()) / 86400000)) : 30,
-        riskScore: Math.round(customer.churn_probability * 100),
-        predictedLtv: 150000,
-        excluded: false,
-      })));
-    }).catch(() => { /* fallback 유지 */ });
+
+    const segmentMap: Record<string, SegmentKey> = {
+      champions: "vip",
+      loyal: "loyal",
+      at_risk: "at_risk",
+      lost: "churned",
+    };
+
+    Promise.all([getRfmSegments(), getChurnRisks()])
+      .then(([segData, churnData]) => {
+        if (!alive) return;
+        
+        const mappedSegs = segData.map((s) => ({
+          key: segmentMap[s.segment] || "loyal",
+          count: s.count,
+          revenueShare: Math.round(s.revenue_share * 100),
+          avgFrequency: s.avg_visit_frequency,
+        }));
+        
+        setSegments(mappedSegs);
+        setCustomers(churnData.map(c => ({ ...c, excluded: false })));
+      })
+      .catch(console.error)
+      .finally(() => undefined);
+
     return () => { alive = false; };
   }, []);
 
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-primary">Customer Intelligence</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">고객 세그먼트 분석 <span className="text-muted-foreground font-light">|</span> RFM Matrix</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 border border-[#DCE4F3] bg-white text-slate-700 hover:bg-gray-50 h-11 uppercase font-black tracking-widest text-[10px] italic">
-            <Filter className="h-4 w-4 mr-2" /> Segment Filters
-          </button>
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 bg-primary text-white hover:bg-[#1E5BE9] shadow-sm h-11 px-6 shadow-xl shadow-primary/20">
-            <MousePointer2 className="h-4 w-4 mr-2" /> Generate Target Group
-          </button>
-        </div>
-      </div>
+  const activeSegment = useMemo(() => 
+    segments.find(s => s.key === selected) || null
+  , [segments, selected]);
 
-      {/* RFM Matrix Grid */}
-      <section className="grid gap-5 md:grid-cols-4">
-        {segments.map((seg) => {
-          const isActive = selected === seg.key;
+  const toggleExclude = (id: string) => {
+    setCustomers(prev => prev.map(c => c.customer_id === id ? { ...c, excluded: !c.excluded } : c));
+    excludeChurnRisk(id).catch(() => {});
+  };
+
+  const targetCount = customers.filter(c => !c.excluded).length;
+
+  return (
+    <div className="space-y-6 pb-10 animate-in fade-in duration-500">
+      
+      {/* 헤더 섹션 */}
+      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-[#eef3ff] p-3">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Customer Intelligence</p>
+              <h1 className="text-xl font-bold text-foreground">고객 세그먼트 분석 (RFM)</h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">AI가 최근 결제 데이터를 분석하여 고객을 4가지 그룹으로 분류합니다.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="inline-flex items-center gap-2 rounded-lg border border-[#d5deec] bg-card px-4 py-2.5 text-sm font-medium text-[#34415b] hover:bg-[#f4f7ff] transition-colors">
+              <History className="h-4 w-4" />
+              과거 이력 비교
+            </button>
+            <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm">
+              <Download className="h-4 w-4" />
+              데이터 내보내기
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* RFM 매트릭스 그리드 */}
+      <div className="grid gap-4 md:grid-cols-4">
+        {(Object.keys(segmentMeta) as SegmentKey[]).map((key) => {
+          const meta = segmentMeta[key];
+          const data = segments.find(s => s.key === key);
+          const isActive = selected === key;
+          const Icon = meta.icon;
+
           return (
             <article
-              key={seg.key}
-              onClick={() => setSelected(seg.key)}
+              key={key}
+              onClick={() => setSelected(key)}
               className={cn(
-                "rounded-2xl border border-border/90 bg-card shadow-sm p-6 flex flex-col gap-4 p-8 cursor-pointer relative overflow-hidden group border-border/50 bg-white",
-                isActive ? "border-primary/40 bg-primary/[0.02] shadow-2xl scale-[1.02]" : "hover:border-primary/20"
+                "group cursor-pointer rounded-2xl border transition-all duration-300 p-5 relative overflow-hidden",
+                isActive 
+                  ? "border-primary bg-white shadow-elevated ring-1 ring-primary/10 scale-[1.02]" 
+                  : "border-border/90 bg-card hover:border-primary/30 hover:shadow-md"
               )}
             >
-              {isActive && <div className="absolute top-0 right-0 p-4 opacity-10"><BarChart3 className="h-20 w-20 text-primary" /></div>}
-              <div className="flex items-center justify-between mb-6">
-                <div className={cn(
-                  "h-14 w-14 rounded-2xl flex items-center justify-center transition-all",
-                  isActive ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-gray-50 text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
-                )}>
-                  {segmentIcons[seg.key]}
+              <div className="flex items-start justify-between relative z-10">
+                <div className={cn("rounded-xl p-2.5 transition-colors", isActive ? "bg-primary text-white" : "bg-[#f4f7ff] text-primary")}>
+                  <Icon className="h-5 w-5" />
                 </div>
-                {isActive && <span className="live-point" />}
+                {isActive && <div className="live-point" />}
               </div>
-              <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-2", isActive ? "text-primary" : "text-muted-foreground")}>{seg.label}</p>
-              <p className="text-4xl font-black text-foreground italic leading-none">{seg.count.toLocaleString()}</p>
               
-              <div className="mt-8 pt-6 border-t border-border/50 space-y-4">
-                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                  <span className="text-muted-foreground/60">Sales Share</span>
-                  <span className="text-foreground italic">{seg.salesShare}%</span>
-                </div>
-                <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
-                  <div className={cn("h-full transition-all duration-1000", isActive ? "bg-primary" : "bg-muted-foreground/20")} style={{ width: `${seg.salesShare}%` }} />
+              <div className="mt-4 space-y-1 relative z-10">
+                <p className={cn("text-[11px] font-bold uppercase tracking-wider", isActive ? "text-primary" : "text-muted-foreground")}>
+                  {meta.label}
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-2xl font-bold text-foreground">{(data?.count ?? 0).toLocaleString()}</p>
+                  <span className="text-xs text-muted-foreground font-medium">명</span>
                 </div>
               </div>
+
+              <div className="mt-6 pt-4 border-t border-border/50 space-y-3 relative z-10">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase">
+                  <span className="text-muted-foreground">매출 기여도</span>
+                  <span className="text-foreground">{data?.revenueShare ?? 0}%</span>
+                </div>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-[#e8edf5]">
+                  <div
+                    className={cn("h-full transition-all duration-1000", isActive ? "bg-primary" : "bg-primary/30")}
+                    style={{ width: `${data?.revenueShare ?? 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* 배경 장식 */}
+              {isActive && (
+                <div className="absolute -right-4 -bottom-4 opacity-[0.03] rotate-12 transition-transform group-hover:rotate-0">
+                  <Icon className="h-24 w-24 text-primary" />
+                </div>
+              )}
             </article>
           );
         })}
-      </section>
+      </div>
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-8 space-y-8">
-          {/* AI Analysis Panel */}
-          {activeSegment && (
-            <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-8 !p-10 border-primary/5">
-              <div className="flex items-start gap-8 relative z-10">
-                <div className="h-20 w-20 rounded-[2.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 shrink-0 rotate-3 group hover:rotate-0 transition-transform">
-                  <BarChart3 className="h-10 w-10" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-slate-900 text-2xl font-black italic tracking-tighter mb-2">{activeSegment.label} 집중 최적화 가이드</h3>
-                  <p className="text-base text-muted-foreground font-medium leading-relaxed mb-8 italic">
-                    {activeSegment.description}. 최근 방문 데이터 시뮬레이션 결과, 
-                    <span className="text-primary font-black underline decoration-primary/20 decoration-4 underline-offset-4 ml-1">AI Recommendation:</span> 전용 메뉴 15% 리워드 제공 시 24%의 복귀 전환율이 예상됩니다.
-                  </p>
-                  <div className="grid grid-cols-3 gap-6">
-                    {[
-                      { label: "Engagement", val: `${activeSegment.avgVisit}회/월`, type: "info" },
-                      { label: "Expected Conv.", val: "24.2%", type: "success" },
-                      { label: "LTV Protect", val: "₩4.2M", type: "warning" },
-                    ].map((m, i) => (
-                      <div key={i} className="bg-white/60 p-5 rounded-[2rem] border border-white/40 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-[9px] mb-1 opacity-60">{m.label}</p>
-                        <p className={cn("text-xl font-black italic", m.type === "success" ? "text-emerald-600" : m.type === "warning" ? "text-amber-600" : "text-foreground")}>{m.val}</p>
-                      </div>
-                    ))}
-                  </div>
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* 왼쪽 섹션: AI 가이드 & 테이블 */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* AI 분석 패널 */}
+          <section className="rounded-2xl border border-[#c9d8ff] bg-[#eef3ff] p-6 relative overflow-hidden">
+            <div className="flex items-start gap-5 relative z-10">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm border border-[#d5deec]">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  {segmentMeta[selected].label} 집중 최적화 가이드
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">AI Insight</span>
+                </h3>
+                <p className="mt-2 text-sm font-medium text-[#4a5568] leading-relaxed italic">
+                  "{segmentMeta[selected].desc}. {selected === 'at_risk' ? '최근 방문 주기가 길어지는 징후가 포착되었습니다. 전용 메뉴 15% 리워드 제공 시 약 24%의 복귀 전환율이 예상됩니다.' : '현재 상태를 유지하기 위한 정기적인 브랜드 뉴스레터 및 포인트 혜택 안내를 권장합니다.'}"
+                </p>
+                
+                <div className="mt-6 grid grid-cols-3 gap-4">
+                  {[
+                    { label: "방문 빈도", val: `${activeSegment?.avgFrequency.toFixed(1) ?? 0}회/월`, icon: TrendingUp },
+                    { label: "예상 전환율", val: "24.2%", icon: Target },
+                    { label: "LTV 보호 가치", val: "₩4.2M", icon: BarChart3 },
+                  ].map((m, i) => (
+                    <div key={i} className="rounded-xl border border-white/60 bg-white/40 p-3 shadow-sm">
+                      <p className="text-[10px] font-bold text-primary/60 uppercase mb-1">{m.label}</p>
+                      <p className="text-sm font-bold text-foreground">{m.val}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </section>
-          )}
-
-          {/* Table */}
-          <article className="rounded-2xl border border-border/90 bg-card shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between !bg-gray-50/30">
-              <div className="flex items-center gap-3">
-                <Target className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold text-slate-900">세그먼트 타겟 리스트</h3>
-              </div>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Selection: {targetCount} Nodes active</p>
             </div>
             
+            {/* 장식용 블러 서클 */}
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/5 blur-3xl" />
+          </section>
+
+          {/* 타겟 리스트 테이블 */}
+          <article className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#f4f7ff] p-2">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-sm font-bold text-foreground">세그먼트 타겟 리스트</h2>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {targetCount}명 활성화됨
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-gray-50 text-gray-500 text-[10px] font-semibold uppercase tracking-widest border-b border-border">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead className="bg-gray-50/50 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50">
                   <tr>
-                    <th className="px-6 py-3 text-left">Customer ID</th>
-                    <th className="px-6 py-3 text-left text-center">Current Grade</th>
-                    <th className="px-6 py-3 text-left text-center">Recency</th>
-                    <th className="px-6 py-3 text-left">Risk Index</th>
-                    <th className="px-6 py-3 text-left text-right">Predicted LTV</th>
-                    <th className="px-6 py-3 text-left text-right">Control</th>
+                    <th className="px-6 py-4">고객 식별자</th>
+                    <th className="px-4 py-4 text-center">현재 등급</th>
+                    <th className="px-4 py-4 text-center">최종 방문</th>
+                    <th className="px-4 py-4">이탈 위험도</th>
+                    <th className="px-6 py-4 text-right">액션</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {customers.map((c) => (
-                    <tr key={c.id} className={cn("border-b border-border/50 hover:bg-gray-50/50 transition-colors font-bold", c.excluded && "opacity-20 grayscale")}>
-                      <td className="px-6 py-4 font-medium font-mono text-primary italic text-xs">#{c.id}</td>
-                      <td className="px-6 py-4 font-medium text-center">
-                        <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border-none font-black italic", c.grade === "VIP" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>{c.grade}</span>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-center italic text-foreground">{c.daysSince}d</td>
-                      <td className="px-6 py-4 font-medium">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 h-1.5 bg-gray-50 rounded-full overflow-hidden shadow-inner">
-                            <div className={cn("h-full transition-all duration-1000 shadow-sm", c.riskScore > 85 ? "bg-red-500" : "bg-amber-500")} style={{ width: `${c.riskScore}%` }} />
+                    <tr key={c.customer_id} className={cn(
+                      "group transition-colors hover:bg-[#f4f7ff]/50",
+                      c.excluded && "opacity-40 grayscale-[0.5]"
+                    )}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#eef3ff] to-[#d5deec] flex items-center justify-center text-[10px] font-bold text-primary">
+                            {c.name?.slice(0, 1) || "C"}
                           </div>
-                          <span className="text-[10px] font-black font-mono w-6 italic">{c.riskScore}</span>
+                          <span className="font-mono text-xs font-bold text-foreground">#{c.name || c.customer_id.slice(0, 8)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-right font-black font-mono text-foreground italic">₩{(c.predictedLtv/1000).toFixed(0)}k</td>
-                      <td className="px-6 py-4 font-medium text-right">
-                        <button onClick={() => toggleExclude(c.id)} className={cn("inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 !h-8 !px-4 !text-[9px] uppercase font-black tracking-widest rounded-lg transition-all", c.excluded ? "bg-muted text-muted-foreground" : "bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-sm")}>{c.excluded ? "Include" : "Exclude"}</button>
+                      <td className="px-4 py-4 text-center">
+                        <span className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold border",
+                          c.segment === 'lost' ? "bg-red-50 text-red-600 border-red-100" : "bg-blue-50 text-primary border-blue-100"
+                        )}>
+                          {c.segment?.toUpperCase() || "GRADE"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center text-xs font-medium text-muted-foreground">
+                        {c.last_visit_date ? new Date(c.last_visit_date).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3 min-w-[120px]">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e8edf5]">
+                            <div
+                              className={cn("h-full transition-all duration-1000", c.churn_probability > 0.7 ? "bg-red-500" : "bg-amber-500")}
+                              style={{ width: `${Math.round(c.churn_probability * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-black w-6 tabular-nums">{Math.round(c.churn_probability * 100)}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={() => toggleExclude(c.customer_id)}
+                          className={cn(
+                            "rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm",
+                            c.excluded 
+                              ? "bg-muted text-muted-foreground border-transparent" 
+                              : "bg-white text-red-600 border-red-100 hover:bg-red-50"
+                          )}
+                        >
+                          {c.excluded ? "포함하기" : "제외하기"}
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            
+            {/* 페이지네이션 (디자인용) */}
+            <div className="border-t border-border/50 bg-gray-50/30 px-6 py-3 flex items-center justify-between">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase">Showing {customers.length} Nodes</p>
+              <button className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                전체 목록 보기 <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
           </article>
         </div>
 
-        {/* Action Sidebar */}
-        <div className="lg:col-span-4 space-y-8">
-          <article className="rounded-2xl border border-border/90 bg-card shadow-sm p-10 bg-slate-950 text-white border-none shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 blur-[80px] rounded-full -mr-20 -mt-20" />
-            <h3 className="text-lg font-bold text-slate-900 !text-white text-2xl mb-2 italic">Campaign Execution</h3>
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-10 border-b border-white/10 pb-6 italic">Targeted Offer Deployment</p>
+        {/* 오른쪽 사이드바: 캠페인 실행 */}
+        <div className="lg:col-span-4 space-y-6">
+          <article className="rounded-2xl border border-border/90 bg-card p-5 md:p-6 shadow-elevated relative overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-border/50 pb-4 mb-5">
+              <div className="rounded-lg bg-[#eef3ff] p-2">
+                <Send className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">타겟 캠페인 오케스트레이션</h3>
+            </div>
 
-            <div className="space-y-8 mb-12">
-              <div className="p-6 bg-white/5 border border-white/10 rounded-[2.5rem] relative group hover:bg-white/10 transition-all">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-primary !text-[9px] mb-3">Audience</p>
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] transition-all">
+                <p className="text-[10px] font-bold text-primary uppercase mb-2">타겟팅 노드</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-black uppercase italic tracking-tighter">{selected}</span>
-                  <span className="text-3xl font-black italic">{targetCount} <span className="text-xs font-normal text-slate-500 tracking-normal">Nodes</span></span>
+                  <span className="text-sm font-semibold text-foreground uppercase">{segmentMeta[selected].label}</span>
+                  <span className="text-sm font-bold text-primary">{targetCount}명</span>
                 </div>
               </div>
 
-              <div className="p-6 bg-white/5 border border-white/10 rounded-[2.5rem] relative group hover:bg-white/10 transition-all">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary !text-slate-400 !text-[9px] mb-3">Model ROI</p>
-                <div className="flex items-end gap-2">
-                  <span className="text-4xl font-black text-emerald-400 italic leading-none">3.8x</span>
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Impact Index</p>
+              <div className="p-4 rounded-xl border border-[#d5deec] bg-card">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">AI 추천 오퍼</p>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="text-sm font-medium text-foreground">전용 메뉴 15% 리워드 쿠폰</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl border border-[#d5deec] bg-card">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">예상 ROI</p>
+                  <p className="text-lg font-bold text-emerald-600">3.8x</p>
+                </div>
+                <div className="p-3 rounded-xl border border-[#d5deec] bg-card">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">복귀 예상</p>
+                  <p className="text-lg font-bold text-primary">24.2%</p>
                 </div>
               </div>
             </div>
 
-            {sentOffer ? (
-              <div className="w-full h-16 bg-emerald-500 rounded-3xl flex items-center justify-center gap-4 animate-in zoom-in-95 shadow-[0_0_30px_rgba(16,185,129,0.4)]">
-                <CheckCircle2 className="h-7 w-7" />
-                <span className="font-black uppercase tracking-[0.3em] text-sm italic">Deployed</span>
+            <div className="mt-6">
+              {sentOffer ? (
+                <div className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm border border-emerald-100 animate-in zoom-in-95">
+                  <CheckCircle2 className="h-4 w-4" />
+                  캠페인 배포 완료
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setSentOffer(true)}
+                  className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-white font-bold text-sm shadow-sm transition-all hover:bg-[#1E5BE9] active:scale-95"
+                >
+                  <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  캠페인 실행 엔진 가동
+                </button>
+              )}
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[#c9d8ff] bg-[#eef3ff] p-3">
+              <p className="text-[10px] font-medium leading-relaxed text-[#4a5568]">
+                <span className="font-bold text-primary">AI 제언:</span> 캠페인 실행 시 담당 슈퍼바이저에게 해당 매장의 밀착 관리 가이드가 자동 전달됩니다.
+              </p>
+            </div>
+          </article>
+
+          {/* 추가 분석 정보 */}
+          <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-lg bg-emerald-50 p-2">
+                <BarChart3 className="h-4 w-4 text-emerald-600" />
               </div>
-            ) : (
-              <button onClick={() => setSentOffer(true)} className="inline-flex items-center justify-center gap-2 rounded-xl h-11 px-6 text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 w-full h-16 bg-primary border-none !rounded-3xl shadow-[0_0_20px_rgba(47,102,255,0.4)] hover:shadow-[0_0_40px_rgba(47,102,255,0.6)] group">
-                <Send className="h-6 w-6 mr-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
-                <span className="font-black uppercase tracking-[0.3em] text-sm italic">Execute Now</span>
-              </button>
-            )}
-            
-            <p className="text-[9px] text-slate-600 text-center mt-8 font-black uppercase tracking-[0.2em] leading-relaxed italic">
-              * AI analyzes historical churn logs<br />to optimize conversion latency.
-            </p>
+              <h4 className="text-sm font-bold text-foreground">세그먼트별 매출 점유율</h4>
+            </div>
+            <div className="space-y-4">
+              {segments.map(s => (
+                <div key={s.key} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase">
+                    <span className="text-muted-foreground">{segmentMeta[s.key].label}</span>
+                    <span className="text-foreground">{s.revenueShare}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-[#e8edf5] rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full transition-all duration-1000", segmentMeta[s.key].color.replace('text', 'bg'))} 
+                      style={{ width: `${s.revenueShare}%` }} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </article>
         </div>
       </div>

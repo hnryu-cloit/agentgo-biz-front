@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  AlertTriangle,
   CheckCircle2,
   Package,
   TrendingDown,
   TrendingUp,
-  Bot,
   ChevronRight,
   History,
   Save,

@@ -26,6 +26,8 @@ type StoreConfig = {
   saved: boolean;
 };
 
+type StoreConfigField = "openTime" | "closeTime" | "breakStart" | "breakEnd" | "seats" | "serviceType";
+
 const serviceTypes: StoreConfig["serviceType"][] = ["홀", "배달", "테이크아웃", "전체"];
 
 export const SettingsStoresPage: React.FC = () => {
@@ -56,7 +58,7 @@ export const SettingsStoresPage: React.FC = () => {
     setConfigs(configs.map(c => c.id === id ? { ...c, expanded: !c.expanded } : c));
   };
 
-  const updateField = (id: string, field: keyof StoreConfig, value: any) => {
+  const updateField = (id: string, field: StoreConfigField, value: StoreConfig[StoreConfigField]) => {
     setConfigs(configs.map(c => c.id === id ? { ...c, [field]: value, saved: false } : c));
   };
 

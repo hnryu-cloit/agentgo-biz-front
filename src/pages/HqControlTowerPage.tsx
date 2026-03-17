@@ -12,18 +12,18 @@ import {
   Database,
   TriangleAlert,
   Cpu,
-  Zap,
   Play,
   Settings2,
-  ChevronRight,
-  BarChart3,
   Globe,
   Layers,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAgentStatuses, getControlTowerOverview } from "@/services/hq";
+import { getAgentStatuses, getAlerts, getControlTowerOverview } from "@/services/hq";
+import { getUploadJobs } from "@/services/data";
+import type { AlertResponse, UploadJobResponse } from "@/types/api";
 
-type TabKey = "agents" | "workflows" | "simulation";
+type TabKey = "agents" | "workflows" | "data" | "risk";
 
 type Agent = {
   id: string;
@@ -73,15 +73,18 @@ const infraNodes = [
 ];
 
 const tabLabels: Record<TabKey, string> = {
-  agents: "에이전트",
+  agents: "에이전트 상태",
   workflows: "워크플로우",
-  simulation: "시뮬레이션",
+  data: "데이터 관리",
+  risk: "리스크 관제",
 };
 
 export const HqControlTowerPage: React.FC = () => {
   const [tab, setTab] = useState<TabKey>("agents");
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
   const [overview, setOverview] = useState<Awaited<ReturnType<typeof getControlTowerOverview>> | null>(null);
+  const [uploadJobs, setUploadJobs] = useState<UploadJobResponse[]>([]);
+  const [alerts, setAlerts] = useState<AlertResponse[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -89,6 +92,7 @@ export const HqControlTowerPage: React.FC = () => {
       if (!alive) return;
       setOverview(response);
     }).catch(() => {});
+    
     getAgentStatuses().then((response) => {
       if (!alive || response.length === 0) return;
       setAgents(response.map((agent) => ({
@@ -101,6 +105,15 @@ export const HqControlTowerPage: React.FC = () => {
         type: agent.agent_name,
       })));
     }).catch(() => {});
+
+    // 추가 데이터 로드
+    getUploadJobs().then((jobs) => {
+      if (alive) setUploadJobs(jobs.slice(0, 5));
+    });
+    getAlerts().then((list) => {
+      if (alive) setAlerts(list.slice(0, 5));
+    });
+
     return () => { alive = false; };
   }, []);
 
@@ -252,40 +265,85 @@ export const HqControlTowerPage: React.FC = () => {
             </div>
           )}
 
-          {tab === "simulation" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="space-y-4">
-                <div className="rounded-xl border border-[#c9d8ff] bg-[#eef3ff] p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-primary" />
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-primary">시나리오 엔진</p>
+          {tab === "data" && (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">최근 데이터 업로드 현황</p>
+                  <div className="space-y-3">
+                    {uploadJobs.length > 0 ? uploadJobs.map((job) => (
+                      <div key={job.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs font-medium text-foreground truncate max-w-[150px]">{job.original_filename}</span>
+                        </div>
+                        <span className={cn(
+                          "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                          job.status === "completed" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-primary"
+                        )}>{job.status.toUpperCase()}</span>
+                      </div>
+                    )) : (
+                      <p className="text-xs text-muted-foreground">최근 업로드 내역이 없습니다.</p>
+                    )}
                   </div>
-                  <textarea
-                    className="w-full rounded-lg border border-[#d5deec] bg-white px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary resize-none h-32"
-                    placeholder="분석하고 싶은 시나리오를 입력하세요. (예: 원가 5% 인상 시 전사 마진 변화)"
-                  />
-                  <button className="mt-3 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm">
-                    시뮬레이션 실행
+                </div>
+                <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 flex flex-col justify-center items-center text-center gap-2">
+                  <Database className="h-8 w-8 text-primary opacity-20" />
+                  <p className="text-sm font-semibold text-foreground">데이터 관리 센터</p>
+                  <p className="text-xs text-muted-foreground">모든 가맹점의 Raw 데이터 정규화 상태를 관리합니다.</p>
+                  <button className="mt-2 rounded-lg border border-[#d5deec] bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-[#eef3ff]">
+                    상세 내역 보기
                   </button>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground ml-1">저장된 시나리오</p>
-                  {["원가 인상 대응 시나리오", "신메뉴 출시 임팩트 분석"].map((s, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-4 py-3 hover:border-[#b8ccff] hover:bg-[#eef3ff] transition-all cursor-pointer group">
-                      <span className="text-sm font-medium text-foreground">{s}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </div>
+          )}
+
+          {tab === "risk" && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">매장별 리스크 히트맵</p>
+                <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "aspect-square rounded-md border border-white/50 shadow-sm transition-transform hover:scale-110 cursor-help",
+                        i % 7 === 0 ? "bg-red-500" : i % 5 === 0 ? "bg-amber-400" : "bg-emerald-500"
+                      )}
+                      title={`매장 ${i + 1}: ${i % 7 === 0 ? "위험" : i % 5 === 0 ? "주의" : "정상"}`}
+                    />
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-4">
+                  {[
+                    { label: "정상", color: "bg-emerald-500" },
+                    { label: "주의", color: "bg-amber-400" },
+                    { label: "위험", color: "bg-red-500" },
+                  ].map((l) => (
+                    <div key={l.label} className="flex items-center gap-1.5">
+                      <div className={cn("h-2 w-2 rounded-full", l.color)} />
+                      <span className="text-[10px] font-semibold text-muted-foreground">{l.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-8 text-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-card flex items-center justify-center border border-[#d5deec]">
-                  <BarChart3 className="h-8 w-8 text-primary opacity-30" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">시나리오 대기 중</p>
-                  <p className="mt-1 text-xs text-muted-foreground">시나리오를 입력하면 AI가 실시간 전사 데이터를 분석합니다.</p>
-                </div>
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground ml-1">최근 주요 알림</p>
+                {alerts.length > 0 ? alerts.map((alert) => (
+                  <div key={alert.id} className="flex items-center justify-between rounded-xl border border-[#d5deec] bg-white px-4 py-3 hover:bg-[#f4f7ff] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-2 w-2 rounded-full",
+                        alert.severity === "critical" ? "bg-red-500" : "bg-amber-400"
+                      )} />
+                      <span className="text-sm font-medium text-foreground">{alert.title}</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-muted-foreground">{alert.store_id}</span>
+                  </div>
+                )) : (
+                  <p className="text-xs text-muted-foreground ml-1">현재 활성화된 리스크가 없습니다.</p>
+                )}
               </div>
             </div>
           )}

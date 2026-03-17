@@ -44,7 +44,6 @@ export const BenchmarkPage: React.FC = () => {
 
   useEffect(() => {
     if (!selectedStoreId) {
-      setActions([]);
       return;
     }
     let alive = true;
@@ -63,6 +62,7 @@ export const BenchmarkPage: React.FC = () => {
   }, [selectedStoreId]);
 
   const selectedStore = stores.find((store) => store.store_id === selectedStoreId) ?? null;
+  const visibleActions = selectedStoreId ? actions : [];
   const metric = metricDefs.find((item) => item.key === activeMetric)!;
   const bestValue = Math.max(...stores.map((store) => store[activeMetric] as number), 1);
 
@@ -191,7 +191,7 @@ export const BenchmarkPage: React.FC = () => {
         <p className="mt-1 text-base text-muted-foreground">평균 대비 격차가 큰 지표 중심으로 생성한 운영 개선 제안입니다.</p>
 
         <div className="mt-5 space-y-3">
-          {actions.map((action) => (
+          {visibleActions.map((action) => (
             <div key={action.title} className="group flex items-start gap-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
               <div className="flex-1">
                 <p className="text-[15px] font-bold text-[#1a2138]">{action.title}</p>
@@ -207,7 +207,7 @@ export const BenchmarkPage: React.FC = () => {
               </div>
             </div>
           ))}
-          {actions.length === 0 && (
+          {visibleActions.length === 0 && (
             <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 text-sm font-medium text-muted-foreground shadow-sm">
               현재 기준 매장에 대한 추천 액션이 없습니다.
             </div>

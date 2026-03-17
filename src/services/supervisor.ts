@@ -1,6 +1,5 @@
 import { get, post } from "../lib/apiClient";
 import type {
-  ActionResponse,
   EscalationCreateRequest,
   EscalationResponse,
   VisitLogCreateRequest,
