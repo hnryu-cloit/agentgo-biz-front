@@ -54,3 +54,12 @@ export function getResourceDataset(
     `/data/resource/datasets/${encodeURIComponent(sourceKind)}/${encodeURIComponent(storeKey)}?limit=${limit}`,
   );
 }
+
+export function importResourceDataset(
+  sourceKind: string,
+  storeKey?: string,
+): Promise<{ imported_count: number; message: string }> {
+  const qs = new URLSearchParams({ source_kind: sourceKind });
+  if (storeKey) qs.append("store_key", storeKey);
+  return post<{ imported_count: number; message: string }>(`/data/resource/import?${qs.toString()}`, {});
+}

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { FileText, RefreshCcw, Upload } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { FileText, RefreshCcw, Upload, Loader2, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob } from "@/services/data";
+import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob, importResourceDataset } from "@/services/data";
 import type { DataType, ResourceSourceCatalog, UploadJobResponse } from "@/types/api";
 
 type ResourceType = Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "receipt_listing" | "menu_lineup">;
@@ -20,33 +20,44 @@ export const DataUploadPage = () => {
   const [preview, setPreview] = useState<{ headers: string[]; rows: Record<string, unknown>[] } | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadJobResponse[]>([]);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
+  const loadData = useCallback(() => {
     Promise.all([getResourceCatalog(), getUploadJobs()])
       .then(([catalog, jobs]) => {
-        if (!alive) return;
         setSources(catalog.sources);
         setUploadHistory(jobs);
-        const firstType = catalog.sources[0]?.source_kind as ResourceType | undefined;
-        const firstStore = catalog.sources[0]?.stores[0]?.store_key ?? "";
-        if (firstType) setSelectedType(firstType);
-        if (firstStore) setSelectedStore(firstStore);
+        if (catalog.sources.length > 0 && !selectedType) {
+          setSelectedType(catalog.sources[0].source_kind as ResourceType);
+        }
       })
       .catch(() => {
-        if (!alive) return;
         setSources([]);
         setUploadHistory([]);
       });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  }, [selectedType]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const activeSource = useMemo(
     () => sources.find((source) => source.source_kind === selectedType) ?? null,
     [selectedType, sources],
   );
+
+  const handleImport = async () => {
+    setIsImporting(true);
+    try {
+      const res = await importResourceDataset(selectedType);
+      alert(`${res.imported_count}건의 데이터가 PostgreSQL에 적재되었습니다.`);
+      loadData();
+    } catch {
+      alert("데이터 적재 중 오류가 발생했습니다. DB 마이그레이션 상태를 확인하세요.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedStore) {
@@ -112,9 +123,14 @@ export const DataUploadPage = () => {
               <Upload className="mx-auto h-8 w-8 text-slate-300" />
               <p className="mt-3 text-sm font-semibold text-slate-700">실데이터 적재 상태</p>
               <p className="mt-1 text-xs text-slate-400">{activeSource?.description ?? "연결된 리소스가 없습니다."}</p>
-              <div className="mt-4 inline-flex rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm">
-                DB 적재 완료 가정
-              </div>
+              <button 
+                onClick={handleImport}
+                disabled={isImporting}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition-all hover:bg-emerald-100 disabled:opacity-50"
+              >
+                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                {isImporting ? "적재 중..." : "PostgreSQL 적재(Import) 실행"}
+              </button>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
