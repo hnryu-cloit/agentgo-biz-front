@@ -1,0 +1,2 @@
+issue_id,domain,service,category,severity,priority,status,test_type,environment,summary,precondition,steps_to_reproduce,expected_result,actual_result,evidence,affected_file,affected_line,owner,recommended_action,detected_on
+AGB-001,frontend,agentgo-biz-front,build,Critical,P0,Open,Static Build,local,"빌드 실패 이슈 요약","필요 환경/데이터","재현 단계","기대 결과","실제 결과","로그 또는 스크린샷 경로","/abs/path/file.tsx","123","Frontend","수정 방향","2026-03-17"
