@@ -36,6 +36,20 @@ const PrivateRoute: React.FC = () => {
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
+const RoleRoute: React.FC<{ allowedRoles: string[] }> = ({ allowedRoles }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <LoadingState />;
+  
+  // hq_admin은 모든 페이지 접근 허용
+  if (user?.role === "hq_admin") return <Outlet />;
+  
+  if (user && allowedRoles.includes(user.role)) {
+    return <Outlet />;
+  }
+  
+  return <Navigate to="/" replace />;
+};
+
 export const App: React.FC = () => {
   return (
     <Suspense fallback={<LoadingState message="페이지를 불러오는 중..." />}>
@@ -48,42 +62,46 @@ export const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/overview" element={<HomePage />} />
 
-            {/* 점주 */}
-            <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
-            <Route path="/owner/qna" element={<QnaPage />} />
-            <Route path="/owner/stock-take" element={<StockTakePage />} />
-            <Route path="/owner/labor" element={<LaborOptimizationPage />} />
+            {/* 점주 및 SV(코칭용) 공유 영역 */}
+            <Route element={<RoleRoute allowedRoles={["store_owner", "supervisor"]} />}>
+              <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
+              <Route path="/owner/qna" element={<QnaPage />} />
+              <Route path="/owner/stock-take" element={<StockTakePage />} />
+              <Route path="/owner/labor" element={<LaborOptimizationPage />} />
+              <Route path="/analysis/benchmark" element={<BenchmarkPage />} />
+            </Route>
 
-            {/* SV */}
-            <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
-            <Route path="/supervisor/analysis" element={<SvAnalysisPage />} />
-            <Route path="/supervisor/actions" element={<SvActionsPage />} />
-            <Route path="/supervisor/visit-log" element={<SvVisitLogPage />} />
+            {/* SV 전용 영역 */}
+            <Route element={<RoleRoute allowedRoles={["supervisor"]} />}>
+              <Route path="/supervisor/dashboard" element={<SupervisorDashboardPage />} />
+              <Route path="/supervisor/analysis" element={<SvAnalysisPage />} />
+              <Route path="/supervisor/actions" element={<SvActionsPage />} />
+              <Route path="/supervisor/visit-log" element={<SvVisitLogPage />} />
+            </Route>
 
-            {/* 본사 */}
-            <Route path="/hq/control-tower" element={<HqControlTowerPage />} />
-            <Route path="/hq/notices" element={<NoticeOcrPage />} />
-            <Route path="/hq/alerts/detail" element={<AlertDetailPage />} />
+            {/* 마케터 전용 영역 */}
+            <Route element={<RoleRoute allowedRoles={["marketer"]} />}>
+              <Route path="/marketing/campaigns" element={<CampaignDesignerPage />} />
+              <Route path="/marketing/rfm" element={<RfmSegmentPage />} />
+              <Route path="/marketing/performance" element={<CampaignPerformancePage />} />
+            </Route>
 
-            {/* 마케팅 */}
-            <Route path="/marketing/campaigns" element={<CampaignDesignerPage />} />
-            <Route path="/marketing/rfm" element={<RfmSegmentPage />} />
-            <Route path="/marketing/performance" element={<CampaignPerformancePage />} />
+            {/* 본사 관리자 전용 영역 (RoleRoute 내부에서 hq_admin은 이미 허용됨) */}
+            <Route element={<RoleRoute allowedRoles={[]} />}>
+              <Route path="/hq/control-tower" element={<HqControlTowerPage />} />
+              <Route path="/hq/notices" element={<NoticeOcrPage />} />
+              <Route path="/hq/alerts/detail" element={<AlertDetailPage />} />
+              <Route path="/data/upload" element={<DataUploadPage />} />
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            </Route>
 
-            {/* 분석 */}
-            <Route path="/analysis/roi" element={<PromoRoiPage />} />
-            <Route path="/analysis/benchmark" element={<BenchmarkPage />} />
-
-            {/* 리포트 / 설정 */}
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/settings/users" element={<SettingsUsersPage />} />
-            <Route path="/settings/stores" element={<SettingsStoresPage />} />
-
-            {/* 데이터 */}
-            <Route path="/data/upload" element={<DataUploadPage />} />
-
-            {/* 관리자 설정 */}
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            {/* 공통 분석 및 리포트 */}
+            <Route element={<RoleRoute allowedRoles={["store_owner", "supervisor", "marketer"]} />}>
+              <Route path="/analysis/roi" element={<PromoRoiPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/settings/users" element={<SettingsUsersPage />} />
+              <Route path="/settings/stores" element={<SettingsStoresPage />} />
+            </Route>
           </Route>
         </Route>
 

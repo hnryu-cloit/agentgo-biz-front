@@ -11,7 +11,7 @@ function buildBypassUser(role?: LoginRequest["role"]): UserInToken {
     name: "Demo User",
     email: "demo@agentgo.biz",
     role: role ?? "store_owner",
-    store_id: role === "store_owner" || !role ? "demo-store" : null,
+    store_id: role === "store_owner" ? "demo-store" : null,
   };
 }
 

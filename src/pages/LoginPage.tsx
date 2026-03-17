@@ -7,18 +7,21 @@ import { login } from "@/services/auth";
 import { useAuth } from "@/contexts/useAuth";
 import { ApiError } from "@/lib/apiClient";
 
-type Role = "store_owner" | "supervisor" | "hq_admin";
+type Role = "store_owner" | "supervisor" | "hq_admin" | "marketer";
 
 const roleOptions: { value: Role; label: string; desc: string }[] = [
-  { value: "store_owner", label: "점주", desc: "가맹점 운영 대시보드" },
-  { value: "supervisor", label: "슈퍼바이저", desc: "담당 구역 관제 보드" },
-  { value: "hq_admin", label: "본사 관리자", desc: "전국 통합 관제 시스템" },
+  { value: "store_owner", label: "가맹점주", desc: "매장 매출 및 운영 최적화" },
+  { value: "supervisor", label: "수퍼바이저", desc: "담당 가맹점 관리 및 코칭" },
+  { value: "hq_admin", label: "본사 관리자", desc: "전사 관제 및 시스템 설정" },
+  { value: "marketer", label: "본사 마케터", desc: "캠페인 설계 및 고객 분석" },
 ];
+
 
 const roleRedirect: Record<Role, string> = {
   store_owner: "/owner/dashboard",
   supervisor: "/supervisor/dashboard",
   hq_admin: "/hq/control-tower",
+  marketer: "/marketing/rfm",
 };
 
 export const LoginPage: React.FC = () => {
