@@ -110,6 +110,14 @@ export function createVisitLog(body: VisitLogCreateRequest): Promise<VisitLogRes
   return post<VisitLogResponse>("/supervisor/visit-logs", body);
 }
 
-export function getVisitLog(logId: string): Promise<VisitLogResponse> {
-  return get<VisitLogResponse>(`/supervisor/visit-logs/${logId}`);
+export interface StoreAiAnalysis {
+  store_id: string;
+  ai_coaching_points: string[];
+  risk_analysis: any;
+  menu_strategy: any;
+  generated_at: string;
+}
+
+export function analyzeSupervisorStore(storeId: string): Promise<StoreAiAnalysis> {
+  return get<StoreAiAnalysis>(`/supervisor/stores/${encodeURIComponent(storeId)}/analysis`);
 }
