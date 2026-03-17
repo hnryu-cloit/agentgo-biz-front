@@ -23,6 +23,12 @@ export interface ControlTowerOverview {
     degraded: number;
     down: number;
   };
+  ai_anomalies?: {
+    type: string;
+    title: string;
+    description: string;
+  }[];
+  generated_at?: string;
 }
 
 export interface AgentStatus {
