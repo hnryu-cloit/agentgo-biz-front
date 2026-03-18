@@ -17,15 +17,22 @@ export interface OwnerDashboard {
   peak_hour: string | null;
   kpi_trend: { label: string; revenue: number }[];
   ai_analysis?: {
-    menu_engineering?: {
+    sales_trend?: any;
+    menu_strategy?: {
       menu_matrix: any[];
       ai_insights: { type: string; title: string; description: string }[];
       summary: any;
     };
-    customer_churn?: {
+    customer_intelligence?: {
       customer_segments: any[];
       ai_insights: { type: string; title: string; description: string }[];
       summary: any;
+    };
+    operational_risk?: any;
+    ai_reasoning?: {
+      headline: string;
+      reasoning: string;
+      action_item: string;
     };
     generated_at: string;
     error?: string;

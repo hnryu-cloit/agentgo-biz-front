@@ -140,69 +140,109 @@ export const OwnerDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* 1. AI 모닝 브리핑 섹션 */}
-      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Sparkles className="h-24 w-24 text-primary" />
-        </div>
-        
-        <div className="flex items-start justify-between gap-4 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg ring-4 ring-white">
-              <Megaphone className="h-5 w-5 text-white" />
+      {/* 1. AI 실시간 전략 제언 (Gemini Interpretation) */}
+      {dashboard.ai_analysis?.ai_reasoning ? (
+        <section className="rounded-3xl border-2 border-primary/20 bg-gradient-to-r from-[#EEF4FF] via-white to-[#F7FAFF] p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute -right-6 -top-6 opacity-10">
+            <Sparkles className="h-32 w-32 text-primary" />
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-lg ring-4 ring-white">
+              <Sparkles className="h-7 w-7 text-white fill-white" />
             </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3" /> AI Morning Briefing
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Strategy Expert</span>
+                <div className="h-px flex-1 bg-primary/10" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 leading-tight">
+                {dashboard.ai_analysis.ai_reasoning.headline}
+              </h2>
+              <p className="mt-3 text-base font-medium text-slate-600 leading-relaxed">
+                {dashboard.ai_analysis.ai_reasoning.reasoning}
               </p>
-              <h3 className="mt-0.5 text-lg font-black text-slate-900">{dashboard.store_name} 지능형 리포트</h3>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] font-bold text-slate-400 block uppercase">Generated At</span>
-            <span className="text-xs font-bold text-slate-500">{dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}</span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3 relative z-10">
-          <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
-            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">실적 요약</p>
-            <div className="flex items-end justify-between">
-              <p className="text-xl font-black text-slate-900">{dashboard.today_revenue.toLocaleString()}<span className="text-xs font-bold ml-1">원</span></p>
-              <p className={cn("text-xs font-bold flex items-center gap-0.5", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
-                {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
-            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">운영 지수</p>
-            <div className="flex items-end justify-between">
-              <p className="text-xl font-black text-slate-900">{dashboard.transaction_count.toLocaleString()}<span className="text-xs font-bold ml-1">건</span></p>
-              <p className="text-xs font-bold text-primary italic">AOV {Math.round(dashboard.avg_order_value / 1000)}k</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm p-4 shadow-sm">
-            <p className="text-[11px] font-bold text-amber-700 uppercase mb-2">주의 필요</p>
-            <div className="flex items-end justify-between">
-              <p className="text-xl font-black text-slate-900">{(dashboard.cancel_rate * 100).toFixed(1)}<span className="text-xs font-bold ml-1">%</span></p>
-              <p className="text-xs font-bold text-amber-600">취소율 모니터링</p>
-            </div>
-          </div>
-        </div>
-
-        {dashboard.ai_analysis && (
-          <div className="mt-5 space-y-2 relative z-10">
-            {[...(dashboard.ai_analysis.menu_engineering?.ai_insights || []), ...(dashboard.ai_analysis.customer_churn?.ai_insights || [])].slice(0, 2).map((insight, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl bg-white/40 px-4 py-3 border border-white/60">
-                <div className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", insight.type === "danger" ? "bg-red-500" : insight.type === "warning" ? "bg-amber-500" : "bg-primary")} />
-                <p className="text-sm font-bold text-slate-700 leading-snug">
-                  <span className="text-primary mr-1">AI:</span> {insight.description}
+              
+              <div className="mt-5 flex items-center gap-4 p-4 rounded-2xl bg-white border border-primary/10 shadow-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                  <Zap className="h-4 w-4 fill-emerald-600" />
+                </div>
+                <p className="text-sm font-black text-slate-800">
+                  <span className="text-emerald-600 mr-2">Today's Action:</span>
+                  {dashboard.ai_analysis.ai_reasoning.action_item}
                 </p>
               </div>
-            ))}
+            </div>
+            
+            <div className="w-full md:w-48 p-4 rounded-2xl bg-slate-900 text-white shadow-lg">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-2">Quick Metrics</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-medium">매출 흐름</span>
+                  <span className={cn("text-xs font-black", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-400" : "text-red-400")}>
+                    {dashboard.revenue_vs_yesterday >= 0 ? "▲" : "▼"} {Math.abs(dashboard.revenue_vs_yesterday).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-medium">취소 리스크</span>
+                  <span className="text-xs font-black text-amber-400">{(dashboard.cancel_rate * 100).toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Sparkles className="h-24 w-24 text-primary" />
+          </div>
+          
+          <div className="flex items-start justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg ring-4 ring-white">
+                <Megaphone className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" /> AI Morning Briefing
+                </p>
+                <h3 className="mt-0.5 text-lg font-black text-slate-900">{dashboard.store_name} 지능형 리포트</h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase">Generated At</span>
+              <span className="text-xs font-bold text-slate-500">{dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3 relative z-10">
+            <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
+              <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">실적 요약</p>
+              <div className="flex items-end justify-between">
+                <p className="text-xl font-black text-slate-900">{dashboard.today_revenue.toLocaleString()}<span className="text-xs font-bold ml-1">원</span></p>
+                <p className={cn("text-xs font-bold flex items-center gap-0.5", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
+                  {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
+              <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">운영 지수</p>
+              <div className="flex items-end justify-between">
+                <p className="text-xl font-black text-slate-900">{dashboard.transaction_count.toLocaleString()}<span className="text-xs font-bold ml-1">건</span></p>
+                <p className="text-xs font-bold text-primary italic">AOV {Math.round(dashboard.avg_order_value / 1000)}k</p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm p-4 shadow-sm">
+              <p className="text-[11px] font-bold text-amber-700 uppercase mb-2">주의 필요</p>
+              <div className="flex items-end justify-between">
+                <p className="text-xl font-black text-slate-900">{(dashboard.cancel_rate * 100).toFixed(1)}<span className="text-xs font-bold ml-1">%</span></p>
+                <p className="text-xs font-bold text-amber-600">취소율 모니터링</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 2. 메뉴 엔지니어링 분석 섹션 */}
       {dashboard.ai_analysis?.menu_engineering && (
