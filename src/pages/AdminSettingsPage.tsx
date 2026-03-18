@@ -19,24 +19,24 @@ const TABS: { value: Tab; label: string; icon: React.ReactNode }[] = [
 
 // ─── 목업 감사 로그 ────────────────────────────────────────────────────────
 const auditLogs = [
-  { id: "a1", action: "로그인",             target: "—",                  ip: "211.234.12.45",  at: "2026-03-15 09:02" },
-  { id: "a2", action: "캠페인 승인 요청",   target: "이탈고객 복귀 쿠폰", ip: "211.234.12.45",  at: "2026-03-15 10:18" },
-  { id: "a3", action: "데이터 업로드",      target: "매출_강남역점.xlsx",  ip: "211.234.12.45",  at: "2026-03-14 16:34" },
-  { id: "a4", action: "사용자 비활성화",    target: "박준혁 (store_owner)",ip: "211.234.12.45",  at: "2026-03-14 11:05" },
-  { id: "a5", action: "로그아웃",           target: "—",                  ip: "211.234.12.45",  at: "2026-03-13 18:22" },
-  { id: "a6", action: "비밀번호 변경",      target: "—",                  ip: "220.70.88.101",  at: "2026-03-12 09:55" },
-  { id: "a7", action: "로그인",             target: "—",                  ip: "220.70.88.101",  at: "2026-03-12 09:53" },
+  { id: "a1", action: "로그인", target: "—", ip: "211.234.12.45", at: "2026-02-28 09:02" },
+  { id: "a2", action: "캠페인 승인 요청", target: "[CJ]광화문점 복귀 할인 쿠폰", ip: "211.234.12.45", at: "2026-02-28 10:18" },
+  { id: "a3", action: "데이터 업로드", target: "크리스탈 제이드_영수증리스트_2025-12-01_2026-02-28.xlsx", ip: "211.234.12.45", at: "2026-02-28 07:57" },
+  { id: "a4", action: "알림 확인", target: "[CJ]광화문점 매출 하락 감지", ip: "211.234.12.45", at: "2026-02-28 21:36" },
+  { id: "a5", action: "리포트 생성", target: "본사 주간 리포트 — 크리스탈제이드 W09", ip: "211.234.12.45", at: "2026-03-01 06:00" },
+  { id: "a6", action: "비밀번호 변경", target: "—", ip: "220.70.88.101", at: "2026-02-27 09:55" },
+  { id: "a7", action: "로그인", target: "—", ip: "220.70.88.101", at: "2026-02-27 09:53" },
 ];
 
 // ─── 알림 설정 목업 ────────────────────────────────────────────────────────
 type NotifSetting = { id: string; label: string; desc: string; email: boolean; push: boolean; sms: boolean };
 const initNotifSettings: NotifSetting[] = [
-  { id: "n1", label: "이상 결제 경보",        desc: "취소율·할인 과다·포인트 누수 탐지",   email: true,  push: true,  sms: true  },
+  { id: "n1", label: "CJ 운영 경보",          desc: "광화문점 매출 하락·업로드 실패 등 주요 경보", email: true,  push: true,  sms: true  },
   { id: "n2", label: "AI 분석 완료",          desc: "에이전트 분석·전략 생성 완료",        email: false, push: true,  sms: false },
-  { id: "n3", label: "데이터 업로드 결과",    desc: "업로드 완료 또는 오류 발생 시",       email: true,  push: true,  sms: false },
-  { id: "n4", label: "캠페인 승인 요청",      desc: "발송 승인 대기 시 즉시 알림",         email: true,  push: true,  sms: true  },
+  { id: "n3", label: "데이터 업로드 결과",    desc: "크리스탈 제이드 리소스 업로드 완료 또는 오류 발생 시", email: true,  push: true,  sms: false },
+  { id: "n4", label: "캠페인 승인 요청",      desc: "CJ 복귀 쿠폰 및 포인트 리워드 승인 대기 시 즉시 알림", email: true,  push: true,  sms: true  },
   { id: "n5", label: "리포트 생성 완료",      desc: "일간·주간 리포트 생성 시",           email: true,  push: false, sms: false },
-  { id: "n6", label: "에이전트 장애",         desc: "에이전트 상태 주의·장애 발생 시",     email: true,  push: true,  sms: true  },
+  { id: "n6", label: "에이전트 장애",         desc: "크리스탈제이드 분석/실행 에이전트 상태 주의·장애 발생 시", email: true,  push: true,  sms: true  },
 ];
 
 // ─── 컴포넌트 ──────────────────────────────────────────────────────────────

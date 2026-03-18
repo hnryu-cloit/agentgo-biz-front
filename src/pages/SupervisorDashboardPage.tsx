@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, BarChart2, CheckSquare, MapPin, Megaphone, ShieldAlert, Sparkles, X, Send, FileText, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSvDashboard, getSvStores, type StoreRiskSummary, type SvDashboard } from "@/services/supervisor";
+import { isSupervisorDashboardEmpty, supervisorDashboardMock, supervisorStoresMock } from "@/lib/mockData";
 
 const emptyDashboard: SvDashboard = {
   total_stores: 0,
@@ -22,13 +23,13 @@ export const SupervisorDashboardPage: React.FC = () => {
     Promise.all([getSvDashboard(), getSvStores()])
       .then(([dashboardResponse, storeResponse]) => {
         if (!alive) return;
-        setDashboard(dashboardResponse);
-        setStores(storeResponse);
+        setDashboard(isSupervisorDashboardEmpty(dashboardResponse) ? supervisorDashboardMock : dashboardResponse);
+        setStores(storeResponse.length > 0 ? storeResponse : supervisorStoresMock);
       })
       .catch(() => {
         if (!alive) return;
-        setDashboard(emptyDashboard);
-        setStores([]);
+        setDashboard(supervisorDashboardMock);
+        setStores(supervisorStoresMock);
       });
     return () => {
       alive = false;

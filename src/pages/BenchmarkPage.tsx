@@ -8,6 +8,7 @@ import {
   type BenchmarkAction,
   type BenchmarkStoreSummary,
 } from "@/services/analysis";
+import { benchmarkActionsMock, benchmarkStoresMock } from "@/lib/mockData";
 
 type MetricKey = "sales_total" | "margin_rate" | "review_score" | "similarity_score";
 
@@ -29,13 +30,14 @@ export const BenchmarkPage: React.FC = () => {
     getBenchmarkStores()
       .then((response) => {
         if (!alive) return;
-        setStores(response);
-        setSelectedStoreId(response[0]?.store_id ?? null);
+        const nextStores = response.length > 0 ? response : benchmarkStoresMock;
+        setStores(nextStores);
+        setSelectedStoreId(nextStores[0]?.store_id ?? null);
       })
       .catch(() => {
         if (!alive) return;
-        setStores([]);
-        setSelectedStoreId(null);
+        setStores(benchmarkStoresMock);
+        setSelectedStoreId(benchmarkStoresMock[0]?.store_id ?? null);
       });
     return () => {
       alive = false;
@@ -50,11 +52,14 @@ export const BenchmarkPage: React.FC = () => {
     getBenchmarkActions(selectedStoreId)
       .then((response) => {
         if (!alive) return;
-        setActions(response.recommended_actions);
+        const nextActions = response.recommended_actions.length > 0
+          ? response.recommended_actions
+          : (benchmarkActionsMock[selectedStoreId] ?? []);
+        setActions(nextActions);
       })
       .catch(() => {
         if (!alive) return;
-        setActions([]);
+        setActions(benchmarkActionsMock[selectedStoreId] ?? []);
       });
     return () => {
       alive = false;

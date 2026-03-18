@@ -41,10 +41,10 @@ type Notification = {
 };
 
 const mockNotifications: Notification[] = [
-  { id: 1, type: "alert", title: "이상 결제 탐지", desc: "A매장 취소율 급증 (P0)", time: "방금 전", read: false },
+  { id: 1, type: "alert", title: "이상 결제 탐지", desc: "[CJ]광화문점 취소율 급증 (P0)", time: "방금 전", read: false },
   { id: 2, type: "workflow", title: "AI 분석 완료", desc: "전략 에이전트 실행 완료", time: "3분 전", read: false },
   { id: 3, type: "notice", title: "공지 OCR 완료", desc: "3월 운영 공지 처리 완료", time: "14분 전", read: true },
-  { id: 4, type: "upload", title: "데이터 업로드 완료", desc: "매출 데이터 248개 매장 반영", time: "1시간 전", read: true },
+  { id: 4, type: "upload", title: "데이터 업로드 완료", desc: "크리스탈제이드 POS 23개 매장 반영", time: "1시간 전", read: true },
 ];
 
 const notifIcon: Record<Notification["type"], string> = {

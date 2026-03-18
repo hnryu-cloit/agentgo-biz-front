@@ -72,7 +72,7 @@ export const HomePage: React.FC = () => {
       setWorkflowData(res);
       
       // 2. 단계별 애니메이션 시뮬레이션
-      const stepsCount = res.agent_steps?.length || 5;
+      const stepsCount = Array.isArray(res.agent_steps) ? res.agent_steps.length : 5;
       for (let i = 0; i < stepsCount; i++) {
         setCurrentStep(i);
         await new Promise(resolve => setTimeout(resolve, 1500));

@@ -39,16 +39,16 @@ type HistoryEntry = {
 };
 
 const initialItems: StockItem[] = [
-  { id: "i01", name: "닭고기 (냉동)",    category: "육류/어패류", unit: "kg",       theoretical: 12.5, actual: 11.2, note: "" },
-  { id: "i02", name: "돼지고기 (앞다리)", category: "육류/어패류", unit: "kg",       theoretical: 8.0,  actual: 7.8,  note: "" },
-  { id: "i03", name: "계란",             category: "육류/어패류", unit: "판(30개)", theoretical: 5,    actual: 4,    note: "" },
-  { id: "i04", name: "새우 (냉동)",      category: "육류/어패류", unit: "kg",       theoretical: 3.0,  actual: 3.0,  note: "" },
-  { id: "i05", name: "양파",             category: "채소/과일",  unit: "kg",       theoretical: 15.0, actual: 14.5, note: "" },
+  { id: "cj-i01", name: "셰프의 마파박스", category: "양념/소스", unit: "세트", theoretical: 42, actual: 38, note: "소공점 메뉴 라인업 기준" },
+  { id: "cj-i02", name: "셰프의 새우박스", category: "육류/어패류", unit: "세트", theoretical: 35, actual: 33, note: "소공점 메뉴 라인업 기준" },
+  { id: "cj-i03", name: "셰프의 어향박스", category: "양념/소스", unit: "세트", theoretical: 30, actual: 28, note: "소공점 메뉴 라인업 기준" },
+  { id: "cj-i04", name: "광동의점심상(2인)", category: "건식품/곡류", unit: "코스", theoretical: 18, actual: 16, note: "소공점 메뉴 라인업 기준" },
+  { id: "cj-i05", name: "특선런치 A코스", category: "채소/과일", unit: "코스", theoretical: 12, actual: 11, note: "소공점 메뉴 라인업 기준" },
 ];
 
 const historyData: HistoryEntry[] = [
-  { id: "h1", month: "2026-02", store: "강남역점", totalItems: 18, normalCount: 14, shortageCount: 4, surplusCount: 0, avgLossRate: 3.8, submittedAt: "2026-03-02 10:15" },
-  { id: "h2", month: "2026-01", store: "강남역점", totalItems: 18, normalCount: 15, shortageCount: 3, surplusCount: 0, avgLossRate: 2.9, submittedAt: "2026-02-03 09:40" },
+  { id: "cj-h1", month: "2026-02", store: "크리스탈제이드 소공점", totalItems: 18, normalCount: 13, shortageCount: 4, surplusCount: 1, avgLossRate: 4.2, submittedAt: "2026-02-28 21:10" },
+  { id: "cj-h2", month: "2026-01", store: "크리스탈제이드 소공점", totalItems: 18, normalCount: 14, shortageCount: 3, surplusCount: 1, avgLossRate: 3.6, submittedAt: "2026-01-31 20:45" },
 ];
 
 const CATEGORIES: Category[] = ["전체", "육류/어패류", "채소/과일", "양념/소스", "건식품/곡류"];
@@ -60,8 +60,8 @@ function diffRate(theoretical: number, actual: number | null): number | null {
 
 export const StockTakePage = () => {
   const [selectedMonth, setSelectedMonth] = useState("2026-03");
-  const [selectedStore, setSelectedStore] = useState("소공점");
-  const [storeOptions, setStoreOptions] = useState<string[]>(["소공점"]);
+  const [selectedStore, setSelectedStore] = useState("크리스탈제이드");
+  const [storeOptions, setStoreOptions] = useState<string[]>(["크리스탈제이드"]);
   const [activeCategory, setActiveCategory] = useState<Category>("전체");
   const [items, setItems] = useState<StockItem[]>(initialItems);
   const [history, setHistory] = useState(historyData);
@@ -91,7 +91,7 @@ export const StockTakePage = () => {
       })
       .catch(() => {
         if (!alive) return;
-        setStoreOptions(["소공점"]);
+        setStoreOptions(["크리스탈제이드"]);
       });
     return () => { alive = false; };
   }, []);

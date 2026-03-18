@@ -3,22 +3,22 @@ import { TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const causes = [
-  { rank: 1, percent: 62, title: "마감시간 직전 취소 집중" },
-  { rank: 2, percent: 28, title: "특정 메뉴 품절 이슈" },
-  { rank: 3, percent: 10, title: "POS 네트워크 불안정" },
+  { rank: 1, percent: 58, title: "[CJ]광화문점 전일 대비 매출 급감" },
+  { rank: 2, percent: 27, title: "디너 시간대 객수 둔화" },
+  { rank: 3, percent: 15, title: "영수증 리소스 업로드 실패 여파" },
 ];
 
 const timeline = [
-  { time: "14:23", desc: "이상 결제 패턴 감지", done: true },
-  { time: "14:25", desc: "본사 경보 발생 (P0)", done: true },
-  { time: "14:30", desc: "현장 확인 요청", done: true },
-  { time: "14:45", desc: "원인 분석 완료", done: false },
+  { time: "21:30", desc: "[CJ]광화문점 매출 하락 패턴 감지", done: true },
+  { time: "21:35", desc: "HQ 경보 생성", done: true },
+  { time: "21:40", desc: "SV 현장 확인 요청", done: true },
+  { time: "21:55", desc: "원인 분석 및 액션 보드 작성", done: false },
 ];
 
 const actions = [
-  "해당 매장 유선 상황 확인",
-  "POS 메뉴 재고 강제 동기화",
-  "취소 고객 대상 사과 메시지 발송",
+  "[CJ]광화문점 점주 유선 확인 및 디너 객수 저하 사유 파악",
+  "receipt_listing 업로드 실패 건 재처리",
+  "크리스탈제이드 재방문 쿠폰 발송 후보군 점검",
 ];
 
 export const AlertDetailPage: React.FC = () => {
@@ -37,11 +37,11 @@ export const AlertDetailPage: React.FC = () => {
       <section className="rounded-2xl border border-border/90 bg-card p-6 border-l-4 border-l-red-500 shadow-elevated">
         <div className="flex items-center gap-2 mb-3">
           <span className="h-2 w-2 animate-pulse rounded-full bg-red-500 shrink-0" />
-          <span className="text-xs font-bold text-red-600 uppercase">P0 Emergency</span>
+          <span className="text-xs font-bold text-red-600 uppercase">CJ Warning</span>
         </div>
-        <h3 className="text-xl font-bold text-foreground">강남역점 결제 이상 탐지</h3>
+        <h3 className="text-xl font-bold text-foreground">[CJ]광화문점 매출 하락 감지</h3>
         <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground font-medium">
-          <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> 14:23</span>
+          <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> 21:30</span>
           <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-600 border border-amber-100">처리 중</span>
         </div>
       </section>

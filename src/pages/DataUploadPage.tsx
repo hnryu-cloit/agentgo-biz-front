@@ -3,6 +3,7 @@ import { FileText, RefreshCcw, Upload, Loader2, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob, importResourceDataset } from "@/services/data";
 import type { DataType, ResourceSourceCatalog, UploadJobResponse } from "@/types/api";
+import { resourceCatalogMock, resourceDatasetPreviewMock, uploadJobsMock } from "@/lib/mockData";
 
 type ResourceType = Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "receipt_listing" | "menu_lineup">;
 
@@ -25,15 +26,15 @@ export const DataUploadPage = () => {
   const loadData = useCallback(() => {
     Promise.all([getResourceCatalog(), getUploadJobs()])
       .then(([catalog, jobs]) => {
-        setSources(catalog.sources);
-        setUploadHistory(jobs);
+        setSources(catalog.sources.length > 0 ? catalog.sources : resourceCatalogMock);
+        setUploadHistory(jobs.length > 0 ? jobs : uploadJobsMock);
         if (catalog.sources.length > 0 && !selectedType) {
           setSelectedType(catalog.sources[0].source_kind as ResourceType);
         }
       })
       .catch(() => {
-        setSources([]);
-        setUploadHistory([]);
+        setSources(resourceCatalogMock);
+        setUploadHistory(uploadJobsMock);
       });
   }, [selectedType]);
 
@@ -68,11 +69,11 @@ export const DataUploadPage = () => {
     getResourceDataset(selectedType, selectedStore, 10)
       .then((dataset) => {
         if (!alive) return;
-        setPreview({ headers: dataset.headers, rows: dataset.rows });
+        setPreview(dataset.rows.length > 0 ? { headers: dataset.headers, rows: dataset.rows } : resourceDatasetPreviewMock);
       })
       .catch(() => {
         if (!alive) return;
-        setPreview(null);
+        setPreview(resourceDatasetPreviewMock);
       });
     return () => {
       alive = false;
