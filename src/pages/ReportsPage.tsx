@@ -2,6 +2,8 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
 import { getReports, generateReport, downloadReport } from "@/services/reports";
 import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 import type { ReportResponse } from "@/types/api";
@@ -63,6 +65,7 @@ export const ReportsPage: React.FC = () => {
   const [reportList, setReportList] = useState(initialReports);
   const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
+  const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -97,6 +100,16 @@ export const ReportsPage: React.FC = () => {
     intent: "summary" | "action" = "summary",
   ) => {
     setSelectedAssistCard(cardId);
+    setInlineAssist({
+      cardId,
+      title: label,
+      why: contextText
+        ? `${contextText}가 무엇을 말하는지 먼저 짧게 파악해야 합니다.`
+        : "이 항목에서 먼저 읽어야 할 포인트를 짧게 파악해야 합니다.",
+      actionLabel: intent === "action"
+        ? "재생성, 재확인, 비교 중 1개만 먼저 선택하세요."
+        : "해설을 본 뒤 어떤 리포트를 먼저 볼지 정하세요.",
+    });
     openAiAssist(label, prompt, contextText, intent);
   };
 
@@ -209,27 +222,30 @@ export const ReportsPage: React.FC = () => {
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => handleAssist("reports-header", "리포트 해설", "현재 리포트 목록과 상태를 해설해줘", "통합 리포트 허브")}
-            className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
-          >
-            해설 보기
-          </button>
-          <button
-            onClick={() => handleAssist("reports-header", "리포트 추천 조치", "현재 리포트 화면 기준으로 지금 해야 할 조치를 알려줘", "생성 실패, 생성 중, 준비 완료 리포트", "action")}
-            className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
-          >
-            추천 조치
-          </button>
-          <button
-            onClick={() => handleAssist("reports-header", "일간 주간 비교", "일간 점주 리포트와 주간 본사 리포트를 비교해서 설명해줘", "일간 vs 주간 리포트")}
-            className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
-          >
-            비교 보기
-          </button>
-        </div>
+        <AssistActionBar
+          className="mt-4"
+          summary={{
+            label: "해설 보기",
+            onClick: () => handleAssist("reports-header", "리포트 해설", "현재 리포트 목록과 상태를 해설해줘", "통합 리포트 허브"),
+          }}
+          action={{
+            label: "추천 조치",
+            onClick: () => handleAssist("reports-header", "리포트 추천 조치", "현재 리포트 화면 기준으로 지금 해야 할 조치를 알려줘", "생성 실패, 생성 중, 준비 완료 리포트", "action"),
+          }}
+          compare={{
+            label: "비교 보기",
+            onClick: () => handleAssist("reports-header", "일간 주간 비교", "일간 점주 리포트와 주간 본사 리포트를 비교해서 설명해줘", "일간 vs 주간 리포트"),
+          }}
+        />
       </section>
+
+      {inlineAssist && inlineAssist.cardId === "reports-header" && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
 
       {storeIntelligence && (
         <section
@@ -245,26 +261,22 @@ export const ReportsPage: React.FC = () => {
             <h3 className="text-lg font-bold text-slate-900">리포트 생성 기준 실데이터 인사이트</h3>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{storeIntelligence.summary}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={() => handleAssist("reports-intelligence", "인사이트 해설", "이 실데이터 인사이트를 해설해줘", storeIntelligence.summary)}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
-            >
-              해설 보기
-            </button>
-            <button
-              onClick={() => handleAssist("reports-intelligence", "인사이트 조치", "이 인사이트 기준으로 리포트에서 확인할 조치를 알려줘", storeIntelligence.summary, "action")}
-              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-            >
-              추천 조치
-            </button>
-            <button
-              onClick={() => handleAssist("reports-intelligence", "인사이트 비교 보기", "이 인사이트를 다른 리포트 지표와 비교해서 설명해줘", storeIntelligence.summary)}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-            >
-              비교 보기
-            </button>
-          </div>
+          <AssistActionBar
+            className="mt-4"
+            compact
+            summary={{
+              label: "해설 보기",
+              onClick: () => handleAssist("reports-intelligence", "인사이트 해설", "이 실데이터 인사이트를 해설해줘", storeIntelligence.summary),
+            }}
+            action={{
+              label: "추천 조치",
+              onClick: () => handleAssist("reports-intelligence", "인사이트 조치", "이 인사이트 기준으로 리포트에서 확인할 조치를 알려줘", storeIntelligence.summary, "action"),
+            }}
+            compare={{
+              label: "비교 보기",
+              onClick: () => handleAssist("reports-intelligence", "인사이트 비교 보기", "이 인사이트를 다른 리포트 지표와 비교해서 설명해줘", storeIntelligence.summary),
+            }}
+          />
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {[
               `오늘 매출 ${storeIntelligence.metrics.sales.today_revenue.toLocaleString()}원`,
@@ -277,6 +289,14 @@ export const ReportsPage: React.FC = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {inlineAssist && inlineAssist.cardId === "reports-intelligence" && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
       )}
 
       {/* 리포트 목록 */}

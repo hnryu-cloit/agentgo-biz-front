@@ -2,6 +2,8 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, BarChart2, CheckSquare, MapPin, Megaphone, ShieldAlert, Sparkles, X, Send, FileText, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
 import { getSvDashboard, getSvStores, type StoreRiskSummary, type SvDashboard } from "@/services/supervisor";
 import { isSupervisorDashboardEmpty, supervisorDashboardMock, supervisorStoresMock } from "@/lib/mockData";
 
@@ -24,6 +26,7 @@ export const SupervisorDashboardPage: React.FC = () => {
   const [selectedStore, setSelectedStore] = useState<StoreRiskSummary | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
+  const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -77,6 +80,16 @@ export const SupervisorDashboardPage: React.FC = () => {
     intent: "summary" | "action" = "summary",
   ) => {
     setSelectedAssistCard(cardId);
+    setInlineAssist({
+      cardId,
+      title: label,
+      why: contextText
+        ? `${contextText}를 기준으로 어떤 매장을 먼저 볼지 우선순위를 정해야 합니다.`
+        : "이 항목은 어떤 매장을 먼저 볼지 정하는 기준입니다.",
+      actionLabel: intent === "action"
+        ? "오늘 방문할 매장과 체크포인트 1개만 먼저 정하세요."
+        : "해설을 본 뒤 추천 조치로 코칭 포인트를 정리하세요.",
+    });
     openAiAssist(label, prompt, contextText, intent);
   };
 
@@ -172,26 +185,22 @@ export const SupervisorDashboardPage: React.FC = () => {
           </div>
           <p className="mt-2 text-2xl font-bold text-slate-900">{avgDelta}%</p>
           <p className="mt-1 text-xs text-slate-500">최근 비교 기준</p>
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => handleAssist("sv-sales-delta", "구역 매출 해설", "구역 평균 매출 증감을 SV 관점에서 해설해줘", `구역 평균 매출 증감 ${avgDelta}%`)}
-              className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
-            >
-              해설 보기
-            </button>
-            <button
-              onClick={() => handleAssist("sv-sales-delta", "SV 추천 조치", "구역 평균 매출 증감 기준으로 SV가 지금 할 코칭 액션을 알려줘", `관리 매장 ${dashboard.total_stores}개`, "action")}
-              className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
-            >
-              추천 조치
-            </button>
-            <button
-              onClick={() => handleAssist("sv-sales-delta", "구역 매출 비교 보기", "구역 평균 매출 증감을 다른 위험 지표와 비교해서 설명해줘", `구역 평균 매출 증감 ${avgDelta}%`)}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-            >
-              비교 보기
-            </button>
-          </div>
+          <AssistActionBar
+            className="mt-4"
+            compact
+            summary={{
+              label: "해설 보기",
+              onClick: () => handleAssist("sv-sales-delta", "구역 매출 해설", "구역 평균 매출 증감을 SV 관점에서 해설해줘", `구역 평균 매출 증감 ${avgDelta}%`),
+            }}
+            action={{
+              label: "추천 조치",
+              onClick: () => handleAssist("sv-sales-delta", "SV 추천 조치", "구역 평균 매출 증감 기준으로 SV가 지금 할 코칭 액션을 알려줘", `관리 매장 ${dashboard.total_stores}개`, "action"),
+            }}
+            compare={{
+              label: "비교 보기",
+              onClick: () => handleAssist("sv-sales-delta", "구역 매출 비교 보기", "구역 평균 매출 증감을 다른 위험 지표와 비교해서 설명해줘", `구역 평균 매출 증감 ${avgDelta}%`),
+            }}
+          />
         </article>
 
         <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
@@ -215,28 +224,32 @@ export const SupervisorDashboardPage: React.FC = () => {
           </div>
           <p className="mt-2 text-xl font-bold text-slate-900">{topDangerStores || "-"}</p>
           <p className="mt-1 text-xs text-slate-500">위험도 상위 매장</p>
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => handleAssist("sv-visit-priority", "방문 우선순위 해설", "추천 방문지를 SV 관점에서 해설해줘", topDangerStores || "위험도 상위 매장")}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
-            >
-              해설 보기
-            </button>
-            <button
-              onClick={() => handleAssist("sv-visit-priority", "방문 추천 조치", "추천 방문지 기준으로 방문 전에 볼 체크포인트를 알려줘", topDangerStores || "위험도 상위 매장", "action")}
-              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-            >
-              추천 조치
-            </button>
-            <button
-              onClick={() => handleAssist("sv-visit-priority", "방문 비교 보기", "추천 방문지와 다른 위험 매장을 비교해서 설명해줘", topDangerStores || "위험도 상위 매장")}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-            >
-              비교 보기
-            </button>
-          </div>
+          <AssistActionBar
+            className="mt-4"
+            compact
+            summary={{
+              label: "해설 보기",
+              onClick: () => handleAssist("sv-visit-priority", "방문 우선순위 해설", "추천 방문지를 SV 관점에서 해설해줘", topDangerStores || "위험도 상위 매장"),
+            }}
+            action={{
+              label: "추천 조치",
+              onClick: () => handleAssist("sv-visit-priority", "방문 추천 조치", "추천 방문지 기준으로 방문 전에 볼 체크포인트를 알려줘", topDangerStores || "위험도 상위 매장", "action"),
+            }}
+            compare={{
+              label: "비교 보기",
+              onClick: () => handleAssist("sv-visit-priority", "방문 비교 보기", "추천 방문지와 다른 위험 매장을 비교해서 설명해줘", topDangerStores || "위험도 상위 매장"),
+            }}
+          />
         </article>
       </section>
+
+      {inlineAssist && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
 
       <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm md:p-6">
         <div className="flex items-center gap-2">

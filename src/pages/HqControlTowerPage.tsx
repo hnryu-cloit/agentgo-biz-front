@@ -20,6 +20,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
 import { getAgentStatuses, getAlerts, getControlTowerOverview } from "@/services/hq";
 import { getUploadJobs } from "@/services/data";
 import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
@@ -94,6 +96,7 @@ export const HqControlTowerPage: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertResponse[]>([]);
   const [flagshipIntelligence, setFlagshipIntelligence] = useState<StoreIntelligence | null>(null);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
+  const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -146,6 +149,16 @@ export const HqControlTowerPage: React.FC = () => {
     intent: "summary" | "action" = "summary",
   ) => {
     setSelectedAssistCard(cardId);
+    setInlineAssist({
+      cardId,
+      title: label,
+      why: contextText
+        ? `${contextText}가 전사 영향과 우선순위에 어떤 의미인지 먼저 봐야 합니다.`
+        : "이 항목은 본사 우선순위와 에스컬레이션 판단에 바로 연결됩니다.",
+      actionLabel: intent === "action"
+        ? "전사 영향이 큰 항목 1건만 먼저 정리하세요."
+        : "해설을 본 뒤 추천 조치로 개입 대상을 정리하세요.",
+    });
     openAiAssist(label, prompt, contextText, intent);
   };
 
@@ -204,50 +217,48 @@ export const HqControlTowerPage: React.FC = () => {
                 <kpi.icon className={cn("h-5 w-5", kpi.warn ? "text-red-500" : "text-primary")} />
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label}를 본사 관점에서 해설해줘`, `${kpi.label}: ${kpi.val}`)}
-                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
-              >
-                해설 보기
-              </button>
-              <button
-                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 본사가 취할 조치를 알려줘`, `${kpi.label}: ${kpi.val}`, "action")}
-                className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-              >
-                추천 조치
-              </button>
-              <button
-                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 관제 지표와 비교해서 설명해줘`, `${kpi.label}: ${kpi.val}`)}
-                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-              >
-                비교 보기
-              </button>
-            </div>
+            <AssistActionBar
+              className="mt-4"
+              compact
+              summary={{
+                label: "해설 보기",
+                onClick: () => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label}를 본사 관점에서 해설해줘`, `${kpi.label}: ${kpi.val}`),
+              }}
+              action={{
+                label: "추천 조치",
+                onClick: () => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 본사가 취할 조치를 알려줘`, `${kpi.label}: ${kpi.val}`, "action"),
+              }}
+              compare={{
+                label: "비교 보기",
+                onClick: () => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 관제 지표와 비교해서 설명해줘`, `${kpi.label}: ${kpi.val}`),
+              }}
+            />
           </article>
         ))}
       </section>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => openAiAssist("본사 현황 해설", "지금 본사 관제 화면에서 가장 중요한 변화를 해설해줘", "전사 통합 관제 타워")}
-          className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
-        >
-          해설 보기
-        </button>
-        <button
-          onClick={() => openAiAssist("본사 추천 조치", "본사 사용자가 지금 바로 해야 할 조치를 알려줘", "에스컬레이션 및 운영 가맹점 현황", "action")}
-          className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
-        >
-          추천 조치
-        </button>
-        <button
-          onClick={() => openAiAssist("권역 비교", "수도권, 영남권, 리테일몰, 백화점 권역을 비교해서 설명해줘", "권역 비교")}
-          className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
-        >
-          비교 보기
-        </button>
-      </div>
+      {inlineAssist && inlineAssist.cardId.startsWith("hq-kpi-") && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
+
+      <AssistActionBar
+        summary={{
+          label: "해설 보기",
+          onClick: () => openAiAssist("본사 현황 해설", "지금 본사 관제 화면에서 가장 중요한 변화를 해설해줘", "전사 통합 관제 타워"),
+        }}
+        action={{
+          label: "추천 조치",
+          onClick: () => openAiAssist("본사 추천 조치", "본사 사용자가 지금 바로 해야 할 조치를 알려줘", "에스컬레이션 및 운영 가맹점 현황", "action"),
+        }}
+        compare={{
+          label: "비교 보기",
+          onClick: () => openAiAssist("권역 비교", "수도권, 영남권, 리테일몰, 백화점 권역을 비교해서 설명해줘", "권역 비교"),
+        }}
+      />
 
       {flagshipIntelligence && (
         <section
@@ -266,26 +277,22 @@ export const HqControlTowerPage: React.FC = () => {
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{flagshipIntelligence.summary}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={() => handleAssist("hq-flagship", "광화문점 해설", "광화문점 브리핑 내용을 본사 관점에서 해설해줘", flagshipIntelligence.summary)}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
-            >
-              해설 보기
-            </button>
-            <button
-              onClick={() => handleAssist("hq-flagship", "광화문점 조치", "광화문점 브리핑 기준으로 본사가 취할 조치를 알려줘", flagshipIntelligence.summary, "action")}
-              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-            >
-              추천 조치
-            </button>
-            <button
-              onClick={() => handleAssist("hq-flagship", "광화문점 비교 보기", "광화문점 인사이트를 다른 플래그십 매장과 비교해서 설명해줘", flagshipIntelligence.summary)}
-              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-            >
-              비교 보기
-            </button>
-          </div>
+          <AssistActionBar
+            className="mt-4"
+            compact
+            summary={{
+              label: "해설 보기",
+              onClick: () => handleAssist("hq-flagship", "광화문점 해설", "광화문점 브리핑 내용을 본사 관점에서 해설해줘", flagshipIntelligence.summary),
+            }}
+            action={{
+              label: "추천 조치",
+              onClick: () => handleAssist("hq-flagship", "광화문점 조치", "광화문점 브리핑 기준으로 본사가 취할 조치를 알려줘", flagshipIntelligence.summary, "action"),
+            }}
+            compare={{
+              label: "비교 보기",
+              onClick: () => handleAssist("hq-flagship", "광화문점 비교 보기", "광화문점 인사이트를 다른 플래그십 매장과 비교해서 설명해줘", flagshipIntelligence.summary),
+            }}
+          />
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             {[
               { label: "매출", value: `${flagshipIntelligence.metrics.sales.today_revenue.toLocaleString()}원` },
@@ -300,6 +307,14 @@ export const HqControlTowerPage: React.FC = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {inlineAssist && inlineAssist.cardId === "hq-flagship" && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
       )}
 
       {/* 오케스트레이션 탭 */}

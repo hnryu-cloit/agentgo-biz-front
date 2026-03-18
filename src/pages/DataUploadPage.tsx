@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { FileText, RefreshCcw, Upload, Loader2, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
 import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob, importResourceDataset } from "@/services/data";
 import type { DataType, ResourceSourceCatalog, UploadJobResponse } from "@/types/api";
 import { resourceCatalogMock, resourceDatasetPreviewMock, uploadJobsMock } from "@/lib/mockData";
@@ -29,6 +31,7 @@ export const DataUploadPage = () => {
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
+  const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   const loadData = useCallback(() => {
     Promise.all([getResourceCatalog(), getUploadJobs()])
@@ -110,6 +113,16 @@ export const DataUploadPage = () => {
     intent: "summary" | "action" = "summary",
   ) => {
     setSelectedAssistCard(cardId);
+    setInlineAssist({
+      cardId,
+      title: label,
+      why: contextText
+        ? `${contextText} 기준으로 어떤 데이터가 연결되어 있는지 먼저 확인해야 합니다.`
+        : "이 항목에서 어떤 상태를 먼저 봐야 하는지 확인해야 합니다.",
+      actionLabel: intent === "action"
+        ? "재적재, 비교 확인, 미리보기 검토 중 1개만 먼저 정하세요."
+        : "해설을 본 뒤 어떤 리소스를 먼저 점검할지 정하세요.",
+    });
     openAiAssist(label, prompt, contextText, intent);
   };
 
@@ -126,26 +139,21 @@ export const DataUploadPage = () => {
         <h2 className="text-2xl font-bold text-slate-900">데이터 업로드</h2>
         <p className="mt-1 text-base text-slate-500">`resource/*` 업로드가 완료되어 DB에 적재된 상태를 기준으로 카탈로그와 미리보기를 확인합니다.</p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => handleAssist("upload-header", "업로드 해설", "현재 데이터 업로드 화면을 해설해줘", "resource 업로드와 DB 적재 상태")}
-            className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
-          >
-            해설 보기
-          </button>
-          <button
-            onClick={() => handleAssist("upload-header", "업로드 추천 조치", "업로드 화면 기준으로 지금 무엇을 해야 하는지 알려줘", "리소스 적재와 업로드 이력", "action")}
-            className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
-          >
-            추천 조치
-          </button>
-          <button
-            onClick={() => handleAssist("upload-header", "리소스 비교", "현재 선택한 리소스와 다른 리소스를 비교해서 설명해줘", selectedType)}
-            className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
-          >
-            비교 보기
-          </button>
-        </div>
+        <AssistActionBar
+          className="mt-4"
+          summary={{
+            label: "해설 보기",
+            onClick: () => handleAssist("upload-header", "업로드 해설", "현재 데이터 업로드 화면을 해설해줘", "resource 업로드와 DB 적재 상태"),
+          }}
+          action={{
+            label: "추천 조치",
+            onClick: () => handleAssist("upload-header", "업로드 추천 조치", "업로드 화면 기준으로 지금 무엇을 해야 하는지 알려줘", "리소스 적재와 업로드 이력", "action"),
+          }}
+          compare={{
+            label: "비교 보기",
+            onClick: () => handleAssist("upload-header", "리소스 비교", "현재 선택한 리소스와 다른 리소스를 비교해서 설명해줘", selectedType),
+          }}
+        />
 
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
           {(sources as Array<ResourceSourceCatalog>).map((source) => (
@@ -185,26 +193,22 @@ export const DataUploadPage = () => {
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
                 {isImporting ? "적재 중..." : "PostgreSQL 적재(Import) 실행"}
               </button>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <button
-                  onClick={() => handleAssist("upload-import", "적재 해설", "현재 적재 상태와 선택된 리소스를 해설해줘", activeSource?.description)}
-                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
-                >
-                  해설 보기
-                </button>
-                <button
-                  onClick={() => handleAssist("upload-import", "적재 조치", "현재 적재 상태 기준으로 다음 조치를 알려줘", activeSource?.description, "action")}
-                  className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-                >
-                  추천 조치
-                </button>
-                <button
-                  onClick={() => handleAssist("upload-import", "적재 비교 보기", "현재 적재 상태를 다른 리소스와 비교해서 설명해줘", activeSource?.description)}
-                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-                >
-                  비교 보기
-                </button>
-              </div>
+              <AssistActionBar
+                className="mt-4"
+                compact
+                summary={{
+                  label: "해설 보기",
+                  onClick: () => handleAssist("upload-import", "적재 해설", "현재 적재 상태와 선택된 리소스를 해설해줘", activeSource?.description),
+                }}
+                action={{
+                  label: "추천 조치",
+                  onClick: () => handleAssist("upload-import", "적재 조치", "현재 적재 상태 기준으로 다음 조치를 알려줘", activeSource?.description, "action"),
+                }}
+                compare={{
+                  label: "비교 보기",
+                  onClick: () => handleAssist("upload-import", "적재 비교 보기", "현재 적재 상태를 다른 리소스와 비교해서 설명해줘", activeSource?.description),
+                }}
+              />
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -237,26 +241,24 @@ export const DataUploadPage = () => {
                 : "border-[#DCE4F3] bg-[#F7FAFF]",
             )}
           >
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-3">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">미리보기 (상위 10행)</p>
-              <button
-                onClick={() => handleAssist("upload-preview", "미리보기 해설", "현재 데이터 미리보기를 해설해줘", `${selectedStore} / ${selectedType}`)}
-                className="ml-auto rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
-              >
-                해설 보기
-              </button>
-              <button
-                onClick={() => handleAssist("upload-preview", "미리보기 추천 조치", "현재 데이터 미리보기 기준으로 확인할 조치를 알려줘", `${selectedStore} / ${selectedType}`, "action")}
-                className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-              >
-                추천 조치
-              </button>
-              <button
-                onClick={() => handleAssist("upload-preview", "미리보기 비교 보기", "현재 데이터 미리보기를 다른 리소스와 비교해서 설명해줘", `${selectedStore} / ${selectedType}`)}
-                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-              >
-                비교 보기
-              </button>
+              <AssistActionBar
+                className="mt-3"
+                compact
+                summary={{
+                  label: "해설 보기",
+                  onClick: () => handleAssist("upload-preview", "미리보기 해설", "현재 데이터 미리보기를 해설해줘", `${selectedStore} / ${selectedType}`),
+                }}
+                action={{
+                  label: "추천 조치",
+                  onClick: () => handleAssist("upload-preview", "미리보기 추천 조치", "현재 데이터 미리보기 기준으로 확인할 조치를 알려줘", `${selectedStore} / ${selectedType}`, "action"),
+                }}
+                compare={{
+                  label: "비교 보기",
+                  onClick: () => handleAssist("upload-preview", "미리보기 비교 보기", "현재 데이터 미리보기를 다른 리소스와 비교해서 설명해줘", `${selectedStore} / ${selectedType}`),
+                }}
+              />
             </div>
             {preview ? (
               <div className="overflow-x-auto rounded-lg border border-[#DCE4F3] bg-white shadow-inner">
@@ -289,6 +291,22 @@ export const DataUploadPage = () => {
           </div>
         </div>
       </section>
+
+      {inlineAssist && inlineAssist.cardId === "upload-header" && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
+
+      {inlineAssist && (inlineAssist.cardId === "upload-import" || inlineAssist.cardId === "upload-preview") && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
 
       <section className="overflow-hidden rounded-2xl border border-border/90 bg-card shadow-elevated">
         <div className="flex items-center justify-between border-b border-slate-100 bg-white p-6">

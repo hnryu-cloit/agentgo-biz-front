@@ -2,6 +2,8 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { BarChart2, Megaphone, RefreshCw, Sparkles, TrendingDown, TrendingUp, Users, Zap, ShoppingBag, AlertTriangle, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
 import { getCustomerInsights, getOwnerActions, getOwnerDashboard, updateActionStatus, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
 import type { ActionResponse, ActionStatus } from "@/types/api";
 import { ownerCustomerInsightsMock, ownerDashboardMock } from "@/lib/mockData";
@@ -48,6 +50,7 @@ export const OwnerDashboardPage: React.FC = () => {
   const [actions, setActions] = useState<ActionResponse[]>([]);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
+  const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -153,6 +156,16 @@ export const OwnerDashboardPage: React.FC = () => {
     intent: "summary" | "action" = "summary",
   ) => {
     setSelectedAssistCard(cardId);
+    setInlineAssist({
+      cardId,
+      title: label,
+      why: contextText
+        ? `${contextText}가 오늘 운영 흐름에서 무엇을 의미하는지 먼저 보는 것이 중요합니다.`
+        : "이 카드가 오늘 운영 흐름에서 무엇을 뜻하는지 먼저 확인해야 합니다.",
+      actionLabel: intent === "action"
+        ? "오늘 바로 할 일 1개만 정해 점검하세요."
+        : "해설을 본 뒤 추천 조치로 바로 이어가세요.",
+    });
     openAiAssist(label, prompt, contextText, intent);
   };
 
@@ -192,20 +205,17 @@ export const OwnerDashboardPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  onClick={() => openAiAssist("전략 해설", "현재 점주 전략 브리핑을 해설해줘", dashboard.ai_analysis?.ai_reasoning?.reasoning)}
-                  className="rounded-full border border-[#c9d8ff] bg-white px-3 py-2 text-xs font-black text-primary shadow-sm"
-                >
-                  해설 보기
-                </button>
-                <button
-                  onClick={() => openAiAssist("추천 조치", "현재 브리핑 기준으로 점주가 지금 바로 할 일을 알려줘", dashboard.ai_analysis?.ai_reasoning?.action_item, "action")}
-                  className="rounded-full border border-[#d5deec] bg-[#eef3ff] px-3 py-2 text-xs font-black text-slate-700 shadow-sm"
-                >
-                  추천 조치
-                </button>
-              </div>
+              <AssistActionBar
+                className="mt-4 max-w-md"
+                summary={{
+                  label: "해설 보기",
+                  onClick: () => openAiAssist("전략 해설", "현재 점주 전략 브리핑을 해설해줘", dashboard.ai_analysis?.ai_reasoning?.reasoning),
+                }}
+                action={{
+                  label: "추천 조치",
+                  onClick: () => openAiAssist("추천 조치", "현재 브리핑 기준으로 점주가 지금 바로 할 일을 알려줘", dashboard.ai_analysis?.ai_reasoning?.action_item, "action"),
+                }}
+              />
             </div>
             
             <div className="w-full md:w-48 p-4 rounded-2xl bg-slate-900 text-white shadow-lg">
@@ -371,20 +381,18 @@ export const OwnerDashboardPage: React.FC = () => {
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     <span className="text-[11px] font-bold text-primary uppercase tracking-tight">Expected Impact: {action.impact}</span>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => openAiAssist(`${action.title} 해설`, "이 액션을 점주 관점에서 해설해줘", `${action.title}: ${action.why}`)}
-                      className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
-                    >
-                      해설 보기
-                    </button>
-                    <button
-                      onClick={() => openAiAssist(`${action.title} 실행 가이드`, "이 액션을 오늘 어떻게 실행하면 좋을지 순서대로 알려줘", `${action.title}: ${action.impact}`, "action")}
-                      className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
-                    >
-                      추천 조치
-                    </button>
-                  </div>
+                  <AssistActionBar
+                    className="mt-4 max-w-sm"
+                    compact
+                    summary={{
+                      label: "해설 보기",
+                      onClick: () => openAiAssist(`${action.title} 해설`, "이 액션을 점주 관점에서 해설해줘", `${action.title}: ${action.why}`),
+                    }}
+                    action={{
+                      label: "추천 조치",
+                      onClick: () => openAiAssist(`${action.title} 실행 가이드`, "이 액션을 오늘 어떻게 실행하면 좋을지 순서대로 알려줘", `${action.title}: ${action.impact}`, "action"),
+                    }}
+                  />
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
                   {action.status !== "executed" ? (
@@ -433,30 +441,34 @@ export const OwnerDashboardPage: React.FC = () => {
                 </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-slate-900">{kpi.value}</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label} 수치를 점주 관점에서 해설해줘`, `${kpi.label}: ${kpi.value}`)}
-                  className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
-                >
-                  해설 보기
-                </button>
-                <button
-                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 점주가 지금 해야 할 액션을 알려줘`, `${kpi.label}: ${kpi.value}`, "action")}
-                  className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
-                >
-                  추천 조치
-                </button>
-                <button
-                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 운영 지표와 비교해서 볼 포인트를 알려줘`, `${kpi.label}: ${kpi.value}`)}
-                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
-                >
-                  비교 보기
-                </button>
-              </div>
+              <AssistActionBar
+                className="mt-4"
+                compact
+                summary={{
+                  label: "해설 보기",
+                  onClick: () => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label} 수치를 점주 관점에서 해설해줘`, `${kpi.label}: ${kpi.value}`),
+                }}
+                action={{
+                  label: "추천 조치",
+                  onClick: () => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 점주가 지금 해야 할 액션을 알려줘`, `${kpi.label}: ${kpi.value}`, "action"),
+                }}
+                compare={{
+                  label: "비교 보기",
+                  onClick: () => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 운영 지표와 비교해서 볼 포인트를 알려줘`, `${kpi.label}: ${kpi.value}`),
+                }}
+              />
             </article>
           );
         })}
       </section>
+
+      {inlineAssist && inlineAssist.cardId.startsWith("owner-kpi-") && (
+        <InlineAssistPanel
+          title={inlineAssist.title}
+          why={inlineAssist.why}
+          actionLabel={inlineAssist.actionLabel}
+        />
+      )}
 
       {/* 5. 매출 트렌드 및 고객 방문 분석 */}
       <section className="grid gap-6 lg:grid-cols-2">
@@ -519,20 +531,18 @@ export const OwnerDashboardPage: React.FC = () => {
               <span className="ml-auto text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Dodo Point CRM</span>
             </div>
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => openAiAssist("재방문율 해설", "재방문율과 고유 고객 수를 점주 관점에서 해설해줘", `재방문율 ${(insights.return_rate * 100).toFixed(1)}%, 고유 고객 ${insights.unique_customers}명`)}
-                className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
-              >
-                해설 보기
-              </button>
-              <button
-                onClick={() => openAiAssist("고객 추천 조치", "고객 방문 분석 기준으로 점주가 할 CRM 액션을 추천해줘", `최근 7일 방문 ${insights.recent_7d_visits}건`, "action")}
-                className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
-              >
-                추천 조치
-              </button>
-            </div>
+            <AssistActionBar
+              className="mb-4 max-w-sm"
+              compact
+              summary={{
+                label: "해설 보기",
+                onClick: () => openAiAssist("재방문율 해설", "재방문율과 고유 고객 수를 점주 관점에서 해설해줘", `재방문율 ${(insights.return_rate * 100).toFixed(1)}%, 고유 고객 ${insights.unique_customers}명`),
+              }}
+              action={{
+                label: "추천 조치",
+                onClick: () => openAiAssist("고객 추천 조치", "고객 방문 분석 기준으로 점주가 할 CRM 액션을 추천해줘", `최근 7일 방문 ${insights.recent_7d_visits}건`, "action"),
+              }}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               {[
