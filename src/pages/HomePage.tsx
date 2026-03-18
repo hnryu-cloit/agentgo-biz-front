@@ -25,10 +25,10 @@ import { cn } from "@/lib/utils";
 import { homeCatalogMock } from "@/lib/mockData";
 
 const quickRoutes = [
-  { to: "/owner/dashboard", title: "점주 홈", desc: "오늘 해야 할 핵심 액션 3가지를 바로 확인하고 처리하세요.", icon: Store, badge: "점주" },
-  { to: "/supervisor/dashboard", title: "수퍼바이저", desc: "리스크 매장 우선순위로 방문 준비 및 일정 관리를 수행합니다.", icon: Users, badge: "SV" },
-  { to: "/hq/control-tower", title: "본사 관제", desc: "에이전트 상태, 워크플로우 및 이슈를 종합적으로 관제합니다.", icon: Network, badge: "HQ" },
-  { to: "/data/upload", title: "데이터 업로드", desc: "원천 파일을 업로드하고 처리 상태를 실시간 확인합니다.", icon: Upload, badge: "Data" },
+  { to: "/owner/dashboard", title: "점주 홈", desc: "크리스탈 제이드 매장 운영 최적화 및 오늘 할 일을 확인하세요.", icon: Store, badge: "점주" },
+  { to: "/supervisor/dashboard", title: "수퍼바이저", desc: "담당 크리스탈 제이드 가맹점 리스크 및 코칭 리포트를 관리합니다.", icon: Users, badge: "SV" },
+  { to: "/hq/control-tower", title: "본사 관제", desc: "전국 크리스탈 제이드 에이전트 상태 및 지표를 통합 관제합니다.", icon: Network, badge: "HQ" },
+  { to: "/data/upload", title: "데이터 업로드", desc: "POS/영수증/CRM 등 원천 데이터를 실시간으로 동기화합니다.", icon: Upload, badge: "Data" },
 ];
 
 export const HomePage: React.FC = () => {
@@ -41,8 +41,8 @@ export const HomePage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(-1);
   const [workflowData, setWorkflowData] = useState<any>(null);
   const [activities, setRecentActivity] = useState([
-    { time: "09:12", title: "POS 적재 완료", desc: "크리스탈 제이드 POS 14개 매장 적재 완료", done: true },
-    { time: "08:42", title: "메뉴 라인업 동기화", desc: "크리스탈제이드 메뉴 라인업 파일 반영", done: true },
+    { time: "09:12", title: "크리스탈 제이드 POS 적재 완료", desc: "전국 14개 매장 실시간 매출 데이터 동기화 성공", done: true },
+    { time: "08:42", title: "메뉴 마스터 업데이트", desc: "봄 시즌 신메뉴 및 원가 데이터 반영 완료", done: true },
   ]);
 
   useEffect(() => {
@@ -50,14 +50,14 @@ export const HomePage: React.FC = () => {
     getResourceCatalog().then((catalog) => {
       if (!alive) return;
       const posSource = catalog.sources.find(s => s.source_kind === "pos_daily_sales");
-      setStoreCount(posSource?.stores.length || homeCatalogMock.storeCount);
-      setMenuCount(catalog.sources.find(s => s.source_kind === "menu_lineup")?.stores.length || homeCatalogMock.menuCount);
-      setLatestDate(posSource?.stores[0]?.date_end || homeCatalogMock.latestDate);
+      setStoreCount(posSource?.stores.length || 14);
+      setMenuCount(catalog.sources.find(s => s.source_kind === "menu_lineup")?.stores.length || 120);
+      setLatestDate(posSource?.stores[0]?.date_end || "2026-03-17");
     }).catch(() => {
       if (!alive) return;
-      setStoreCount(homeCatalogMock.storeCount);
-      setMenuCount(homeCatalogMock.menuCount);
-      setLatestDate(homeCatalogMock.latestDate);
+      setStoreCount(14);
+      setMenuCount(120);
+      setLatestDate("2026-03-17");
     });
     return () => { alive = false; };
   }, []);
@@ -67,8 +67,8 @@ export const HomePage: React.FC = () => {
     setCurrentStep(0);
     
     try {
-      // 1. 백엔드 API 호출 (에이전트 협업 데이터 가져오기)
-      const res = await runWorkflow({ workflow_name: "full_analysis", params: { dry_run: false } });
+      // 1. 백엔드 API 호출 (브랜드 특화 워크플로우 실행)
+      const res = await runWorkflow({ workflow_name: "crystal_jade_full_analysis", params: { dry_run: false } });
       setWorkflowData(res);
       
       // 2. 단계별 애니메이션 시뮬레이션
@@ -80,7 +80,7 @@ export const HomePage: React.FC = () => {
       
       // 3. 완료 처리
       setRecentActivity(prev => [
-        { time: new Date().toLocaleTimeString().slice(0, 5), title: "전사 통합 AI 분석 완료", desc: "전국 매장 리스크 및 메뉴 전략 동기화 완료", done: true },
+        { time: new Date().toLocaleTimeString().slice(0, 5), title: "크리스탈 제이드 통합 AI 분석 완료", desc: "전국 매장 리스크 및 메뉴 전략 동기화 완료", done: true },
         ...prev
       ]);
       
@@ -93,9 +93,9 @@ export const HomePage: React.FC = () => {
   };
 
   const kpis = [
-    { label: "연동된 매장 수", value: `${storeCount}개`, sub: "resource 기준", icon: LayoutGrid },
-    { label: "메뉴 데이터 연동", value: `${menuCount}개`, sub: "메뉴 라인업 기준", icon: FileText },
-    { label: "기준 날짜", value: latestDate, sub: "실데이터 최신일", icon: Calendar },
+    { label: "크리스탈 제이드 매장", value: `${storeCount}개`, sub: "전국 직영/가맹 합산", icon: LayoutGrid },
+    { label: "메뉴 데이터 연동", value: `${menuCount}개`, sub: "레시피/원가 정보 포함", icon: FileText },
+    { label: "데이터 기준일", value: latestDate, sub: "실시간 동기화 중", icon: Calendar },
   ];
 
   return (
@@ -108,14 +108,14 @@ export const HomePage: React.FC = () => {
         
         <div className="relative z-10">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-            <Sparkles className="h-3 w-3" /> AgentGo Biz Orchestration
+            <Sparkles className="h-3 w-3" /> Crystal Jade Intelligence Hub
           </p>
           <h1 className="mt-4 font-title text-4xl font-black leading-tight text-slate-900 md:text-5xl">
-            지능형 멀티에이전트<br />운영 허브
+            크리스탈 제이드<br />지능형 멀티에이전트
           </h1>
           <p className="mt-6 max-w-2xl text-lg font-medium text-slate-500 leading-relaxed">
-            데이터 수집부터 점주 액션 생성까지, AI 에이전트들이 협업하여<br />
-            매장 운영의 모든 리스크와 기회를 실시간으로 관리합니다.
+            데이터 수집부터 점주 액션 생성까지, 크리스탈 제이드 전용 AI 에이전트들이<br />
+            프리미엄 브랜드 가치와 매장 수익성을 실시간으로 관리합니다.
           </p>
           
           <div className="mt-10 flex flex-wrap gap-4">
@@ -128,13 +128,13 @@ export const HomePage: React.FC = () => {
               )}
             >
               {isSimulating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5 fill-current" />}
-              전사 통합 AI 분석 실행
+              크리스탈 제이드 통합 AI 분석 실행
             </button>
             <Link
               to="/hq/control-tower"
               className="inline-flex items-center gap-2.5 rounded-2xl border border-[#D6E0F0] bg-white px-8 py-4 text-base font-bold text-slate-700 transition-all hover:bg-[#F8FAFF] hover:border-primary/30"
             >
-              관제 상태 확인
+              전사 관제 현황
               <ArrowRight className="h-5 w-5 text-slate-300" />
             </Link>
           </div>
@@ -144,7 +144,7 @@ export const HomePage: React.FC = () => {
         {isSimulating && workflowData && (
           <div className="mt-12 rounded-2xl bg-white/80 backdrop-blur-md border border-white p-6 shadow-lg relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">AI Agent Collaboration Stream</h3>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Crystal Jade Agent Stream</h3>
               <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full uppercase animate-pulse">Processing</span>
             </div>
             
@@ -228,7 +228,7 @@ export const HomePage: React.FC = () => {
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-black text-slate-900 uppercase">Recent Activity</h3>
+                <h3 className="text-sm font-black text-slate-900 uppercase">CJ Activity Log</h3>
               </div>
               <div className="live-point" />
             </div>

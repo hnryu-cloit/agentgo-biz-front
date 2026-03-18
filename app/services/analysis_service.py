@@ -36,16 +36,21 @@ class AnalysisService:
         }
         
         prompt = f"""
-        너는 F&B 매장 운영 전문 AI 컨설턴트야. 아래의 분석 데이터를 보고 점주에게 줄 '오늘의 한 줄 전략'을 작성해줘.
-        격식있으면서도 실행 중심적인 어조여야 해.
+        너는 정통 중식 파인 다이닝 브랜드 '크리스탈 제이드(Crystal Jade)'의 운영 전문 AI 컨설턴트야. 
+        아래의 실시간 매장 지표를 보고, 크리스탈 제이드의 브랜드 가치를 유지하면서 수익성을 극대화할 수 있는 '오늘의 전략'을 작성해줘.
         
         데이터: {json.dumps(context, ensure_ascii=False)}
+        
+        응답 가이드라인:
+        1. 브랜드 명칭 '크리스탈 제이드'를 자연스럽게 언급할 것.
+        2. 중식 파인 다이닝 특성에 맞는 고급스러운 어조를 사용할 것.
+        3. 단순 수치 나열이 아닌, 프리미엄 서비스 관점의 해석을 포함할 것.
         
         응답은 반드시 아래 JSON 형식으로만 해줘:
         {{"headline": "전략 제목", "reasoning": "데이터 기반 원인 해석", "action_item": "당장 실행할 것"}}
         """
         
-        system_prompt = "너는 데이터의 숨겨진 의미를 찾고 비즈니스 성장을 돕는 냉철한 분석가야."
+        system_prompt = "너는 글로벌 중식 브랜드 '크리스탈 제이드'의 성장을 돕는 전략 분석가야. 고급스러운 미식 경험과 효율적인 매장 운영 사이의 최적점을 찾아내야 해."
         
         try:
             ai_interpretation_raw = gemini.generate_gemini_content(prompt, system_prompt=system_prompt)
