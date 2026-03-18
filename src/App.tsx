@@ -18,7 +18,6 @@ const LoginPage = lazy(() => import("@/pages/LoginPage").then((module) => ({ def
 const NoticeOcrPage = lazy(() => import("@/pages/NoticeOcrPage").then((module) => ({ default: module.NoticeOcrPage })));
 const OwnerDashboardPage = lazy(() => import("@/pages/OwnerDashboardPage").then((module) => ({ default: module.OwnerDashboardPage })));
 const PromoRoiPage = lazy(() => import("@/pages/PromoRoiPage").then((module) => ({ default: module.PromoRoiPage })));
-const QnaPage = lazy(() => import("@/pages/QnaPage").then((module) => ({ default: module.QnaPage })));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage").then((module) => ({ default: module.ReportsPage })));
 const RfmSegmentPage = lazy(() => import("@/pages/RfmSegmentPage").then((module) => ({ default: module.RfmSegmentPage })));
 const SettingsStoresPage = lazy(() => import("@/pages/SettingsStoresPage").then((module) => ({ default: module.SettingsStoresPage })));
@@ -65,7 +64,6 @@ export const App: React.FC = () => {
             {/* 점주 및 SV(코칭용) 공유 영역 */}
             <Route element={<RoleRoute allowedRoles={["store_owner", "supervisor"]} />}>
               <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
-              <Route path="/owner/qna" element={<QnaPage />} />
               <Route path="/owner/stock-take" element={<StockTakePage />} />
               <Route path="/owner/labor" element={<LaborOptimizationPage />} />
               <Route path="/analysis/benchmark" element={<BenchmarkPage />} />

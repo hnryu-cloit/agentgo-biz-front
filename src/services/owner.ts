@@ -6,7 +6,7 @@ import type { ActionResponse, ActionUpdateRequest } from "../types/api";
 // ---------------------------------------------------------------------------
 
 export interface OwnerDashboard {
-  store_key?: string | null;
+  store_key: string | null;
   store_name: string;
   latest_date: string | null;
   today_revenue: number;
@@ -15,8 +15,24 @@ export interface OwnerDashboard {
   avg_order_value: number;
   cancel_rate: number;
   peak_hour: string | null;
-  kpi_trend: Array<{ label: string; revenue: number }>;
+  kpi_trend: { label: string; revenue: number }[];
+  ai_analysis?: {
+    menu_engineering?: {
+      menu_matrix: any[];
+      ai_insights: { type: string; title: string; description: string }[];
+      summary: any;
+    };
+    customer_churn?: {
+      customer_segments: any[];
+      ai_insights: { type: string; title: string; description: string }[];
+      summary: any;
+    };
+    generated_at: string;
+    error?: string;
+    status?: string;
+  };
 }
+
 
 export function getOwnerDashboard(storeKey?: string): Promise<OwnerDashboard> {
   const qs = storeKey ? `?store_key=${encodeURIComponent(storeKey)}` : "";

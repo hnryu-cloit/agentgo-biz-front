@@ -29,7 +29,6 @@ const menuSections: MenuSection[] = [
     roles: ["store_owner", "supervisor", "hq_admin"],
     items: [
       { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
-      { to: "/owner/qna", label: "자연어 QnA", icon: "chat" },
       { to: "/owner/labor", label: "인력 최적화", icon: "group" },
       { to: "/owner/stock-take", label: "재고 실사 관리", icon: "inventory_2" },
     ],
@@ -98,10 +97,25 @@ const roleConfig: Record<string, { label: string; icon: string }> = {
 
 export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   
-  // 유저 역할이 정의되지 않은 경우 기본값으로 가맹점주 설정 (보통은 로그인 페이지로 리다이렉트됨)
+  // 유저 역할이 정의되지 않은 경우 기본값으로 가맹점주 설정
   const currentRole = (user?.role as Role) || "store_owner";
+
+  const handleRoleChange = (newRole: Role) => {
+    if (!user) return;
+    
+    // 1. AuthContext 업데이트 (App.tsx 라우팅 및 Sidebar 메뉴 즉시 반영)
+    setUser({
+      ...user,
+      role: newRole,
+      // 점주일 때만 데모 매장 ID 할당, 나머지는 null (본사/SV는 전역 관점)
+      store_id: newRole === "store_owner" ? "demo-store" : null,
+    });
+    
+    // 2. LocalStorage 업데이트 (새로고침 시 유지용 - auth.ts의 BYPASS_ROLE_KEY와 일치)
+    localStorage.setItem("bypassUserRole", newRole);
+  };
 
   const visibleSections = menuSections.filter(
     (s) => !s.roles || s.roles.includes(currentRole)
@@ -115,17 +129,25 @@ export const Sidebar: React.FC = () => {
           <img src={Logo} alt="AgentGo" className="h-7 w-auto" />
         </NavLink>
 
-        {/* 현재 역할 표시 */}
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-3.5 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm border border-border/50">
+        {/* 역할 선택 셀렉트박스 (데모/테스트용 스위처) */}
+        <div className="mb-6 relative group">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <span className="material-symbols-outlined text-[18px] text-primary">
               {roleConfig[currentRole]?.icon || "person"}
             </span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Active Role</span>
-            <span className="text-[13px] font-bold text-slate-700">
-              {roleConfig[currentRole]?.label || currentRole}
+          <select
+            value={currentRole}
+            onChange={(e) => handleRoleChange(e.target.value as Role)}
+            className="w-full appearance-none rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] py-3 pl-10 pr-10 text-[13px] font-bold text-slate-700 focus:outline-none focus:border-primary cursor-pointer transition-all hover:bg-[#EEF4FF]"
+          >
+            {(Object.keys(roleConfig) as Role[]).map((r) => (
+              <option key={r} value={r}>{roleConfig[r].label}</option>
+            ))}
+          </select>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <span className="material-symbols-outlined text-[18px] text-slate-400">
+              expand_more
             </span>
           </div>
         </div>
