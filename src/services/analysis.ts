@@ -64,6 +64,62 @@ export interface BenchmarkActionResponse {
   recommended_actions: BenchmarkAction[];
 }
 
+export interface InsightEvidence {
+  metric: string;
+  value: string;
+  period: string;
+  source: {
+    name: string;
+    uploaded_at: string;
+  };
+}
+
+export interface AiAnalysisSection {
+  store_id: string;
+  analysis_type: string;
+  summary: string;
+  highlights: string[];
+  evidence: InsightEvidence[];
+  warnings: Array<{ code: string; message: string }>;
+  cold_start_mode: boolean;
+}
+
+export interface AiStaffingSection {
+  store_id: string;
+  status: string;
+  gap: number;
+  opportunity_cost: number;
+  recommendation: string;
+  evidence: InsightEvidence[];
+}
+
+export interface StoreIntelligence {
+  store_id: string;
+  summary: string;
+  priority_actions: string[];
+  sales: AiAnalysisSection | null;
+  churn: AiAnalysisSection | null;
+  staffing: AiStaffingSection[];
+  metrics: {
+    sales: {
+      latest_date: string | null;
+      today_revenue: number;
+      previous_revenue: number;
+      avg_order_value: number;
+      guest_count: number;
+      receipt_count: number;
+      cancel_rate: number;
+    };
+    churn: {
+      recent_7d_visits: number;
+      return_rate: number;
+      unique_customers: number;
+      at_risk_customers: number;
+    };
+    roi_rate: number;
+  };
+}
+
 export function getBenchmarkStores(params?: {
   store_id?: string;
   region?: string;
@@ -76,4 +132,9 @@ export function getBenchmarkStores(params?: {
 
 export function getBenchmarkActions(storeId: string): Promise<BenchmarkActionResponse> {
   return get<BenchmarkActionResponse>(`/analysis/benchmark/stores/${storeId}/actions`);
+}
+
+export function getStoreIntelligence(storeKey?: string): Promise<StoreIntelligence> {
+  const qs = storeKey ? `?store_key=${encodeURIComponent(storeKey)}` : "";
+  return get<StoreIntelligence>(`/analysis/store-intelligence${qs}`);
 }

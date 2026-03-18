@@ -1,8 +1,9 @@
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, BarChart2, Calendar, DollarSign, Target, TrendingUp } from "lucide-react";
-import { getRoiAnalysis, type RoiMetrics } from "@/services/analysis";
+import { ArrowDownRight, ArrowUpRight, BarChart2, Calendar, DollarSign, Sparkles, Target, TrendingUp } from "lucide-react";
+import { getRoiAnalysis, getStoreIntelligence, type RoiMetrics, type StoreIntelligence } from "@/services/analysis";
 import { cn } from "@/lib/utils";
+import { isRoiMetricsEmpty, roiMock } from "@/lib/mockData";
 
 type MetricRow = {
   label: string;
@@ -25,18 +26,22 @@ const emptyMetrics: RoiMetrics = {
 
 export const PromoRoiPage: React.FC = () => {
   const [roi, setRoi] = useState<RoiMetrics>(emptyMetrics);
+  const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
 
   useEffect(() => {
     let alive = true;
-    getRoiAnalysis()
-      .then((response) => {
-        if (!alive) return;
-        setRoi(response);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setRoi(emptyMetrics);
-      });
+    Promise.all([
+      getRoiAnalysis().catch(() => null),
+      getStoreIntelligence("[CJ]광화문점").catch(() => null),
+    ]).then(([response, intelligence]) => {
+      if (!alive) return;
+      setRoi(!response || isRoiMetricsEmpty(response) ? roiMock : response);
+      setStoreIntelligence(intelligence);
+    }).catch(() => {
+      if (!alive) return;
+      setRoi(roiMock);
+      setStoreIntelligence(null);
+    });
     return () => { alive = false; };
   }, []);
 
@@ -52,6 +57,12 @@ export const PromoRoiPage: React.FC = () => {
       { label: "프로모션 비용", baseline: 0, current: roi.promo_cost, unit: "원", higherIsBetter: false },
     ];
   }, [roi]);
+  const peakHours = storeIntelligence
+    ? storeIntelligence.staffing
+      .map((item) => item.evidence[0]?.period?.split(" ")[1])
+      .filter((value): value is string => Boolean(value))
+      .join(", ")
+    : "";
 
   return (
     <div className="space-y-6 pb-10">
@@ -74,6 +85,36 @@ export const PromoRoiPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {storeIntelligence && (
+        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold text-slate-900">ROI 연계 AI 실데이터 인사이트</h3>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">{storeIntelligence.summary}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            {[
+              { label: "객단가", value: `${storeIntelligence.metrics.sales.avg_order_value.toLocaleString()}원` },
+              { label: "최근 7일 방문", value: `${storeIntelligence.metrics.churn.recent_7d_visits.toLocaleString()}건` },
+              { label: "재방문율", value: `${(storeIntelligence.metrics.churn.return_rate * 100).toFixed(1)}%` },
+              { label: "피크 시간대", value: peakHours || "-" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">{item.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {storeIntelligence.priority_actions.slice(0, 3).map((item) => (
+              <div key={item} className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
+                <p className="text-sm font-medium text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* KPI 카드 3개 */}
       <section className="grid gap-4 md:grid-cols-3">

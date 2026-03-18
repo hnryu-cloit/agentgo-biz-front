@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getAvailableLabor, getLaborProductivity, getLaborSchedule, getHourlyPattern } from "@/services/labor";
 import { getResourceCatalog } from "@/services/data";
+import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 
 type ShiftStatus = "근무중" | "대기" | "미출근" | "퇴근";
 type Staff = {
@@ -35,38 +36,39 @@ type HourSlot = {
 };
 
 const staffList: Staff[] = [
-  { id: "s1", name: "김민준", role: "매니저",  startTime: "09:00", endTime: "18:00", status: "근무중", hoursWorked: 6.5, revenueContrib: 1_820_000 },
-  { id: "s2", name: "이서연", role: "주방",    startTime: "10:00", endTime: "19:00", status: "근무중", hoursWorked: 5.5, revenueContrib: 1_540_000 },
-  { id: "s3", name: "박지훈", role: "카운터",  startTime: "11:00", endTime: "20:00", status: "근무중", hoursWorked: 4.5, revenueContrib: 1_260_000 },
-  { id: "s4", name: "최예린", role: "홀서빙",  startTime: "14:00", endTime: "22:00", status: "대기",   hoursWorked: 1.5, revenueContrib: 420_000  },
+  { id: "cj-s1", name: "김민준", role: "매니저", startTime: "10:00", endTime: "19:00", status: "근무중", hoursWorked: 8, revenueContrib: 2_650_000 },
+  { id: "cj-s2", name: "이서연", role: "주방", startTime: "10:30", endTime: "20:30", status: "근무중", hoursWorked: 8, revenueContrib: 2_180_000 },
+  { id: "cj-s3", name: "박지훈", role: "카운터", startTime: "11:00", endTime: "21:00", status: "근무중", hoursWorked: 8, revenueContrib: 1_940_000 },
+  { id: "cj-s4", name: "최예린", role: "홀서빙", startTime: "11:30", endTime: "21:30", status: "대기", hoursWorked: 8, revenueContrib: 1_720_000 },
 ];
 
 const hourSlots: HourSlot[] = [
-  { hour: "09", revenue: 120_000,  staffCount: 2, recommended: 2, manHourRevenue: 60_000  },
-  { hour: "10", revenue: 185_000,  staffCount: 2, recommended: 2, manHourRevenue: 92_500  },
-  { hour: "11", revenue: 320_000,  staffCount: 3, recommended: 3, manHourRevenue: 106_667 },
-  { hour: "12", revenue: 580_000,  staffCount: 4, recommended: 5, manHourRevenue: 145_000 },
-  { hour: "13", revenue: 625_000,  staffCount: 4, recommended: 5, manHourRevenue: 156_250 },
-  { hour: "14", revenue: 420_000,  staffCount: 3, recommended: 3, manHourRevenue: 140_000 },
+  { hour: "11", revenue: 2_570_000, staffCount: 4, recommended: 4, manHourRevenue: 642_500 },
+  { hour: "12", revenue: 12_800_000, staffCount: 4, recommended: 4, manHourRevenue: 3_200_000 },
+  { hour: "13", revenue: 14_520_000, staffCount: 4, recommended: 4, manHourRevenue: 3_630_000 },
+  { hour: "14", revenue: 8_060_000, staffCount: 4, recommended: 4, manHourRevenue: 2_015_000 },
+  { hour: "18", revenue: 8_380_000, staffCount: 4, recommended: 4, manHourRevenue: 2_095_000 },
+  { hour: "19", revenue: 11_140_000, staffCount: 4, recommended: 4, manHourRevenue: 2_785_000 },
 ];
 
 const aiRecommendations = [
   {
     level: "warning" as const,
-    tag: "인력 부족",
-    title: "12~13시 런치 피크 — 1명 추가 배치 권장",
-    desc: "예상 객수 대비 홀 인력이 부족하여 서비스 지연 위험이 높습니다. 최예린 사원의 출근을 1시간 앞당기는 것을 추천합니다.",
-    impact: "예상 손실액 ₩160,000 방어",
+    tag: "크리스탈제이드 피크",
+    title: "12~14시, 18~19시 방문 급증",
+    desc: "도도포인트 실데이터 기준으로 12시 1,280건, 13시 1,452건, 19시 1,114건 방문이 집중됩니다. 런치와 디너 모두 4인 이상 운영을 유지하는 편이 맞습니다.",
+    impact: "피크 서비스 지연 방어",
   },
 ];
 
 export const LaborOptimizationPage = () => {
   const [selectedDate, setSelectedDate]   = useState("2026-03-15");
-  const [selectedStore, setSelectedStore] = useState("광화문점");
-  const [storeOptions, setStoreOptions] = useState<string[]>(["광화문점"]);
+  const [selectedStore, setSelectedStore] = useState("크리스탈제이드");
+  const [storeOptions, setStoreOptions] = useState<string[]>(["크리스탈제이드"]);
   const [staffRoster, setStaffRoster] = useState(staffList);
   const [productivitySlots, setProductivitySlots] = useState(hourSlots);
   const [availableLabor, setAvailableLabor] = useState<Record<string, unknown> | null>(null);
+  const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
   const activeStaff = staffRoster.filter((s) => s.status === "근무중").length;
   const maxRevenue = Math.max(...productivitySlots.map(s => s.revenue));
 
@@ -84,7 +86,7 @@ export const LaborOptimizationPage = () => {
       })
       .catch(() => {
         if (!alive) return;
-        setStoreOptions(["광화문점"]);
+        setStoreOptions(["크리스탈제이드"]);
       });
     return () => { alive = false; };
   }, []);
@@ -95,7 +97,8 @@ export const LaborOptimizationPage = () => {
       getLaborSchedule({ store_id: selectedStore, date: selectedDate }),
       getLaborProductivity({ store_id: selectedStore, date: selectedDate }),
       getAvailableLabor({ store_id: selectedStore, date: selectedDate }),
-    ]).then(([schedule, productivity, available]) => {
+      getStoreIntelligence(selectedStore).catch(() => null),
+    ]).then(([schedule, productivity, available, intelligence]) => {
       if (!alive) return;
       if (schedule.length > 0) {
         setStaffRoster(schedule.map((entry) => ({
@@ -133,9 +136,20 @@ export const LaborOptimizationPage = () => {
         }).catch(() => { /* fallback 유지 */ });
       }
       setAvailableLabor(available);
+      setStoreIntelligence(intelligence);
     }).catch(() => { /* fallback 유지 */ });
     return () => { alive = false; };
   }, [selectedDate, selectedStore]);
+
+  const recommendationCards = storeIntelligence && storeIntelligence.staffing.length > 0
+    ? storeIntelligence.staffing.map((item) => ({
+        level: item.status === "understaffed" ? "warning" as const : "info" as const,
+        tag: `${item.evidence[1]?.period ?? "시간대"} 운영`,
+        title: item.status === "understaffed" ? `${Math.abs(item.gap)}명 추가 투입 권고` : item.status === "overstaffed" ? `${Math.abs(item.gap)}명 재배치 검토` : "현재 인력 적정",
+        desc: item.recommendation,
+        impact: `기회비용 ${item.opportunity_cost.toLocaleString()}원`,
+      }))
+    : aiRecommendations;
 
   return (
     <div className="space-y-6 pb-10">
@@ -212,7 +226,7 @@ export const LaborOptimizationPage = () => {
         </div>
 
         <div className="space-y-2">
-          {aiRecommendations.map((rec, i) => (
+          {recommendationCards.map((rec, i) => (
             <div key={i} className="rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className={cn(

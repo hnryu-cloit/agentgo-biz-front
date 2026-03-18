@@ -1,9 +1,10 @@
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BarChart2, DollarSign, Megaphone, RefreshCw, ShoppingBag, Sparkles, TrendingDown, TrendingUp, Users, Zap } from "lucide-react";
+import { BarChart2, Megaphone, RefreshCw, Sparkles, TrendingDown, TrendingUp, Users, Zap, ShoppingBag, AlertTriangle, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCustomerInsights, getOwnerActions, getOwnerDashboard, updateActionStatus, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
 import type { ActionResponse, ActionStatus } from "@/types/api";
+import { ownerCustomerInsightsMock, ownerDashboardMock } from "@/lib/mockData";
 
 const emptyDashboard: OwnerDashboard = {
   store_key: null,
@@ -20,25 +21,18 @@ const emptyDashboard: OwnerDashboard = {
 
 const actionTemplates = [
   {
-    id: 1,
+    id: "1",
     level: "P0" as const,
     title: "객수 회복 프로모션 점검",
     why: "전일 대비 매출과 객수 흐름을 함께 확인해야 합니다.",
     impact: "비피크 시간대 매출 회복",
   },
   {
-    id: 2,
+    id: "2",
     level: "P1" as const,
     title: "객단가 상향 메뉴 제안",
     why: "평균 객단가와 결제건수 조합을 기준으로 업셀링 포인트를 확인합니다.",
     impact: "객단가 개선",
-  },
-  {
-    id: 3,
-    level: "P1" as const,
-    title: "환불 비중 점검",
-    why: "취소율이 높아지면 운영 품질 이슈로 이어질 수 있습니다.",
-    impact: "취소율 안정화",
   },
 ];
 
@@ -50,21 +44,23 @@ export const OwnerDashboardPage: React.FC = () => {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getOwnerDashboard(), getOwnerActions()])
-      .then(([response, actionResponse]) => {
+    getOwnerDashboard()
+      .then((response) => {
         if (!alive) return;
         setDashboard(response);
-        setActions(actionResponse);
         const key = response.store_key ?? undefined;
-        return getCustomerInsights(key, 90);
+        return Promise.all([getOwnerActions(), getCustomerInsights(key, 90)]);
       })
-      .then((ins) => {
-        if (!alive || !ins) return;
-        setInsights(ins);
+      .then((result) => {
+        if (!alive || !result) return;
+        const [actionResponse, ins] = result;
+        if (actionResponse) setActions(actionResponse);
+        if (ins) setInsights(ins.daily_trend.length > 0 ? ins : ownerCustomerInsightsMock);
       })
       .catch(() => {
         if (!alive) return;
-        setDashboard(emptyDashboard);
+        setDashboard(ownerDashboardMock);
+        setInsights(ownerCustomerInsightsMock);
       });
     return () => {
       alive = false;
@@ -72,7 +68,36 @@ export const OwnerDashboardPage: React.FC = () => {
   }, []);
 
   const trendMax = Math.max(...dashboard.kpi_trend.map((item) => item.revenue), 1);
-  const achievementRate = dashboard.today_revenue > 0 ? Math.min(100, Math.round((dashboard.today_revenue / Math.max(dashboard.today_revenue - dashboard.revenue_vs_yesterday, 1)) * 100)) : 0;
+
+  // AI 분석 기반 액션 생성
+  const aiActions = useMemo(() => {
+    const list: any[] = [];
+    if (dashboard.ai_analysis?.menu_engineering) {
+      dashboard.ai_analysis.menu_engineering.ai_insights.forEach((insight, idx) => {
+        list.push({
+          id: `ai-menu-${idx}`,
+          level: insight.type === "danger" || insight.type === "warning" ? "P0" : "P1",
+          title: insight.title,
+          why: insight.description,
+          impact: "수익성 개선 및 매출 증대",
+          status: "pending",
+        });
+      });
+    }
+    if (dashboard.ai_analysis?.customer_churn) {
+      dashboard.ai_analysis.customer_churn.ai_insights.forEach((insight, idx) => {
+        list.push({
+          id: `ai-churn-${idx}`,
+          level: insight.type === "danger" ? "P0" : "P1",
+          title: insight.title,
+          why: insight.description,
+          impact: "고객 리텐션 및 재방문 활성화",
+          status: "pending",
+        });
+      });
+    }
+    return list;
+  }, [dashboard.ai_analysis]);
 
   const actionBoard = useMemo(
     () => (
@@ -85,18 +110,12 @@ export const OwnerDashboardPage: React.FC = () => {
             impact: action.expected_impact || "예상 효과 정보 없음",
             status: action.status,
           }))
-        : actionTemplates.map((action) => ({
+        : aiActions.length > 0 ? aiActions : actionTemplates.map((action) => ({
             ...action,
-            id: String(action.id),
             status: "pending" as ActionStatus,
-            why: action.id === 1
-              ? `전일 대비 매출 변화는 ${dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}${dashboard.revenue_vs_yesterday.toLocaleString()}원 입니다.`
-              : action.id === 2
-                ? `현재 평균 객단가는 ${dashboard.avg_order_value.toLocaleString()}원 입니다.`
-                : `현재 취소율은 ${(dashboard.cancel_rate * 100).toFixed(2)}% 입니다.`,
           }))
     ),
-    [actions, dashboard],
+    [actions, aiActions],
   );
 
   const completedCount = actionBoard.filter((action) => action.status === "executed").length;
@@ -121,70 +140,193 @@ export const OwnerDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-10">
-      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6">
-        <div className="flex items-start justify-between gap-4">
+      {/* 1. AI 모닝 브리핑 섹션 */}
+      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <Sparkles className="h-24 w-24 text-primary" />
+        </div>
+        
+        <div className="flex items-start justify-between gap-4 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
-              <Megaphone className="h-4 w-4 text-white" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg ring-4 ring-white">
+              <Megaphone className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">모닝 브리핑</p>
-              <p className="mt-0.5 text-sm font-bold text-slate-900">{dashboard.store_name} 최신 브리핑</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" /> AI Morning Briefing
+              </p>
+              <h3 className="mt-0.5 text-lg font-black text-slate-900">{dashboard.store_name} 지능형 리포트</h3>
             </div>
           </div>
-          <span className="shrink-0 text-xs text-slate-400">{dashboard.latest_date ?? "데이터 없음"}</span>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">전일 실적</p>
-            <p className="mt-1 text-sm font-bold text-slate-900">매출 {dashboard.today_revenue.toLocaleString()}원</p>
-            <p className={cn("text-xs", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
-              전일 대비 {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}원
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">운영 핵심</p>
-            <p className="mt-1 text-sm font-bold text-slate-900">결제건수 {dashboard.transaction_count.toLocaleString()}건</p>
-            <p className="text-xs text-emerald-600">평균 객단가 {dashboard.avg_order_value.toLocaleString()}원</p>
-          </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
-            <p className="text-xs font-medium text-amber-700">주의 지표</p>
-            <p className="mt-1 text-sm font-bold text-slate-900">취소율 {(dashboard.cancel_rate * 100).toFixed(2)}%</p>
-            <p className="text-xs text-amber-600">매출 피크 포인트 {dashboard.peak_hour ?? "-"}</p>
+          <div className="text-right">
+            <span className="text-[10px] font-bold text-slate-400 block uppercase">Generated At</span>
+            <span className="text-xs font-bold text-slate-500">{dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}</span>
           </div>
         </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3 relative z-10">
+          <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
+            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">실적 요약</p>
+            <div className="flex items-end justify-between">
+              <p className="text-xl font-black text-slate-900">{dashboard.today_revenue.toLocaleString()}<span className="text-xs font-bold ml-1">원</span></p>
+              <p className={cn("text-xs font-bold flex items-center gap-0.5", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
+                {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
+            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">운영 지수</p>
+            <div className="flex items-end justify-between">
+              <p className="text-xl font-black text-slate-900">{dashboard.transaction_count.toLocaleString()}<span className="text-xs font-bold ml-1">건</span></p>
+              <p className="text-xs font-bold text-primary italic">AOV {Math.round(dashboard.avg_order_value / 1000)}k</p>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm p-4 shadow-sm">
+            <p className="text-[11px] font-bold text-amber-700 uppercase mb-2">주의 필요</p>
+            <div className="flex items-end justify-between">
+              <p className="text-xl font-black text-slate-900">{(dashboard.cancel_rate * 100).toFixed(1)}<span className="text-xs font-bold ml-1">%</span></p>
+              <p className="text-xs font-bold text-amber-600">취소율 모니터링</p>
+            </div>
+          </div>
+        </div>
+
+        {dashboard.ai_analysis && (
+          <div className="mt-5 space-y-2 relative z-10">
+            {[...(dashboard.ai_analysis.menu_engineering?.ai_insights || []), ...(dashboard.ai_analysis.customer_churn?.ai_insights || [])].slice(0, 2).map((insight, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-xl bg-white/40 px-4 py-3 border border-white/60">
+                <div className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", insight.type === "danger" ? "bg-red-500" : insight.type === "warning" ? "bg-amber-500" : "bg-primary")} />
+                <p className="text-sm font-bold text-slate-700 leading-snug">
+                  <span className="text-primary mr-1">AI:</span> {insight.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
+      {/* 2. 메뉴 엔지니어링 분석 섹션 */}
+      {dashboard.ai_analysis?.menu_engineering && (
+        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <BarChart2 className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold text-slate-900">수익성 및 메뉴 엔지니어링</h3>
+            <span className="ml-auto rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary uppercase tracking-tighter">AI Analysis</span>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-4">
+            {[
+              { label: "효자 메뉴 (Star)", count: dashboard.ai_analysis.menu_engineering.summary.star_count, color: "text-emerald-600" },
+              { label: "식사 메뉴 (Plowhorse)", count: dashboard.ai_analysis.menu_engineering.summary.plowhorse_count, color: "text-blue-600" },
+              { label: "수수께끼 (Puzzle)", count: dashboard.ai_analysis.menu_engineering.summary.puzzle_count, color: "text-amber-600" },
+              { label: "삭제 대상 (Dog)", count: dashboard.ai_analysis.menu_engineering.summary.dog_count, color: "text-red-600" },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-2xl p-4 border border-border/50 bg-white shadow-sm">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">{stat.label}</p>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-2xl font-black", stat.color)}>{stat.count}</span>
+                  <span className="text-xs font-bold text-slate-400">개</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 overflow-x-auto rounded-xl border border-border/60 bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-border/60">
+                <tr>
+                  <th className="px-4 py-3">메뉴명</th>
+                  <th className="px-4 py-3 text-center">판매량</th>
+                  <th className="px-4 py-3 text-right">단위 마진</th>
+                  <th className="px-4 py-3 text-center">AI 분류</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {dashboard.ai_analysis.menu_engineering.menu_matrix.slice(0, 5).map((menu, i) => (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-slate-700">{menu.menu_name}</td>
+                    <td className="px-4 py-3 text-center font-mono font-bold text-slate-500">{menu.qty}</td>
+                    <td className="px-4 py-3 text-right font-mono font-bold text-emerald-600">₩{Math.round(menu.unit_margin).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase italic",
+                        menu.category === "Star" ? "bg-emerald-100 text-emerald-700" :
+                        menu.category === "Plowhorse" ? "bg-blue-100 text-blue-700" :
+                        menu.category === "Puzzle" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                      )}>
+                        {menu.category}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* 3. 오늘의 운영 액션 보드 */}
       <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full border border-[#CFE0FF] bg-[#EEF4FF] px-3 py-1 text-xs font-semibold text-[#2454C8]">
-                {dashboard.store_name}
-              </span>
-              <span className="text-sm text-slate-400">최신 기준 {dashboard.latest_date ?? "-"}</span>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900">점주 대시보드</h2>
-            <p className="mt-1 text-base text-slate-500">실제 resource 집계 기준으로 매장 운영 상태를 확인합니다.</p>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 py-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF]">
-              <Sparkles className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">AI 예상 달성률 {achievementRate}%</p>
-              <p className="text-xs text-slate-500">전일 흐름 기준 추정</p>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-bold text-slate-900">오늘의 지능형 액션</h3>
+          <span className="ml-auto rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500 uppercase tracking-tight">
+            {completedCount}/{actionBoard.length} Tasks
+          </span>
+        </div>
+        <div className="mt-5 space-y-3">
+          {actionBoard.map((action) => (
+            <article
+              key={action.id}
+              className={cn(
+                "rounded-2xl border p-5 transition-all group hover:border-primary/30 hover:shadow-md",
+                action.status === "executed" ? "border-emerald-100 bg-emerald-50/30 opacity-80" : "border-[#DCE4F3] bg-[#F7FAFF]",
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={cn(
+                      "rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm",
+                      action.level === "P0" ? "bg-gradient-to-r from-red-500 to-orange-500" : "bg-gradient-to-r from-amber-500 to-yellow-500"
+                    )}>
+                      {action.level}
+                    </span>
+                    <p className="text-base font-black text-slate-900">{action.title}</p>
+                  </div>
+                  <p className="text-sm font-medium leading-relaxed text-slate-600 mb-4">{action.why}</p>
+                  <div className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 border border-border/50 shadow-sm">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[11px] font-bold text-primary uppercase tracking-tight">Expected Impact: {action.impact}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 shrink-0">
+                  {action.status !== "executed" ? (
+                    <button
+                      onClick={() => handleActionStatus(action.id, "executed")}
+                      disabled={pendingActionId === action.id}
+                      className="rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-primary/20 transition-all hover:bg-[#1E5BE9] active:scale-95 disabled:opacity-50"
+                    >
+                      실행
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 rounded-xl text-emerald-700 font-black text-xs italic uppercase">
+                      <Zap className="h-3 w-3 fill-emerald-700" /> Done
+                    </div>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
+      {/* 4. 기타 지표 요약 */}
       <section className="grid gap-4 md:grid-cols-4">
         {[
-          { label: "매출", value: `${dashboard.today_revenue.toLocaleString()}원`, delta: dashboard.revenue_vs_yesterday >= 0 ? "상승" : "하락", tone: dashboard.revenue_vs_yesterday >= 0 ? "emerald" : "red", icon: DollarSign },
-          { label: "결제건수", value: `${dashboard.transaction_count.toLocaleString()}건`, delta: dashboard.latest_date ?? "-", tone: "blue", icon: Users },
-          { label: "평균 객단가", value: `${dashboard.avg_order_value.toLocaleString()}원`, delta: "AOV", tone: "blue", icon: ShoppingBag },
-          { label: "취소율", value: `${(dashboard.cancel_rate * 100).toFixed(2)}%`, delta: dashboard.cancel_rate > 0.03 ? "주의" : "안정", tone: dashboard.cancel_rate > 0.03 ? "amber" : "emerald", icon: AlertTriangle },
+          { label: "매출", value: `${dashboard.today_revenue.toLocaleString()}원`, tone: dashboard.revenue_vs_yesterday >= 0 ? "emerald" : "red", icon: DollarSign },
+          { label: "결제건수", value: `${dashboard.transaction_count.toLocaleString()}건`, tone: "blue", icon: Users },
+          { label: "평균 객단가", value: `${dashboard.avg_order_value.toLocaleString()}원`, tone: "blue", icon: ShoppingBag },
+          { label: "취소율", value: `${(dashboard.cancel_rate * 100).toFixed(2)}%`, tone: dashboard.cancel_rate > 0.03 ? "amber" : "emerald", icon: AlertTriangle },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
@@ -196,172 +338,71 @@ export const OwnerDashboardPage: React.FC = () => {
                 </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-slate-900">{kpi.value}</p>
-              <p className={cn("mt-1.5 text-sm font-medium", kpi.tone === "red" ? "text-red-600" : kpi.tone === "amber" ? "text-amber-600" : kpi.tone === "emerald" ? "text-emerald-600" : "text-slate-500")}>
-                {kpi.delta}
-              </p>
             </article>
           );
         })}
       </section>
 
-      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-        <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-bold text-slate-900">오늘의 운영 액션 보드</h3>
-          <span className="ml-auto rounded border border-[#DCE4F3] bg-[#F7FAFF] px-2 py-0.5 text-xs font-medium text-slate-500">
-            {completedCount}/{actionBoard.length} 완료
-          </span>
-        </div>
-        <div className="mt-4 space-y-3">
-          {actionBoard.map((action) => (
-            <article
-              key={action.id}
-              className={cn(
-                "rounded-xl border p-4 transition-all",
-                action.status === "executed" ? "border-[#BFD4FF] bg-[#EEF4FF]" : "border-[#DCE4F3] bg-[#F7FAFF]",
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("rounded px-2 py-0.5 text-xs font-semibold text-white", action.level === "P0" ? "bg-red-500" : "bg-amber-500")}>
-                      {action.level}
-                    </span>
-                    <p className="font-semibold text-slate-900">{action.title}</p>
-                  </div>
-                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{action.why}</p>
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#CFE0FF] bg-white px-2.5 py-1">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    <span className="text-xs font-semibold text-primary">{action.impact}</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {action.status !== "executed" && actions.length > 0 ? (
-                    <>
-                      <button
-                        onClick={() => handleActionStatus(action.id, "executed")}
-                        disabled={pendingActionId === action.id}
-                        className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9] disabled:opacity-50"
-                      >
-                        실행
-                      </button>
-                      <button
-                        onClick={() => handleActionStatus(action.id, "deferred")}
-                        disabled={pendingActionId === action.id}
-                        className="rounded-lg border border-[#DCE4F3] bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        보류
-                      </button>
-                    </>
-                  ) : action.status === "executed" ? (
-                    <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-emerald-600">
-                      실행 완료
-                    </span>
-                  ) : (
-                    <button
-                      className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9]"
-                    >
-                      실행
-                    </button>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
+      {/* 5. 매출 트렌드 및 고객 방문 분석 */}
+      <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="h-5 w-5 text-slate-400" />
-            <h3 className="text-lg font-bold text-slate-900">매출 트렌드</h3>
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="h-5 w-5 text-slate-400" />
+            <h3 className="text-lg font-bold text-slate-900">시간대별 매출 추이</h3>
           </div>
-          <div className="mt-4 flex h-44 items-end gap-2 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-3 pb-3 pt-4">
+          <div className="flex h-48 items-end gap-1.5 rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 pb-4 pt-6">
             {dashboard.kpi_trend.map((point) => (
-              <div key={point.label} className="flex flex-1 flex-col items-center gap-1">
-                <div className="w-full rounded-t bg-primary/80" style={{ height: `${(point.revenue / trendMax) * 100}%` }} />
-                <span className="text-[10px] text-slate-400">{point.label}</span>
+              <div key={point.label} className="flex flex-1 flex-col items-center gap-2 group">
+                <div 
+                  className="w-full rounded-t-lg bg-gradient-to-t from-primary/60 to-primary transition-all duration-500 group-hover:from-primary hover:shadow-lg" 
+                  style={{ height: `${(point.revenue / trendMax) * 100}%` }} 
+                />
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{point.label}</span>
               </div>
             ))}
           </div>
         </article>
 
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-          <div className="flex items-center gap-2">
-            {dashboard.revenue_vs_yesterday >= 0 ? <TrendingUp className="h-5 w-5 text-emerald-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />}
-            <h3 className="text-lg font-bold text-slate-900">운영 해석</h3>
-          </div>
-          <div className="mt-4 space-y-3 text-sm text-slate-600">
-            <p>현재 매출은 <strong className="text-slate-900">{dashboard.today_revenue.toLocaleString()}원</strong> 입니다.</p>
-            <p>전일 대비 변화는 <strong className={dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-600"}>{dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}원</strong> 입니다.</p>
-            <p>결제건수와 객단가를 함께 보면 운영 원인 해석이 더 정확합니다. 현재 객단가는 <strong className="text-slate-900">{dashboard.avg_order_value.toLocaleString()}원</strong> 입니다.</p>
-          </div>
-        </article>
-      </section>
+        {insights && (
+          <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-bold text-slate-900">고객 방문 분석</h3>
+              <span className="ml-auto text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Dodo Point CRM</span>
+            </div>
 
-      {insights && (
-        <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-bold text-slate-900">고객 인사이트</h3>
-            <span className="ml-auto text-xs text-slate-400">도도포인트 기준 · 최근 90일</span>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "고유 고객수", value: `${insights.unique_customers.toLocaleString()}명`, icon: Users, color: "text-blue-600" },
+                { label: "재방문율", value: `${(insights.return_rate * 100).toFixed(1)}%`, icon: RefreshCw, color: "text-emerald-600" },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 group transition-all hover:bg-white hover:shadow-md">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">{item.label}</p>
+                    <item.icon className="h-3 w-3 text-slate-300" />
+                  </div>
+                  <p className={cn("text-2xl font-black", item.color)}>{item.value}</p>
+                </div>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {[
-              { label: "고유 고객수", value: `${insights.unique_customers.toLocaleString()}명`, tone: "blue" },
-              { label: "재방문율", value: `${(insights.return_rate * 100).toFixed(1)}%`, tone: insights.return_rate >= 0.5 ? "emerald" : "amber" },
-              { label: "최근 7일 방문", value: `${insights.recent_7d_visits.toLocaleString()}건`, tone: "blue" },
-              {
-                label: "방문 추세",
-                value: `${insights.visit_trend_delta_pct >= 0 ? "+" : ""}${insights.visit_trend_delta_pct.toFixed(1)}%`,
-                tone: insights.visit_trend_delta_pct >= 0 ? "emerald" : "red",
-              },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3">
-                <p className="text-xs font-medium text-slate-500">{item.label}</p>
-                <p className={cn("mt-1 text-xl font-bold",
-                  item.tone === "emerald" ? "text-emerald-600" :
-                  item.tone === "red" ? "text-red-500" :
-                  item.tone === "amber" ? "text-amber-600" : "text-slate-900"
-                )}>{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {insights.daily_trend.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-medium text-slate-500">일별 방문 추이</p>
-              <div className="flex h-20 items-end gap-0.5 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] px-2 pb-2 pt-3">
-                {(() => {
-                  const maxV = Math.max(...insights.daily_trend.map((d) => d.visit_count), 1);
-                  const step = Math.max(1, Math.floor(insights.daily_trend.length / 30));
-                  const visible = insights.daily_trend.filter((_, i) => i % step === 0).slice(-30);
-                  return visible.map((d) => (
-                    <div
-                      key={d.date}
-                      title={`${d.date}: ${d.visit_count}건`}
-                      className="flex-1 rounded-t bg-primary/70 min-w-0"
-                      style={{ height: `${(d.visit_count / maxV) * 100}%` }}
-                    />
-                  ));
-                })()}
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-slate-400">
-                <span>{insights.daily_trend[0]?.date}</span>
-                <span>{insights.daily_trend[insights.daily_trend.length - 1]?.date}</span>
+            <div className="mt-6 border-t border-border/50 pt-6">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-3 flex items-center gap-1.5">
+                <TrendingUp className="h-3 w-3" /> Recent 30 Days Trend
+              </p>
+              <div className="flex h-16 items-end gap-0.5 rounded-xl bg-slate-50 px-2 pb-1.5">
+                {insights.daily_trend.slice(-30).map((d, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-sm bg-primary/40 min-w-0 hover:bg-primary transition-colors"
+                    style={{ height: `${(d.visit_count / Math.max(...insights.daily_trend.map(x => x.visit_count), 1)) * 100}%` }}
+                  />
+                ))}
               </div>
             </div>
-          )}
-
-          <div className="mt-3 flex items-center gap-4 text-xs text-slate-500 border-t border-[#DCE4F3] pt-3">
-            <span><RefreshCw className="inline h-3 w-3 mr-1" />적립 {insights.earn_count.toLocaleString()}건</span>
-            <span>사용 {insights.use_count.toLocaleString()}건</span>
-            <span className="ml-auto">기준일 {insights.latest_date ?? "-"}</span>
-          </div>
-        </section>
-      )}
+          </article>
+        )}
+      </section>
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getReports, generateReport, downloadReport } from "@/services/reports";
+import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 import type { ReportResponse } from "@/types/api";
 
 type ReportType = "daily_owner" | "weekly_hq";
@@ -20,11 +21,11 @@ type Report = {
 };
 
 const initialReports: Report[] = [
-  { id: "r1", type: "daily_owner", title: "일간 점주 리포트 — 강남역점", period: "2026-03-08", createdAt: "2026-03-09 07:00", status: "ready", size: "248KB" },
-  { id: "r2", type: "weekly_hq", title: "본사 주간 리포트 — W10 (전체)", period: "2026-03-02 ~ 2026-03-08", createdAt: "2026-03-09 06:00", status: "ready", size: "1.2MB" },
-  { id: "r3", type: "daily_owner", title: "일간 점주 리포트 — 홍대점", period: "2026-03-07", createdAt: "2026-03-08 07:00", status: "ready", size: "231KB" },
-  { id: "r4", type: "daily_owner", title: "일간 점주 리포트 — 역삼점", period: "2026-03-06", createdAt: "2026-03-07 07:04", status: "failed" },
-  { id: "r5", type: "weekly_hq", title: "본사 주간 리포트 — W09 (전체)", period: "2026-02-23 ~ 2026-03-01", createdAt: "2026-03-02 06:00", status: "ready", size: "1.1MB" },
+  { id: "cj-r1", type: "daily_owner", title: "일간 점주 리포트 — [CJ]광화문점", period: "2026-02-28", createdAt: "2026-02-28 22:00", status: "ready", size: "248KB" },
+  { id: "cj-r2", type: "weekly_hq", title: "본사 주간 리포트 — 크리스탈제이드 W09", period: "2026-02-22 ~ 2026-02-28", createdAt: "2026-03-01 06:00", status: "ready", size: "1.2MB" },
+  { id: "cj-r3", type: "daily_owner", title: "일간 점주 리포트 — [CJ]소공점", period: "2026-02-28", createdAt: "2026-02-28 22:05", status: "ready", size: "231KB" },
+  { id: "cj-r4", type: "daily_owner", title: "일간 점주 리포트 — [CJ]광화문점 영수증 상세", period: "2026-02-28", createdAt: "2026-02-28 08:00", status: "failed" },
+  { id: "cj-r5", type: "weekly_hq", title: "본사 주간 리포트 — 크리스탈제이드 W08", period: "2026-02-15 ~ 2026-02-21", createdAt: "2026-02-22 06:00", status: "ready", size: "1.1MB" },
 ];
 
 const typeLabel: Record<ReportType, string> = {
@@ -54,15 +55,28 @@ export const ReportsPage: React.FC = () => {
   const [generating, setGenerating] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [reportList, setReportList] = useState(initialReports);
+  const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
 
   useEffect(() => {
     let alive = true;
     getReports()
       .then((res) => {
-        if (!alive || res.length === 0) return;
-        setReportList(res.map(apiToReport));
+        if (!alive) return;
+        setReportList(res.length > 0 ? res.map(apiToReport) : initialReports);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!alive) return;
+        setReportList(initialReports);
+      });
+    getStoreIntelligence("[CJ]광화문점")
+      .then((res) => {
+        if (!alive) return;
+        setStoreIntelligence(res);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStoreIntelligence(null);
+      });
     return () => { alive = false; };
   }, []);
 
@@ -74,7 +88,7 @@ export const ReportsPage: React.FC = () => {
     const newReport: Report = {
       id: tempId,
       type,
-      title: type === "daily_owner" ? "일간 점주 리포트 — 강남역점" : "본사 주간 리포트 — W11 (전체)",
+      title: type === "daily_owner" ? "일간 점주 리포트 — [CJ]광화문점" : "본사 주간 리포트 — 크리스탈제이드 신규 주차",
       period: new Date().toISOString().slice(0, 10),
       createdAt: "생성 중...",
       status: "generating",
@@ -170,6 +184,27 @@ export const ReportsPage: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {storeIntelligence && (
+        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold text-slate-900">리포트 생성 기준 실데이터 인사이트</h3>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">{storeIntelligence.summary}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              `오늘 매출 ${storeIntelligence.metrics.sales.today_revenue.toLocaleString()}원`,
+              `재방문율 ${(storeIntelligence.metrics.churn.return_rate * 100).toFixed(1)}%`,
+              `프로모션 ROI ${storeIntelligence.metrics.roi_rate.toFixed(1)}%`,
+            ].map((item) => (
+              <div key={item} className="rounded-xl border border-[#DCE4F3] bg-white p-3 shadow-sm">
+                <p className="text-sm font-medium text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 리포트 목록 */}
       <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">

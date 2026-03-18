@@ -1,7 +1,10 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Megaphone, Users, Sparkles, BarChart2, Calculator, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createCampaign, getRfmSegments, sendCampaign, simulateCampaignBep, type CampaignBepSimulation } from "@/services/marketing";
 
 // ─── 타입 ──────────────────────────────────────────────────────────────────
 type MenuOption = {
@@ -13,25 +16,34 @@ type MenuOption = {
   dailyAvgRevenue: number; // 일평균 매출 (원)
 };
 
+type SegmentOption = {
+  id: "champions" | "loyal" | "at_risk" | "lost";
+  name: string;
+  users: string;
+  rev: string;
+  desc: string;
+};
+
 // ─── 목업 데이터 ───────────────────────────────────────────────────────────
-const segments = [
-  { id: "vip",   name: "VIP",     users: "2,341명", rev: "기여 38%", desc: "최근 30일 내 3회 이상 방문" },
-  { id: "good",  name: "우수",    users: "8,120명", rev: "기여 44%", desc: "최근 60일 내 방문 이력" },
-  { id: "churn", name: "이탈 우려", users: "1,847명", rev: "잠재 18%", desc: "30일 이상 미방문 고객" },
+const segmentFallback: SegmentOption[] = [
+  { id: "champions", name: "VIP", users: "612명", rev: "기여 34%", desc: "크리스탈제이드 최근 30일 고빈도 방문 고객" },
+  { id: "loyal", name: "우수", users: "1,984명", rev: "기여 41%", desc: "최근 60일 내 재방문 이력이 유지된 고객" },
+  { id: "at_risk", name: "이탈 우려", users: "1,147명", rev: "잠재 17%", desc: "최근 30일 방문이 끊긴 재활성화 후보" },
+  { id: "lost", name: "휴면", users: "2,537명", rev: "잠재 8%", desc: "장기 미방문 고객, 강한 오퍼 필요" },
 ];
 
 const offerPresets = [
-  { label: "복귀 할인 쿠폰 10%", roi: "예상 ROI 416%" },
-  { label: "무료 음료 증정",     roi: "예상 ROI 280%" },
-  { label: "포인트 2배 적립",    roi: "예상 ROI 195%" },
+  { label: "[CJ]광화문점 복귀 할인 쿠폰 10%", roi: "실데이터 기준 ROI 40.3%" },
+  { label: "크리스탈제이드 점심 재방문 쿠폰", roi: "최근 7일 방문 +14.3%" },
+  { label: "도도포인트 2배 적립", roi: "최근 90일 이벤트 7,673건 기준" },
 ];
 
 const menuOptions: MenuOption[] = [
-  { id: "m1", name: "양념치킨 세트",   price: 18_000, marginRate: 0.38, dailyAvgQty: 45,  dailyAvgRevenue: 810_000  },
-  { id: "m2", name: "후라이드 세트",   price: 17_000, marginRate: 0.40, dailyAvgQty: 52,  dailyAvgRevenue: 884_000  },
-  { id: "m3", name: "반반 세트",       price: 19_000, marginRate: 0.36, dailyAvgQty: 38,  dailyAvgRevenue: 722_000  },
-  { id: "m4", name: "맥주 1L",         price: 6_000,  marginRate: 0.65, dailyAvgQty: 80,  dailyAvgRevenue: 480_000  },
-  { id: "m5", name: "순살치킨 세트",   price: 20_000, marginRate: 0.35, dailyAvgQty: 29,  dailyAvgRevenue: 580_000  },
+  { id: "cj-m1", name: "셰프의 마파박스", price: 39_000, marginRate: 0.36, dailyAvgQty: 14, dailyAvgRevenue: 546_000 },
+  { id: "cj-m2", name: "셰프의 새우박스", price: 42_000, marginRate: 0.34, dailyAvgQty: 11, dailyAvgRevenue: 462_000 },
+  { id: "cj-m3", name: "셰프의 어향박스", price: 41_000, marginRate: 0.35, dailyAvgQty: 9, dailyAvgRevenue: 369_000 },
+  { id: "cj-m4", name: "광동의점심상(2인)", price: 78_000, marginRate: 0.31, dailyAvgQty: 7, dailyAvgRevenue: 546_000 },
+  { id: "cj-m5", name: "특선런치 A코스", price: 55_000, marginRate: 0.33, dailyAvgQty: 8, dailyAvgRevenue: 440_000 },
 ];
 
 function fmt(n: number) {
@@ -53,17 +65,108 @@ function calcBep(menu: MenuOption, discountRate: number, fixedCost: number, prom
 
 // ─── 컴포넌트 ──────────────────────────────────────────────────────────────
 export const CampaignDesignerPage: React.FC = () => {
-  const [selectedSegment, setSelectedSegment] = useState("churn");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [segments, setSegments] = useState<SegmentOption[]>(segmentFallback.map((segment) => ({ ...segment })));
+  const [selectedSegment, setSelectedSegment] = useState("at_risk");
   const [discount, setDiscount]               = useState(10);
   const [selectedPreset, setSelectedPreset]   = useState(0);
-  const [selectedMenuId, setSelectedMenuId]   = useState("m1");
+  const [selectedMenuId, setSelectedMenuId]   = useState("cj-m1");
   const [fixedCost, setFixedCost]             = useState(50_000); // 발송 고정비 (원)
   const [promoDays, setPromoDays]             = useState(7);      // 프로모션 기간 (일)
+  const [channel, setChannel]                 = useState<"kakao" | "push" | "sms">("kakao");
+  const [simulation, setSimulation]           = useState<CampaignBepSimulation | null>(null);
+  const [message, setMessage]                 = useState("고객님, 오랜만에 방문하시면 셰프의 마파박스 10% 할인 혜택을 드립니다. (7일 유효)");
+  const [submitting, setSubmitting]           = useState(false);
+
+  useEffect(() => {
+    const nextSegment = searchParams.get("segment");
+    const nextChannel = searchParams.get("channel");
+    const nextDiscount = searchParams.get("discount");
+    const nextMenu = searchParams.get("menu");
+    if (nextSegment && ["champions", "loyal", "at_risk", "lost"].includes(nextSegment)) {
+      setSelectedSegment(nextSegment);
+    }
+    if (nextChannel && ["kakao", "push", "sms"].includes(nextChannel)) {
+      setChannel(nextChannel as "kakao" | "push" | "sms");
+    }
+    if (nextDiscount && !Number.isNaN(Number(nextDiscount))) {
+      setDiscount(Number(nextDiscount));
+    }
+    if (nextMenu && menuOptions.some((item) => item.id === nextMenu)) {
+      setSelectedMenuId(nextMenu);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    let alive = true;
+    getRfmSegments()
+      .then((response) => {
+        if (!alive) return;
+        const hasData = response.some((item) => item.count > 0);
+        if (!hasData) return;
+        const labelMap = {
+          champions: "VIP",
+          loyal: "우수",
+          at_risk: "이탈 우려",
+          lost: "휴면",
+        } as const;
+        const descMap = {
+          champions: "크리스탈제이드 최근 30일 고빈도 방문 고객",
+          loyal: "최근 60일 내 재방문 이력이 유지된 고객",
+          at_risk: "최근 30일 방문이 끊긴 재활성화 후보",
+          lost: "장기 미방문 고객, 강한 오퍼 필요",
+        } as const;
+        setSegments(response.map((item) => ({
+          id: item.segment,
+          name: labelMap[item.segment],
+          users: `${item.count.toLocaleString()}명`,
+          rev: `기여 ${(item.revenue_share * 100).toFixed(0)}%`,
+          desc: descMap[item.segment],
+        })));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const targetCustomers = Number((segments.find((s) => s.id === selectedSegment)?.users ?? "0").replace(/[^\d]/g, "")) || 0;
+    const menu = menuOptions.find((m) => m.id === selectedMenuId);
+    if (!menu || targetCustomers <= 0) return () => { alive = false; };
+    simulateCampaignBep({
+      store_key: "[CJ]광화문점",
+      segment_name: selectedSegment as "champions" | "loyal" | "at_risk" | "lost",
+      channel,
+      offer_type: "discount",
+      offer_value: discount,
+      target_customers: targetCustomers,
+      promo_days: promoDays,
+      fixed_cost: fixedCost,
+      menu_name: menu.name,
+      menu_price: menu.price,
+      margin_rate: menu.marginRate,
+      daily_avg_qty: menu.dailyAvgQty,
+    }).then((response) => {
+      if (!alive) return;
+      setSimulation(response);
+    }).catch(() => {
+      if (!alive) return;
+      setSimulation(null);
+    });
+    return () => { alive = false; };
+  }, [channel, discount, fixedCost, promoDays, segments, selectedMenuId, selectedSegment]);
 
   const selected     = segments.find((s) => s.id === selectedSegment)!;
   const selectedMenu = menuOptions.find((m) => m.id === selectedMenuId)!;
   const discountRate = discount / 100;
   const bep          = calcBep(selectedMenu, discountRate, fixedCost, promoDays);
+
+  useEffect(() => {
+    setMessage(`고객님, 오랜만에 방문하시면 ${selectedMenu.name} ${discount}% 할인 혜택을 드립니다. (7일 유효)`);
+  }, [discount, selectedMenu.name]);
 
   // BEP 판정
   const bepJudge = !bep
@@ -73,6 +176,44 @@ export const CampaignDesignerPage: React.FC = () => {
     : bep.incrementRate <= 0.7
     ? { label: "달성 가능", sub: `일평균 대비 ${(bep.incrementRate * 100).toFixed(0)}% 증분 필요`, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", icon: <AlertTriangle className="h-5 w-5" /> }
     : { label: "달성 어려움", sub: `일평균 대비 ${(bep.incrementRate * 100).toFixed(0)}% 증분 필요`, color: "text-red-600", bg: "bg-red-50", border: "border-red-100", icon: <XCircle className="h-5 w-5" /> };
+
+  const handleOpenPerformance = () => {
+    const params = new URLSearchParams({
+      name: `${selected.name} 대상 ${selectedMenu.name} ${discount}% 캠페인`,
+      channel,
+      segment: selectedSegment,
+      sent: String(Number(selected.users.replace(/[^\d]/g, "")) || 0),
+      open_rate: simulation ? String(simulation.expected_open_rate) : "0.38",
+      use_rate: simulation ? String(simulation.expected_conversion_rate) : "0.24",
+      revenue: simulation ? String(simulation.expected_incremental_revenue) : "0",
+    });
+    navigate(`/marketing/performance?${params.toString()}`);
+  };
+
+  const handleLaunchCampaign = async () => {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + promoDays);
+    setSubmitting(true);
+    try {
+      const created = await createCampaign({
+        name: `${selected.name} 대상 ${selectedMenu.name} ${discount}% 캠페인`,
+        channel,
+        target_segment: selectedSegment,
+        offer_type: "discount",
+        offer_value: String(discount),
+        message_template: message,
+        start_date: startDate.toISOString().slice(0, 10),
+        end_date: endDate.toISOString().slice(0, 10),
+      });
+      const sent = await sendCampaign(created.id);
+      navigate(`/marketing/performance?campaign_id=${encodeURIComponent(sent.id)}`);
+    } catch {
+      handleOpenPerformance();
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -182,6 +323,24 @@ export const CampaignDesignerPage: React.FC = () => {
             ))}
           </div>
 
+          <div className="mt-4">
+            <label className="mb-1 block text-sm font-semibold text-[#34415b]">발송 채널</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["kakao", "push", "sms"] as const).map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setChannel(item)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-sm font-semibold transition-colors",
+                    channel === item ? "border-[#b8ccff] bg-[#eef3ff] text-primary" : "border-[#d5deec] bg-card text-[#34415b]",
+                  )}
+                >
+                  {item.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 대상 메뉴 선택 */}
           <div className="mt-4">
             <label className="mb-1 block text-sm font-semibold text-[#34415b]">대상 메뉴</label>
@@ -231,7 +390,8 @@ export const CampaignDesignerPage: React.FC = () => {
             <label className="mb-1 block text-sm font-medium text-[#34415b]">발송 메시지</label>
             <textarea
               className="h-20 w-full rounded-xl border border-[#d5deec] bg-card p-3 text-sm text-[#34415b] outline-none transition-colors focus:border-primary/50"
-              defaultValue={`고객님, 오랜만에 방문하시면 ${selectedMenu.name} ${discount}% 할인 혜택을 드립니다. (7일 유효)`}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
             />
           </div>
 
@@ -239,8 +399,12 @@ export const CampaignDesignerPage: React.FC = () => {
             <button className="flex-1 rounded-lg border border-[#d5deec] bg-card px-3 py-2.5 text-sm font-medium text-[#34415b] transition-colors hover:bg-[#f4f7ff]">
               테스트 발송
             </button>
-            <button className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2356e0]">
-              승인 요청
+            <button
+              onClick={handleLaunchCampaign}
+              disabled={submitting}
+              className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2356e0] disabled:opacity-50"
+            >
+              {submitting ? "저장 중..." : "캠페인 저장 후 성과 보기"}
             </button>
           </div>
         </article>
@@ -355,7 +519,7 @@ export const CampaignDesignerPage: React.FC = () => {
                 <div className="rounded-xl border border-white bg-card px-4 py-3 shadow-sm text-center">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--subtle-foreground)]">BEP 최소 판매 수량</p>
                   <p className={cn("mt-1 text-4xl font-black", bepJudge.color)}>
-                    {bep.bepQty}<span className="ml-1 text-lg font-bold">개</span>
+                    {simulation?.break_even_orders ?? bep.bepQty}<span className="ml-1 text-lg font-bold">건</span>
                   </p>
                   <p className="mt-1 text-xs text-[var(--subtle-foreground)]">기간 {promoDays}일 내 달성해야 손익 0</p>
                 </div>
@@ -365,22 +529,30 @@ export const CampaignDesignerPage: React.FC = () => {
                   {[
                     {
                       label: "기간 내 일평균 예상 판매",
-                      value: `${bep.periodExpected}개`,
-                      sub: `${selectedMenu.dailyAvgQty}개/일 × ${promoDays}일`,
+                      value: `${simulation?.expected_incremental_orders ?? bep.periodExpected}건`,
+                      sub: simulation
+                        ? `모델 예상 전환율 ${(simulation.expected_conversion_rate * 100).toFixed(1)}%`
+                        : `${selectedMenu.dailyAvgQty}개/일 × ${promoDays}일`,
                       color: "text-[#34415b]",
                     },
                     {
                       label: "BEP 달성 필요 증분",
-                      value: `+${Math.max(0, bep.bepQty - bep.periodExpected)}개`,
-                      sub: bep.bepQty <= bep.periodExpected
-                        ? "일평균만 유지해도 BEP 초과 ✅"
-                        : `일평균 대비 ${(bep.incrementRate * 100).toFixed(0)}% 추가 필요`,
-                      color: bep.bepQty <= bep.periodExpected ? "text-emerald-600" : bepJudge.color,
+                      value: `+${Math.max(0, (simulation?.break_even_orders ?? bep.bepQty) - (simulation?.expected_incremental_orders ?? bep.periodExpected))}건`,
+                      sub: simulation && simulation.expected_incremental_orders >= simulation.break_even_orders
+                        ? "예상 증분 주문만으로도 BEP 초과 ✅"
+                        : simulation
+                          ? `BEP 도달 확률 ${(simulation.break_even_probability * 100).toFixed(0)}%`
+                          : bep.bepQty <= bep.periodExpected
+                            ? "일평균만 유지해도 BEP 초과 ✅"
+                            : `일평균 대비 ${(bep.incrementRate * 100).toFixed(0)}% 추가 필요`,
+                      color: simulation
+                        ? simulation.expected_incremental_orders >= simulation.break_even_orders ? "text-emerald-600" : bepJudge.color
+                        : bep.bepQty <= bep.periodExpected ? "text-emerald-600" : bepJudge.color,
                     },
                     {
                       label: "발송 고정비 회수 매출",
-                      value: `${fmt(bep.bepQty * selectedMenu.price * (1 - discountRate))}원`,
-                      sub: "BEP 판매 수량 × 할인 후 단가",
+                      value: `${fmt(simulation?.break_even_revenue ?? (bep.bepQty * selectedMenu.price * (1 - discountRate)))}원`,
+                      sub: simulation ? "예상 객단가 기준 손익분기 매출" : "BEP 판매 수량 × 할인 후 단가",
                       color: "text-[#34415b]",
                     },
                   ].map((row) => (
@@ -399,22 +571,31 @@ export const CampaignDesignerPage: React.FC = () => {
                   <div className="mb-1 flex items-center justify-between text-[10px]">
                     <span className="font-bold text-muted-foreground">BEP 달성 가능성</span>
                     <span className={cn("font-black", bepJudge.color)}>
-                      {Math.min(100, Math.round((bep.periodExpected / bep.bepQty) * 100))}%
+                      {simulation
+                        ? Math.round(simulation.break_even_probability * 100)
+                        : Math.min(100, Math.round((bep.periodExpected / bep.bepQty) * 100))}%
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-card overflow-hidden border border-[var(--border)]">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
-                        bep.incrementRate <= 0.3 ? "bg-emerald-400" :
-                        bep.incrementRate <= 0.7 ? "bg-amber-400" : "bg-red-400"
+                        simulation
+                          ? simulation.break_even_probability >= 0.8 ? "bg-emerald-400" :
+                            simulation.break_even_probability >= 0.5 ? "bg-amber-400" : "bg-red-400"
+                          : bep.incrementRate <= 0.3 ? "bg-emerald-400" :
+                            bep.incrementRate <= 0.7 ? "bg-amber-400" : "bg-red-400"
                       )}
-                      style={{ width: `${Math.min(100, Math.round((bep.periodExpected / bep.bepQty) * 100))}%` }}
+                      style={{ width: `${simulation
+                        ? Math.min(100, Math.round(simulation.break_even_probability * 100))
+                        : Math.min(100, Math.round((bep.periodExpected / bep.bepQty) * 100))}%` }}
                     />
                   </div>
                 </div>
 
-                <p className="text-[10px] text-[var(--subtle-foreground)] leading-relaxed">{bepJudge.sub}</p>
+                <p className="text-[10px] text-[var(--subtle-foreground)] leading-relaxed">
+                  {simulation?.summary ?? bepJudge.sub}
+                </p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
@@ -440,6 +621,11 @@ export const CampaignDesignerPage: React.FC = () => {
             <span>BEP 수량 = 발송 고정비 ÷ 개당 공헌이익</span>
             <span>달성 가능성 = 기간 내 일평균 예상 ÷ BEP 수량</span>
           </div>
+          {simulation && (
+            <p className="mt-3 text-xs text-slate-500">
+              통계 모델 `{simulation.model_name}` 기준, 실제 POS/도도포인트 집계와 채널/세그먼트 반응률을 반영했습니다.
+            </p>
+          )}
         </div>
       </section>
 
@@ -452,9 +638,10 @@ export const CampaignDesignerPage: React.FC = () => {
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           {[
             { label: "발송 대상",  value: selected.users },
-            { label: "예상 오픈율", value: "38.2%" },
-            { label: "예상 복귀율", value: "24.0%" },
-            { label: "예상 ROI",   value: "416%" },
+            { label: "예상 오픈율", value: simulation ? `${(simulation.expected_open_rate * 100).toFixed(1)}%` : "38.2%" },
+            { label: "예상 복귀율", value: simulation ? `${(simulation.expected_conversion_rate * 100).toFixed(1)}%` : "24.0%" },
+            { label: "예상 ROI",   value: simulation ? `${simulation.expected_roi.toFixed(0)}%` : "416%" },
+            { label: "모델 신뢰도", value: simulation ? `${(simulation.confidence * 100).toFixed(0)}%` : "71%" },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 shadow-sm">
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -465,11 +652,13 @@ export const CampaignDesignerPage: React.FC = () => {
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#c9d8ff] bg-[#eef3ff] px-4 py-3">
           <TrendingUp className="h-4 w-4 shrink-0 text-primary" />
           <p className="text-xs text-[#4a5568]">
-            BEP 달성 시 기간 내 추가 수익{" "}
+            {simulation ? simulation.action_guide[0] : "BEP 달성 시 기간 내 추가 수익"}{" "}
             <span className="font-black text-primary">
-              {bep
-                ? `약 ${fmt(Math.max(0, bep.periodExpected - bep.bepQty) * Math.round(bep.contribPerUnit))}원`
-                : "계산 불가"}
+              {simulation
+                ? `약 ${fmt(Math.max(0, simulation.expected_incremental_profit))}원`
+                : bep
+                  ? `약 ${fmt(Math.max(0, bep.periodExpected - bep.bepQty) * Math.round(bep.contribPerUnit))}원`
+                  : "계산 불가"}
             </span>
             {" "}예상 · 프로모션 승인 전 BEP 달성 가능성을 반드시 확인하세요.
           </p>
