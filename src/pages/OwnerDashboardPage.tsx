@@ -72,8 +72,8 @@ export const OwnerDashboardPage: React.FC = () => {
   // AI 분석 기반 액션 생성
   const aiActions = useMemo(() => {
     const list: any[] = [];
-    if (dashboard.ai_analysis?.menu_engineering) {
-      dashboard.ai_analysis.menu_engineering.ai_insights.forEach((insight, idx) => {
+    if (dashboard.ai_analysis?.menu_strategy) {
+      dashboard.ai_analysis.menu_strategy.ai_insights.forEach((insight: { type: string; title: string; description: string }, idx: number) => {
         list.push({
           id: `ai-menu-${idx}`,
           level: insight.type === "danger" || insight.type === "warning" ? "P0" : "P1",
@@ -84,8 +84,8 @@ export const OwnerDashboardPage: React.FC = () => {
         });
       });
     }
-    if (dashboard.ai_analysis?.customer_churn) {
-      dashboard.ai_analysis.customer_churn.ai_insights.forEach((insight, idx) => {
+    if (dashboard.ai_analysis?.customer_intelligence) {
+      dashboard.ai_analysis.customer_intelligence.ai_insights.forEach((insight: { type: string; title: string; description: string }, idx: number) => {
         list.push({
           id: `ai-churn-${idx}`,
           level: insight.type === "danger" ? "P0" : "P1",
@@ -245,7 +245,7 @@ export const OwnerDashboardPage: React.FC = () => {
       )}
 
       {/* 2. 메뉴 엔지니어링 분석 섹션 */}
-      {dashboard.ai_analysis?.menu_engineering && (
+      {dashboard.ai_analysis?.menu_strategy && (
         <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
           <div className="flex items-center gap-2 mb-6">
             <BarChart2 className="h-5 w-5 text-primary" />
@@ -255,10 +255,10 @@ export const OwnerDashboardPage: React.FC = () => {
           
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: "효자 메뉴 (Star)", count: dashboard.ai_analysis.menu_engineering.summary.star_count, color: "text-emerald-600" },
-              { label: "식사 메뉴 (Plowhorse)", count: dashboard.ai_analysis.menu_engineering.summary.plowhorse_count, color: "text-blue-600" },
-              { label: "수수께끼 (Puzzle)", count: dashboard.ai_analysis.menu_engineering.summary.puzzle_count, color: "text-amber-600" },
-              { label: "삭제 대상 (Dog)", count: dashboard.ai_analysis.menu_engineering.summary.dog_count, color: "text-red-600" },
+              { label: "효자 메뉴 (Star)", count: dashboard.ai_analysis.menu_strategy.summary.star_count, color: "text-emerald-600" },
+              { label: "식사 메뉴 (Plowhorse)", count: dashboard.ai_analysis.menu_strategy.summary.plowhorse_count, color: "text-blue-600" },
+              { label: "수수께끼 (Puzzle)", count: dashboard.ai_analysis.menu_strategy.summary.puzzle_count, color: "text-amber-600" },
+              { label: "삭제 대상 (Dog)", count: dashboard.ai_analysis.menu_strategy.summary.dog_count, color: "text-red-600" },
             ].map((stat) => (
               <div key={stat.label} className="rounded-2xl p-4 border border-border/50 bg-white shadow-sm">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">{stat.label}</p>
@@ -281,7 +281,7 @@ export const OwnerDashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {dashboard.ai_analysis.menu_engineering.menu_matrix.slice(0, 5).map((menu, i) => (
+                {dashboard.ai_analysis.menu_strategy.menu_matrix.slice(0, 5).map((menu: { menu_name: string; qty: number; unit_margin: number; category: string }, i: number) => (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-bold text-slate-700">{menu.menu_name}</td>
                     <td className="px-4 py-3 text-center font-mono font-bold text-slate-500">{menu.qty}</td>
