@@ -38,6 +38,12 @@ const typeColor: Record<ReportType, string> = {
   weekly_hq: "text-purple-700 bg-purple-50 border-purple-200",
 };
 
+function openAiAssist(label: string, prompt: string, contextText?: string, intent: "summary" | "action" = "summary") {
+  window.dispatchEvent(new CustomEvent("agentgo-ai-assist", {
+    detail: { label, prompt, contextText, intent },
+  }));
+}
+
 function apiToReport(r: ReportResponse): Report {
   return {
     id: r.id,
@@ -56,6 +62,7 @@ export const ReportsPage: React.FC = () => {
   const [retrying, setRetrying] = useState<string | null>(null);
   const [reportList, setReportList] = useState(initialReports);
   const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
+  const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -81,6 +88,17 @@ export const ReportsPage: React.FC = () => {
   }, []);
 
   const filtered = reportList.filter((r) => filter === "전체" || r.type === filter);
+
+  const handleAssist = (
+    cardId: string,
+    label: string,
+    prompt: string,
+    contextText?: string,
+    intent: "summary" | "action" = "summary",
+  ) => {
+    setSelectedAssistCard(cardId);
+    openAiAssist(label, prompt, contextText, intent);
+  };
 
   const handleGenerate = (type: ReportType) => {
     const tempId = `new-${Date.now()}`;
@@ -134,7 +152,14 @@ export const ReportsPage: React.FC = () => {
     <div className="space-y-6 pb-10">
 
       {/* 헤더 */}
-      <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+      <section
+        className={cn(
+          "rounded-2xl border shadow-elevated p-5 md:p-6 transition-all",
+          selectedAssistCard === "reports-header"
+            ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+            : "border-border/90 bg-card",
+        )}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <div className="rounded-xl bg-[#eef3ff] p-3">
@@ -183,15 +208,63 @@ export const ReportsPage: React.FC = () => {
             </button>
           ))}
         </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => handleAssist("reports-header", "리포트 해설", "현재 리포트 목록과 상태를 해설해줘", "통합 리포트 허브")}
+            className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
+          >
+            해설 보기
+          </button>
+          <button
+            onClick={() => handleAssist("reports-header", "리포트 추천 조치", "현재 리포트 화면 기준으로 지금 해야 할 조치를 알려줘", "생성 실패, 생성 중, 준비 완료 리포트", "action")}
+            className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
+          >
+            추천 조치
+          </button>
+          <button
+            onClick={() => handleAssist("reports-header", "일간 주간 비교", "일간 점주 리포트와 주간 본사 리포트를 비교해서 설명해줘", "일간 vs 주간 리포트")}
+            className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
+          >
+            비교 보기
+          </button>
+        </div>
       </section>
 
       {storeIntelligence && (
-        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
+        <section
+          className={cn(
+            "rounded-2xl border p-5 shadow-elevated md:p-6 transition-all",
+            selectedAssistCard === "reports-intelligence"
+              ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+              : "border-[#CFE0FF] bg-[#F7FAFF]",
+          )}
+        >
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-slate-900">리포트 생성 기준 실데이터 인사이트</h3>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{storeIntelligence.summary}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => handleAssist("reports-intelligence", "인사이트 해설", "이 실데이터 인사이트를 해설해줘", storeIntelligence.summary)}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
+            >
+              해설 보기
+            </button>
+            <button
+              onClick={() => handleAssist("reports-intelligence", "인사이트 조치", "이 인사이트 기준으로 리포트에서 확인할 조치를 알려줘", storeIntelligence.summary, "action")}
+              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+            >
+              추천 조치
+            </button>
+            <button
+              onClick={() => handleAssist("reports-intelligence", "인사이트 비교 보기", "이 인사이트를 다른 리포트 지표와 비교해서 설명해줘", storeIntelligence.summary)}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+            >
+              비교 보기
+            </button>
+          </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {[
               `오늘 매출 ${storeIntelligence.metrics.sales.today_revenue.toLocaleString()}원`,

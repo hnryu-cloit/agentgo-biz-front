@@ -14,6 +14,12 @@ const typeLabel: Record<ResourceType, string> = {
   menu_lineup: "메뉴 라인업",
 };
 
+function openAiAssist(label: string, prompt: string, contextText?: string, intent: "summary" | "action" = "summary") {
+  window.dispatchEvent(new CustomEvent("agentgo-ai-assist", {
+    detail: { label, prompt, contextText, intent },
+  }));
+}
+
 export const DataUploadPage = () => {
   const [sources, setSources] = useState<ResourceSourceCatalog[]>([]);
   const [selectedType, setSelectedType] = useState<ResourceType>("pos_daily_sales");
@@ -22,6 +28,7 @@ export const DataUploadPage = () => {
   const [uploadHistory, setUploadHistory] = useState<UploadJobResponse[]>([]);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
     Promise.all([getResourceCatalog(), getUploadJobs()])
@@ -95,11 +102,50 @@ export const DataUploadPage = () => {
     }
   };
 
+  const handleAssist = (
+    cardId: string,
+    label: string,
+    prompt: string,
+    contextText?: string,
+    intent: "summary" | "action" = "summary",
+  ) => {
+    setSelectedAssistCard(cardId);
+    openAiAssist(label, prompt, contextText, intent);
+  };
+
   return (
     <div className="space-y-6 pb-10">
-      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+      <section
+        className={cn(
+          "rounded-2xl border p-5 shadow-elevated md:p-6 transition-all",
+          selectedAssistCard === "upload-header"
+            ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+            : "border-border/90 bg-card",
+        )}
+      >
         <h2 className="text-2xl font-bold text-slate-900">데이터 업로드</h2>
         <p className="mt-1 text-base text-slate-500">`resource/*` 업로드가 완료되어 DB에 적재된 상태를 기준으로 카탈로그와 미리보기를 확인합니다.</p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => handleAssist("upload-header", "업로드 해설", "현재 데이터 업로드 화면을 해설해줘", "resource 업로드와 DB 적재 상태")}
+            className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
+          >
+            해설 보기
+          </button>
+          <button
+            onClick={() => handleAssist("upload-header", "업로드 추천 조치", "업로드 화면 기준으로 지금 무엇을 해야 하는지 알려줘", "리소스 적재와 업로드 이력", "action")}
+            className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
+          >
+            추천 조치
+          </button>
+          <button
+            onClick={() => handleAssist("upload-header", "리소스 비교", "현재 선택한 리소스와 다른 리소스를 비교해서 설명해줘", selectedType)}
+            className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
+          >
+            비교 보기
+          </button>
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
           {(sources as Array<ResourceSourceCatalog>).map((source) => (
@@ -120,7 +166,14 @@ export const DataUploadPage = () => {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div>
-            <div className="rounded-xl border-2 border-dashed border-[#DCE4F3] bg-[#F7FAFF] p-8 text-center">
+            <div
+              className={cn(
+                "rounded-xl border-2 border-dashed p-8 text-center transition-all",
+                selectedAssistCard === "upload-import"
+                  ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+                  : "border-[#DCE4F3] bg-[#F7FAFF]",
+              )}
+            >
               <Upload className="mx-auto h-8 w-8 text-slate-300" />
               <p className="mt-3 text-sm font-semibold text-slate-700">실데이터 적재 상태</p>
               <p className="mt-1 text-xs text-slate-400">{activeSource?.description ?? "연결된 리소스가 없습니다."}</p>
@@ -132,6 +185,26 @@ export const DataUploadPage = () => {
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
                 {isImporting ? "적재 중..." : "PostgreSQL 적재(Import) 실행"}
               </button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={() => handleAssist("upload-import", "적재 해설", "현재 적재 상태와 선택된 리소스를 해설해줘", activeSource?.description)}
+                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
+                >
+                  해설 보기
+                </button>
+                <button
+                  onClick={() => handleAssist("upload-import", "적재 조치", "현재 적재 상태 기준으로 다음 조치를 알려줘", activeSource?.description, "action")}
+                  className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+                >
+                  추천 조치
+                </button>
+                <button
+                  onClick={() => handleAssist("upload-import", "적재 비교 보기", "현재 적재 상태를 다른 리소스와 비교해서 설명해줘", activeSource?.description)}
+                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+                >
+                  비교 보기
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -156,8 +229,35 @@ export const DataUploadPage = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-4 shadow-sm">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">미리보기 (상위 10행)</p>
+          <div
+            className={cn(
+              "rounded-xl border p-4 shadow-sm transition-all",
+              selectedAssistCard === "upload-preview"
+                ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+                : "border-[#DCE4F3] bg-[#F7FAFF]",
+            )}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">미리보기 (상위 10행)</p>
+              <button
+                onClick={() => handleAssist("upload-preview", "미리보기 해설", "현재 데이터 미리보기를 해설해줘", `${selectedStore} / ${selectedType}`)}
+                className="ml-auto rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
+              >
+                해설 보기
+              </button>
+              <button
+                onClick={() => handleAssist("upload-preview", "미리보기 추천 조치", "현재 데이터 미리보기 기준으로 확인할 조치를 알려줘", `${selectedStore} / ${selectedType}`, "action")}
+                className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+              >
+                추천 조치
+              </button>
+              <button
+                onClick={() => handleAssist("upload-preview", "미리보기 비교 보기", "현재 데이터 미리보기를 다른 리소스와 비교해서 설명해줘", `${selectedStore} / ${selectedType}`)}
+                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+              >
+                비교 보기
+              </button>
+            </div>
             {preview ? (
               <div className="overflow-x-auto rounded-lg border border-[#DCE4F3] bg-white shadow-inner">
                 <table className="w-full min-w-[600px] text-left text-xs">

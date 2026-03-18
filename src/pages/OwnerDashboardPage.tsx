@@ -36,11 +36,18 @@ const actionTemplates = [
   },
 ];
 
+function openAiAssist(label: string, prompt: string, contextText?: string, intent: "summary" | "action" = "summary") {
+  window.dispatchEvent(new CustomEvent("agentgo-ai-assist", {
+    detail: { label, prompt, contextText, intent },
+  }));
+}
+
 export const OwnerDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<OwnerDashboard>(emptyDashboard);
   const [insights, setInsights] = useState<CustomerInsights | null>(null);
   const [actions, setActions] = useState<ActionResponse[]>([]);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+  const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -138,6 +145,17 @@ export const OwnerDashboardPage: React.FC = () => {
     }
   };
 
+  const handleAssist = (
+    cardId: string,
+    label: string,
+    prompt: string,
+    contextText?: string,
+    intent: "summary" | "action" = "summary",
+  ) => {
+    setSelectedAssistCard(cardId);
+    openAiAssist(label, prompt, contextText, intent);
+  };
+
   return (
     <div className="space-y-6 pb-10">
       {/* 1. AI 실시간 전략 제언 (Gemini Interpretation) */}
@@ -172,6 +190,21 @@ export const OwnerDashboardPage: React.FC = () => {
                   <span className="text-emerald-600 mr-2">Today's Action:</span>
                   {dashboard.ai_analysis.ai_reasoning.action_item}
                 </p>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => openAiAssist("전략 해설", "현재 점주 전략 브리핑을 해설해줘", dashboard.ai_analysis?.ai_reasoning?.reasoning)}
+                  className="rounded-full border border-[#c9d8ff] bg-white px-3 py-2 text-xs font-black text-primary shadow-sm"
+                >
+                  해설 보기
+                </button>
+                <button
+                  onClick={() => openAiAssist("추천 조치", "현재 브리핑 기준으로 점주가 지금 바로 할 일을 알려줘", dashboard.ai_analysis?.ai_reasoning?.action_item, "action")}
+                  className="rounded-full border border-[#d5deec] bg-[#eef3ff] px-3 py-2 text-xs font-black text-slate-700 shadow-sm"
+                >
+                  추천 조치
+                </button>
               </div>
             </div>
             
@@ -338,6 +371,20 @@ export const OwnerDashboardPage: React.FC = () => {
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     <span className="text-[11px] font-bold text-primary uppercase tracking-tight">Expected Impact: {action.impact}</span>
                   </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openAiAssist(`${action.title} 해설`, "이 액션을 점주 관점에서 해설해줘", `${action.title}: ${action.why}`)}
+                      className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
+                    >
+                      해설 보기
+                    </button>
+                    <button
+                      onClick={() => openAiAssist(`${action.title} 실행 가이드`, "이 액션을 오늘 어떻게 실행하면 좋을지 순서대로 알려줘", `${action.title}: ${action.impact}`, "action")}
+                      className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+                    >
+                      추천 조치
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
                   {action.status !== "executed" ? (
@@ -370,7 +417,15 @@ export const OwnerDashboardPage: React.FC = () => {
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
+            <article
+              key={kpi.label}
+              className={cn(
+                "rounded-2xl border p-5 shadow-elevated transition-all",
+                selectedAssistCard === `owner-kpi-${kpi.label}`
+                  ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+                  : "border-border/90 bg-card",
+              )}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
                 <div className="rounded-lg bg-[#EEF4FF] p-1.5">
@@ -378,6 +433,26 @@ export const OwnerDashboardPage: React.FC = () => {
                 </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-slate-900">{kpi.value}</p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label} 수치를 점주 관점에서 해설해줘`, `${kpi.label}: ${kpi.value}`)}
+                  className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
+                >
+                  해설 보기
+                </button>
+                <button
+                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 점주가 지금 해야 할 액션을 알려줘`, `${kpi.label}: ${kpi.value}`, "action")}
+                  className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
+                >
+                  추천 조치
+                </button>
+                <button
+                  onClick={() => handleAssist(`owner-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 운영 지표와 비교해서 볼 포인트를 알려줘`, `${kpi.label}: ${kpi.value}`)}
+                  className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+                >
+                  비교 보기
+                </button>
+              </div>
             </article>
           );
         })}
@@ -386,29 +461,77 @@ export const OwnerDashboardPage: React.FC = () => {
       {/* 5. 매출 트렌드 및 고객 방문 분석 */}
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="h-5 w-5 text-slate-400" />
-            <h3 className="text-lg font-bold text-slate-900">시간대별 매출 추이</h3>
-          </div>
-          <div className="flex h-48 items-end gap-1.5 rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 pb-4 pt-6">
-            {dashboard.kpi_trend.map((point) => (
-              <div key={point.label} className="flex flex-1 flex-col items-center gap-2 group">
-                <div 
-                  className="w-full rounded-t-lg bg-gradient-to-t from-primary/60 to-primary transition-all duration-500 group-hover:from-primary hover:shadow-lg" 
-                  style={{ height: `${(point.revenue / trendMax) * 100}%` }} 
-                />
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{point.label}</span>
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-bold text-slate-900">시간대별 매출 추이</h3>
+            </div>
+            {dashboard.ai_analysis?.sales_trend?.peak_hours && (
+              <div className="flex gap-1.5">
+                {dashboard.ai_analysis.sales_trend.peak_hours.slice(0, 2).map((h: number) => (
+                  <span key={h} className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700 uppercase italic">
+                    PEAK {h}H
+                  </span>
+                ))}
               </div>
-            ))}
+            )}
           </div>
+          
+          <div className="flex h-48 items-end gap-1 rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] px-4 pb-4 pt-8 relative">
+            {dashboard.kpi_trend.map((point) => {
+              const hourNum = parseInt(point.label);
+              const isPeak = dashboard.ai_analysis?.sales_trend?.peak_hours?.includes(hourNum);
+              
+              return (
+                <div key={point.label} className="flex flex-1 flex-col items-center gap-2 group relative">
+                  <div 
+                    className={cn(
+                      "w-full rounded-t-md transition-all duration-500 group-hover:shadow-lg",
+                      isPeak 
+                        ? "bg-gradient-to-t from-amber-400 to-orange-400" 
+                        : "bg-gradient-to-t from-primary/40 to-primary/80"
+                    )}
+                    style={{ height: `${(point.revenue / trendMax) * 100}%` }} 
+                  >
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap z-20">
+                      {Math.round(point.revenue / 1000)}k
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{point.label}</span>
+                </div>
+              );
+            })}
+          </div>
+          
+          {dashboard.ai_analysis?.sales_trend?.summary && (
+            <p className="mt-4 text-[11px] font-medium text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+              <span className="text-primary font-bold mr-1">AI 해석:</span>
+              {dashboard.ai_analysis.sales_trend.summary}
+            </p>
+          )}
         </article>
 
         {insights && (
           <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
-            <div className="flex items-center gap-2 mb-6">
+            <div className="mb-6 flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-bold text-slate-900">고객 방문 분석</h3>
               <span className="ml-auto text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Dodo Point CRM</span>
+            </div>
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => openAiAssist("재방문율 해설", "재방문율과 고유 고객 수를 점주 관점에서 해설해줘", `재방문율 ${(insights.return_rate * 100).toFixed(1)}%, 고유 고객 ${insights.unique_customers}명`)}
+                className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
+              >
+                해설 보기
+              </button>
+              <button
+                onClick={() => openAiAssist("고객 추천 조치", "고객 방문 분석 기준으로 점주가 할 CRM 액션을 추천해줘", `최근 7일 방문 ${insights.recent_7d_visits}건`, "action")}
+                className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
+              >
+                추천 조치
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

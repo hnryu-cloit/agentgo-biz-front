@@ -12,11 +12,18 @@ const emptyDashboard: SvDashboard = {
   low_margin_store_count: 0,
 };
 
+function openAiAssist(label: string, prompt: string, contextText?: string, intent: "summary" | "action" = "summary") {
+  window.dispatchEvent(new CustomEvent("agentgo-ai-assist", {
+    detail: { label, prompt, contextText, intent },
+  }));
+}
+
 export const SupervisorDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<SvDashboard>(emptyDashboard);
   const [stores, setStores] = useState<StoreRiskSummary[]>([]);
   const [selectedStore, setSelectedStore] = useState<StoreRiskSummary | null>(null);
   const [showReport, setShowReport] = useState(false);
+  const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -60,6 +67,17 @@ export const SupervisorDashboardPage: React.FC = () => {
   const handleOpenReport = (store: StoreRiskSummary) => {
     setSelectedStore(store);
     setShowReport(true);
+  };
+
+  const handleAssist = (
+    cardId: string,
+    label: string,
+    prompt: string,
+    contextText?: string,
+    intent: "summary" | "action" = "summary",
+  ) => {
+    setSelectedAssistCard(cardId);
+    openAiAssist(label, prompt, contextText, intent);
   };
 
   return (
@@ -142,13 +160,38 @@ export const SupervisorDashboardPage: React.FC = () => {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
+        <article
+          className={cn(
+            "rounded-2xl border p-5 shadow-sm transition-all",
+            selectedAssistCard === "sv-sales-delta" ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]" : "border-border/90 bg-card",
+          )}
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">구역 평균 매출 증감</p>
             <Activity className="h-4 w-4 text-slate-400" />
           </div>
           <p className="mt-2 text-2xl font-bold text-slate-900">{avgDelta}%</p>
           <p className="mt-1 text-xs text-slate-500">최근 비교 기준</p>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => handleAssist("sv-sales-delta", "구역 매출 해설", "구역 평균 매출 증감을 SV 관점에서 해설해줘", `구역 평균 매출 증감 ${avgDelta}%`)}
+              className="rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
+            >
+              해설 보기
+            </button>
+            <button
+              onClick={() => handleAssist("sv-sales-delta", "SV 추천 조치", "구역 평균 매출 증감 기준으로 SV가 지금 할 코칭 액션을 알려줘", `관리 매장 ${dashboard.total_stores}개`, "action")}
+              className="rounded-full border border-[#c9d8ff] bg-white px-3 py-1.5 text-[11px] font-black text-primary"
+            >
+              추천 조치
+            </button>
+            <button
+              onClick={() => handleAssist("sv-sales-delta", "구역 매출 비교 보기", "구역 평균 매출 증감을 다른 위험 지표와 비교해서 설명해줘", `구역 평균 매출 증감 ${avgDelta}%`)}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+            >
+              비교 보기
+            </button>
+          </div>
         </article>
 
         <article className="rounded-2xl border border-border/90 bg-card p-5 shadow-sm">
@@ -160,13 +203,38 @@ export const SupervisorDashboardPage: React.FC = () => {
           <p className="mt-1 text-xs text-slate-500">전 매장 평균</p>
         </article>
 
-        <article className="rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] p-5 shadow-sm">
+        <article
+          className={cn(
+            "rounded-2xl border p-5 shadow-sm transition-all",
+            selectedAssistCard === "sv-visit-priority" ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]" : "border-[#DCE4F3] bg-[#F7FAFF]",
+          )}
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">AI 추천 금주 방문지</p>
             <MapPin className="h-4 w-4 text-primary" />
           </div>
           <p className="mt-2 text-xl font-bold text-slate-900">{topDangerStores || "-"}</p>
           <p className="mt-1 text-xs text-slate-500">위험도 상위 매장</p>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => handleAssist("sv-visit-priority", "방문 우선순위 해설", "추천 방문지를 SV 관점에서 해설해줘", topDangerStores || "위험도 상위 매장")}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-600"
+            >
+              해설 보기
+            </button>
+            <button
+              onClick={() => handleAssist("sv-visit-priority", "방문 추천 조치", "추천 방문지 기준으로 방문 전에 볼 체크포인트를 알려줘", topDangerStores || "위험도 상위 매장", "action")}
+              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+            >
+              추천 조치
+            </button>
+            <button
+              onClick={() => handleAssist("sv-visit-priority", "방문 비교 보기", "추천 방문지와 다른 위험 매장을 비교해서 설명해줘", topDangerStores || "위험도 상위 매장")}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+            >
+              비교 보기
+            </button>
+          </div>
         </article>
       </section>
 
@@ -194,6 +262,12 @@ export const SupervisorDashboardPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <BarChart2 className="h-5 w-5 text-slate-400" />
           <h3 className="text-lg font-bold text-slate-900">매장별 위험도 분석</h3>
+          <button
+            onClick={() => openAiAssist("위험도 표 해설", "매장별 위험도 표를 SV 관점에서 해설해줘", "매장별 위험도 분석")}
+            className="ml-auto rounded-full border border-[#d5deec] bg-[#f7faff] px-3 py-1.5 text-[11px] font-black text-slate-600"
+          >
+            해설 보기
+          </button>
         </div>
         <div className="mt-4 overflow-x-auto rounded-xl border border-border shadow-sm">
           <table className="w-full min-w-[860px] text-left text-sm">

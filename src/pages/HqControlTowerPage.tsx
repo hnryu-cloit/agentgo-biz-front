@@ -80,6 +80,12 @@ const tabLabels: Record<TabKey, string> = {
   risk: "리스크 관제",
 };
 
+function openAiAssist(label: string, prompt: string, contextText?: string, intent: "summary" | "action" = "summary") {
+  window.dispatchEvent(new CustomEvent("agentgo-ai-assist", {
+    detail: { label, prompt, contextText, intent },
+  }));
+}
+
 export const HqControlTowerPage: React.FC = () => {
   const [tab, setTab] = useState<TabKey>("agents");
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
@@ -87,6 +93,7 @@ export const HqControlTowerPage: React.FC = () => {
   const [uploadJobs, setUploadJobs] = useState<UploadJobResponse[]>([]);
   const [alerts, setAlerts] = useState<AlertResponse[]>([]);
   const [flagshipIntelligence, setFlagshipIntelligence] = useState<StoreIntelligence | null>(null);
+  const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -131,6 +138,17 @@ export const HqControlTowerPage: React.FC = () => {
     return () => { alive = false; };
   }, []);
 
+  const handleAssist = (
+    cardId: string,
+    label: string,
+    prompt: string,
+    contextText?: string,
+    intent: "summary" | "action" = "summary",
+  ) => {
+    setSelectedAssistCard(cardId);
+    openAiAssist(label, prompt, contextText, intent);
+  };
+
   return (
     <div className="space-y-6 pb-10">
 
@@ -167,7 +185,15 @@ export const HqControlTowerPage: React.FC = () => {
           { label: "정상 에이전트", val: `${overview?.agents.healthy ?? agents.filter((a) => a.status === "정상").length}개`, delta: `전체 ${overview?.agents.total ?? agents.length}개 중`, icon: Users, warn: false },
           { label: "에스컬레이션", val: `${overview?.active_alerts ?? 0}건`, delta: `다운 ${overview?.agents.down ?? 0}개`, icon: ShieldAlert, warn: true },
         ].map((kpi, idx) => (
-          <article key={idx} className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5">
+          <article
+            key={idx}
+            className={cn(
+              "rounded-2xl border p-5 shadow-elevated transition-all",
+              selectedAssistCard === `hq-kpi-${kpi.label}`
+                ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+                : "border-border/90 bg-card",
+            )}
+          >
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{kpi.label}</p>
@@ -178,12 +204,60 @@ export const HqControlTowerPage: React.FC = () => {
                 <kpi.icon className={cn("h-5 w-5", kpi.warn ? "text-red-500" : "text-primary")} />
               </div>
             </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 해설`, `${kpi.label}를 본사 관점에서 해설해줘`, `${kpi.label}: ${kpi.val}`)}
+                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
+              >
+                해설 보기
+              </button>
+              <button
+                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 추천 조치`, `${kpi.label} 기준으로 본사가 취할 조치를 알려줘`, `${kpi.label}: ${kpi.val}`, "action")}
+                className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+              >
+                추천 조치
+              </button>
+              <button
+                onClick={() => handleAssist(`hq-kpi-${kpi.label}`, `${kpi.label} 비교 보기`, `${kpi.label}를 다른 관제 지표와 비교해서 설명해줘`, `${kpi.label}: ${kpi.val}`)}
+                className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+              >
+                비교 보기
+              </button>
+            </div>
           </article>
         ))}
       </section>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => openAiAssist("본사 현황 해설", "지금 본사 관제 화면에서 가장 중요한 변화를 해설해줘", "전사 통합 관제 타워")}
+          className="rounded-full border border-[#d5deec] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm"
+        >
+          해설 보기
+        </button>
+        <button
+          onClick={() => openAiAssist("본사 추천 조치", "본사 사용자가 지금 바로 해야 할 조치를 알려줘", "에스컬레이션 및 운영 가맹점 현황", "action")}
+          className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-4 py-2 text-xs font-black text-primary shadow-sm"
+        >
+          추천 조치
+        </button>
+        <button
+          onClick={() => openAiAssist("권역 비교", "수도권, 영남권, 리테일몰, 백화점 권역을 비교해서 설명해줘", "권역 비교")}
+          className="rounded-full border border-[#d5deec] bg-[#f7faff] px-4 py-2 text-xs font-black text-slate-600 shadow-sm"
+        >
+          비교 보기
+        </button>
+      </div>
+
       {flagshipIntelligence && (
-        <section className="rounded-2xl border border-[#CFE0FF] bg-[#F7FAFF] p-5 shadow-elevated md:p-6">
+        <section
+          className={cn(
+            "rounded-2xl border p-5 shadow-elevated md:p-6 transition-all",
+            selectedAssistCard === "hq-flagship"
+              ? "border-[#b8ccff] bg-[#f7faff] ring-2 ring-[#d9e5ff]"
+              : "border-[#CFE0FF] bg-[#F7FAFF]",
+          )}
+        >
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-slate-900">플래그십 매장 AI 실데이터 브리핑</h3>
@@ -192,6 +266,26 @@ export const HqControlTowerPage: React.FC = () => {
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{flagshipIntelligence.summary}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => handleAssist("hq-flagship", "광화문점 해설", "광화문점 브리핑 내용을 본사 관점에서 해설해줘", flagshipIntelligence.summary)}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-700"
+            >
+              해설 보기
+            </button>
+            <button
+              onClick={() => handleAssist("hq-flagship", "광화문점 조치", "광화문점 브리핑 기준으로 본사가 취할 조치를 알려줘", flagshipIntelligence.summary, "action")}
+              className="rounded-full border border-[#c9d8ff] bg-[#eef3ff] px-3 py-1.5 text-[11px] font-black text-primary"
+            >
+              추천 조치
+            </button>
+            <button
+              onClick={() => handleAssist("hq-flagship", "광화문점 비교 보기", "광화문점 인사이트를 다른 플래그십 매장과 비교해서 설명해줘", flagshipIntelligence.summary)}
+              className="rounded-full border border-[#d5deec] bg-white px-3 py-1.5 text-[11px] font-black text-slate-500"
+            >
+              비교 보기
+            </button>
+          </div>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             {[
               { label: "매출", value: `${flagshipIntelligence.metrics.sales.today_revenue.toLocaleString()}원` },
