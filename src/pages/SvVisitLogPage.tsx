@@ -7,6 +7,9 @@ import {
   Edit3, Save, X, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getVisitLogs, createVisitLog, getSvStores } from "@/services/supervisor";
 
 type VisitCategory = "운영" | "위생" | "서비스" | "데이터";
@@ -34,56 +37,19 @@ type VisitRecord = {
   isEditing: boolean;
 };
 
-const initialVisits: VisitRecord[] = [
-  {
-    id: "v1",
-    store: "[CJ]광화문점",
-    visitDate: "2026-02-28",
-    supervisor: "김수진 SV",
-    aiBriefing: "크리스탈제이드 도도포인트 기준 12시 1,280건, 13시 1,452건 방문이 집중됩니다. [CJ]광화문점은 전일 대비 매출이 1,941,100원 감소해 런치·디너 운영 점검이 필요합니다.",
-    checklist: [
-      { id: "c1", category: "운영", task: "12~14시 피크 인력 배치 적정성", status: "warn" },
-      { id: "c2", category: "위생", task: "오픈 주방 및 홀 청결 상태", status: "pass" },
-      { id: "c3", category: "서비스", task: "디너 세트 업셀링 스크립트 사용", status: "warn" },
-      { id: "c4", category: "데이터", task: "영수증 업로드 실패 건 확인", status: "fail" },
-    ],
-    notes: "점심 피크에 홀 회전이 느려졌고, 저녁 시간대 객수 회복이 약했습니다. 영수증 업로드 실패 건도 함께 확인이 필요합니다.",
-    ownerFeedback: "점주가 디너 객수 감소와 주말 프로모션 약화를 체감하고 있어 본사 쿠폰 지원을 요청했습니다.",
-    followups: [
-      { id: "f1", task: "[CJ]광화문점 디너 쿠폰 테스트 실행", deadline: "03-05", done: false },
-      { id: "f2", task: "receipt_listing 리소스 재업로드 확인", deadline: "03-02", done: true },
-    ],
-    photos: ["cj_gwanghwamun_kitchen.jpg", "cj_gwanghwamun_dinner_flow.png"],
-    expanded: true,
-    isEditing: false,
-  },
-  {
-    id: "v2",
-    store: "[CJ]소공점",
-    visitDate: "2026-02-27",
-    supervisor: "박재원 SV",
-    aiBriefing: "[CJ]소공점은 평균 객단가 158,920원으로 높지만 취소율이 0.7% 있어 디너 코스 설명과 결제 동선을 함께 점검하는 편이 좋습니다.",
-    checklist: [
-      { id: "c5", category: "운영", task: "오픈/마감 시간 준수 여부", status: "pass" },
-      { id: "c6", category: "위생", task: "테이블 및 바닥 청결 상태", status: "pass" },
-      { id: "c7", category: "서비스", task: "코스 메뉴 설명 스크립트 활용", status: "warn" },
-    ],
-    notes: "전반적으로 안정적이나 신규 직원의 코스 안내 멘트가 약합니다. 매장 입구 홍보물이 고객 시선에서 다소 벗어나 있습니다.",
-    ownerFeedback: "점주는 코스메뉴 보드와 포인트 적립 배너 보강을 요청했습니다.",
-    followups: [
-      { id: "f3", task: "크리스탈제이드 코스메뉴 보드 교체", deadline: "03-04", done: true },
-    ],
-    expanded: false,
-    isEditing: false,
-  }
-];
+type StoreOption = {
+  id: string;
+  name: string;
+};
 
 export const SvVisitLogPage: React.FC = () => {
-  const [visits, setVisits] = useState(initialVisits);
-  const [storeNames, setStoreNames] = useState<string[]>([]);
+  const [visits, setVisits] = useState<VisitRecord[]>([]);
+  const [storeOptions, setStoreOptions] = useState<StoreOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newLog, setNewLog] = useState({
-    store: "",
+    storeId: "",
     visitDate: new Date().toISOString().split("T")[0],
     notes: "",
     ownerFeedback: "",
@@ -93,13 +59,14 @@ export const SvVisitLogPage: React.FC = () => {
   // API 연결: 방문 기록 로드
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     Promise.all([getVisitLogs(), getSvStores()])
       .then(([res, stores]) => {
         if (!alive) return;
-        const names = stores.map((store) => store.name);
-        setStoreNames(names);
-        setNewLog((prev) => ({ ...prev, store: prev.store || names[0] || "" }));
-        if (res.length === 0) return;
+        const options = stores.map((store) => ({ id: store.id, name: store.name }));
+        setStoreOptions(options);
+        setNewLog((prev) => ({ ...prev, storeId: prev.storeId || options[0]?.id || "" }));
         setVisits(res.map((v) => ({
           id: v.id,
           store: v.store_id,
@@ -108,13 +75,19 @@ export const SvVisitLogPage: React.FC = () => {
           aiBriefing: "",
           checklist: [],
           notes: v.summary,
-          ownerFeedback: v.coaching_points ?? "",
+          ownerFeedback: Array.isArray(v.coaching_points) ? v.coaching_points.join(", ") : "",
           followups: [],
           expanded: false,
           isEditing: false,
         })));
       })
-      .catch(() => { /* mock 유지 */ });
+      .catch((error) => {
+        if (!alive) return;
+        setLoadError(error instanceof Error ? error.message : "방문 기록을 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
+      });
     return () => { alive = false; };
   }, []);
 
@@ -158,9 +131,10 @@ export const SvVisitLogPage: React.FC = () => {
   };
 
   const handleCreate = () => {
+    const selectedStore = storeOptions.find((store) => store.id === newLog.storeId);
     const record: VisitRecord = {
       id: `v${Date.now()}`,
-      store: newLog.store,
+      store: selectedStore?.name ?? newLog.storeId,
       visitDate: newLog.visitDate,
       supervisor: "김수진 SV",
       aiBriefing: "방문 전 AI 분석 결과: 크리스탈제이드 실데이터 기준 피크타임 운영과 재방문 전환 액션을 우선 확인해야 합니다.",
@@ -179,19 +153,27 @@ export const SvVisitLogPage: React.FC = () => {
     };
     setVisits([record, ...visits]);
     setShowForm(false);
-    setNewLog({ store: storeNames[0] ?? "", visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
+    setNewLog({ storeId: storeOptions[0]?.id ?? "", visitDate: new Date().toISOString().split("T")[0], notes: "", ownerFeedback: "", followup: "" });
 
     // API 저장 (실패 시 로컬 상태 유지)
     createVisitLog({
-      store_id: newLog.store,
+      store_id: newLog.storeId,
       visit_date: newLog.visitDate,
       purpose: "현장 방문",
       summary: newLog.notes,
       issues_found: null,
-      coaching_points: newLog.ownerFeedback || null,
+      coaching_points: newLog.ownerFeedback ? [newLog.ownerFeedback] : null,
       next_visit_date: null,
     }).catch(() => { /* 로컬 상태 유지 */ });
   };
+
+  if (isLoading) {
+    return <LoadingState message="방문 기록을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="방문 기록을 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -228,11 +210,11 @@ export const SvVisitLogPage: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[#34415b] px-1">방문 매장</label>
                 <select 
-                  value={newLog.store}
-                  onChange={(e) => setNewLog({ ...newLog, store: e.target.value })}
+                  value={newLog.storeId}
+                  onChange={(e) => setNewLog({ ...newLog, storeId: e.target.value })}
                   className="h-10 w-full rounded-xl border border-[#d5deec] bg-card px-3 text-sm text-[#34415b] outline-none focus:border-primary/50 transition-all shadow-sm"
                 >
-                  {storeNames.map(n => <option key={n} value={n}>{n}</option>)}
+                  {storeOptions.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
@@ -289,6 +271,9 @@ export const SvVisitLogPage: React.FC = () => {
 
       {/* Visit Records List */}
       <section className="space-y-4">
+        {visits.length === 0 && (
+          <EmptyState title="등록된 방문 기록이 없습니다" description="새 방문 일지 작성 버튼으로 첫 기록을 남길 수 있습니다." />
+        )}
         {visits.map((v) => (
           <article key={v.id} className={cn(
             "rounded-2xl border transition-all duration-300 shadow-sm",

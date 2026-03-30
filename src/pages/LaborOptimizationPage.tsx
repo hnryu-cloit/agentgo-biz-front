@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAvailableLabor, getLaborProductivity, getLaborSchedule, getHourlyPattern } from "@/services/labor";
-import { getResourceCatalog } from "@/services/data";
+import { getOwnerDashboard } from "@/services/owner";
 import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 
 type ShiftStatus = "근무중" | "대기" | "미출근" | "퇴근";
@@ -74,15 +74,11 @@ export const LaborOptimizationPage = () => {
 
   useEffect(() => {
     let alive = true;
-    getResourceCatalog()
-      .then((catalog) => {
-        if (!alive) return;
-        const posStores = catalog.sources.find((s) => s.source_kind === "receipt_listing")?.stores.map((s) => s.store_key) ?? [];
-        const dodoStores = catalog.sources.find((s) => s.source_kind === "dodo_point")?.stores.map((s) => s.store_key) ?? [];
-        const stores = [...new Set([...posStores, ...dodoStores])];
-        if (stores.length === 0) return;
-        setStoreOptions(stores);
-        setSelectedStore((current) => (stores.includes(current) ? current : stores[0]));
+    getOwnerDashboard()
+      .then((dashboard) => {
+        if (!alive || !dashboard.store_key) return;
+        setStoreOptions([dashboard.store_key]);
+        setSelectedStore(dashboard.store_key);
       })
       .catch(() => {
         if (!alive) return;

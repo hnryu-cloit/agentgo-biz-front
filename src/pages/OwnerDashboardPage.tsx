@@ -4,9 +4,11 @@ import { BarChart2, Megaphone, RefreshCw, Sparkles, TrendingDown, TrendingUp, Us
 import { cn } from "@/lib/utils";
 import { AssistActionBar } from "@/components/commons/AssistActionBar";
 import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getCustomerInsights, getOwnerActions, getOwnerDashboard, updateActionStatus, type CustomerInsights, type OwnerDashboard } from "@/services/owner";
 import type { ActionResponse, ActionStatus } from "@/types/api";
-import { ownerCustomerInsightsMock, ownerDashboardMock } from "@/lib/mockData";
 
 const emptyDashboard: OwnerDashboard = {
   store_key: null,
@@ -48,12 +50,16 @@ export const OwnerDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<OwnerDashboard>(emptyDashboard);
   const [insights, setInsights] = useState<CustomerInsights | null>(null);
   const [actions, setActions] = useState<ActionResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
   const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     getOwnerDashboard()
       .then((response) => {
         if (!alive) return;
@@ -65,12 +71,14 @@ export const OwnerDashboardPage: React.FC = () => {
         if (!alive || !result) return;
         const [actionResponse, ins] = result;
         if (actionResponse) setActions(actionResponse);
-        if (ins) setInsights(ins.daily_trend.length > 0 ? ins : ownerCustomerInsightsMock);
+        if (ins && ins.daily_trend.length > 0) setInsights(ins);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setDashboard(ownerDashboardMock);
-        setInsights(ownerCustomerInsightsMock);
+        setLoadError(error instanceof Error ? error.message : "점주 대시보드를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
       });
     return () => {
       alive = false;
@@ -130,6 +138,14 @@ export const OwnerDashboardPage: React.FC = () => {
 
   const completedCount = actionBoard.filter((action) => action.status === "executed").length;
 
+  if (isLoading) {
+    return <LoadingState message="점주 대시보드를 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="점주 대시보드를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
   const handleActionStatus = async (actionId: string, status: ActionStatus) => {
     const previous = actions;
     setPendingActionId(actionId);
@@ -171,116 +187,107 @@ export const OwnerDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* 1. AI 실시간 전략 제언 (Gemini Interpretation) */}
+      {/* 페이지 헤더 */}
       {dashboard.ai_analysis?.ai_reasoning ? (
-        <section className="rounded-3xl border-2 border-primary/20 bg-gradient-to-r from-[#EEF4FF] via-white to-[#F7FAFF] p-6 shadow-xl relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 opacity-10">
-            <Sparkles className="h-32 w-32 text-primary" />
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-lg ring-4 ring-white">
-              <Sparkles className="h-7 w-7 text-white fill-white" />
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Strategy Expert</span>
-                <div className="h-px flex-1 bg-primary/10" />
+        <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
+                <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 leading-tight">
-                {dashboard.ai_analysis.ai_reasoning.headline}
-              </h2>
-              <p className="mt-3 text-base font-medium text-slate-600 leading-relaxed">
-                {dashboard.ai_analysis.ai_reasoning.reasoning}
-              </p>
-              
-              <div className="mt-5 flex items-center gap-4 p-4 rounded-2xl bg-white border border-primary/10 shadow-sm">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                  <Zap className="h-4 w-4 fill-emerald-600" />
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-primary">점주 홈</span>
                 </div>
-                <p className="text-sm font-black text-slate-800">
-                  <span className="text-emerald-600 mr-2">Today's Action:</span>
-                  {dashboard.ai_analysis.ai_reasoning.action_item}
+                <h2 className="text-2xl font-bold text-slate-900">{dashboard.store_name} 운영 브리핑</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  오늘 매장 운영 상태와 우선 실행 항목을 확인합니다.
                 </p>
               </div>
-
-              <AssistActionBar
-                className="mt-4 max-w-md"
-                summary={{
-                  label: "해설 보기",
-                  onClick: () => openAiAssist("전략 해설", "현재 점주 전략 브리핑을 해설해줘", dashboard.ai_analysis?.ai_reasoning?.reasoning),
-                }}
-                action={{
-                  label: "추천 조치",
-                  onClick: () => openAiAssist("추천 조치", "현재 브리핑 기준으로 점주가 지금 바로 할 일을 알려줘", dashboard.ai_analysis?.ai_reasoning?.action_item, "action"),
-                }}
-              />
             </div>
-            
-            <div className="w-full md:w-48 p-4 rounded-2xl bg-slate-900 text-white shadow-lg">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-2">Quick Metrics</p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400 font-medium">매출 흐름</span>
-                  <span className={cn("text-xs font-black", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-400" : "text-red-400")}>
-                    {dashboard.revenue_vs_yesterday >= 0 ? "▲" : "▼"} {Math.abs(dashboard.revenue_vs_yesterday).toLocaleString()}
-                  </span>
+            <div className="rounded-xl border border-[#DCE4F3] bg-white px-3 py-2">
+              <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">생성 시각</span>
+              <span className="text-sm font-semibold text-slate-700">
+                {dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
+                <Zap className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">AI Morning Briefing</p>
+                <h3 className="mt-0.5 text-lg font-bold text-slate-900">
+                {dashboard.ai_analysis.ai_reasoning.headline}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {dashboard.ai_analysis.ai_reasoning.reasoning}
+                </p>
+                <div className="mt-4 rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold text-emerald-600">오늘의 우선 조치</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {dashboard.ai_analysis.ai_reasoning.action_item}
+                  </p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400 font-medium">취소 리스크</span>
-                  <span className="text-xs font-black text-amber-400">{(dashboard.cancel_rate * 100).toFixed(1)}%</span>
-                </div>
+                <AssistActionBar
+                  className="mt-4 max-w-md"
+                  summary={{
+                    label: "해설 보기",
+                    onClick: () => openAiAssist("전략 해설", "현재 점주 전략 브리핑을 해설해줘", dashboard.ai_analysis?.ai_reasoning?.reasoning),
+                  }}
+                  action={{
+                    label: "추천 조치",
+                    onClick: () => openAiAssist("추천 조치", "현재 브리핑 기준으로 점주가 지금 바로 할 일을 알려줘", dashboard.ai_analysis?.ai_reasoning?.action_item, "action"),
+                  }}
+                />
               </div>
             </div>
           </div>
         </section>
       ) : (
-        <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Sparkles className="h-24 w-24 text-primary" />
-          </div>
-          
-          <div className="flex items-start justify-between gap-4 relative z-10">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg ring-4 ring-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
                 <Megaphone className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3" /> AI Morning Briefing
-                </p>
-                <h3 className="mt-0.5 text-lg font-black text-slate-900">{dashboard.store_name} 지능형 리포트</h3>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">점주 홈</p>
+                <h2 className="mt-0.5 text-2xl font-bold text-slate-900">{dashboard.store_name} 운영 브리핑</h2>
+                <p className="mt-1 text-sm text-slate-500">오늘 운영 상태와 핵심 지표를 확인합니다.</p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 block uppercase">Generated At</span>
-              <span className="text-xs font-bold text-slate-500">{dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">생성 시각</span>
+              <span className="text-sm font-semibold text-slate-500">{dashboard.ai_analysis?.generated_at ? new Date(dashboard.ai_analysis.generated_at).toLocaleString() : (dashboard.latest_date ?? "실시간")}</span>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3 relative z-10">
-            <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
-              <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">실적 요약</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
+              <p className="text-sm font-medium text-slate-500">실적 요약</p>
               <div className="flex items-end justify-between">
-                <p className="text-xl font-black text-slate-900">{dashboard.today_revenue.toLocaleString()}<span className="text-xs font-bold ml-1">원</span></p>
-                <p className={cn("text-xs font-bold flex items-center gap-0.5", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{dashboard.today_revenue.toLocaleString()}<span className="ml-1 text-xs font-bold">원</span></p>
+                <p className={cn("text-xs font-semibold flex items-center gap-0.5", dashboard.revenue_vs_yesterday >= 0 ? "text-emerald-600" : "text-red-500")}>
                   {dashboard.revenue_vs_yesterday >= 0 ? "+" : ""}{dashboard.revenue_vs_yesterday.toLocaleString()}
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border border-[#DCE4F3] bg-white/80 backdrop-blur-sm p-4 shadow-sm">
-              <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">운영 지수</p>
+            <div className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
+              <p className="text-sm font-medium text-slate-500">운영 지수</p>
               <div className="flex items-end justify-between">
-                <p className="text-xl font-black text-slate-900">{dashboard.transaction_count.toLocaleString()}<span className="text-xs font-bold ml-1">건</span></p>
-                <p className="text-xs font-bold text-primary italic">AOV {Math.round(dashboard.avg_order_value / 1000)}k</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{dashboard.transaction_count.toLocaleString()}<span className="ml-1 text-xs font-bold">건</span></p>
+                <p className="text-xs font-semibold text-primary">AOV {Math.round(dashboard.avg_order_value / 1000)}k</p>
               </div>
             </div>
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur-sm p-4 shadow-sm">
-              <p className="text-[11px] font-bold text-amber-700 uppercase mb-2">주의 필요</p>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+              <p className="text-sm font-medium text-amber-700">주의 필요</p>
               <div className="flex items-end justify-between">
-                <p className="text-xl font-black text-slate-900">{(dashboard.cancel_rate * 100).toFixed(1)}<span className="text-xs font-bold ml-1">%</span></p>
-                <p className="text-xs font-bold text-amber-600">취소율 모니터링</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{(dashboard.cancel_rate * 100).toFixed(1)}<span className="ml-1 text-xs font-bold">%</span></p>
+                <p className="text-xs font-semibold text-amber-600">취소율 모니터링</p>
               </div>
             </div>
           </div>
@@ -357,61 +364,68 @@ export const OwnerDashboardPage: React.FC = () => {
           </span>
         </div>
         <div className="mt-5 space-y-3">
-          {actionBoard.map((action) => (
-            <article
-              key={action.id}
-              className={cn(
-                "rounded-2xl border p-5 transition-all group hover:border-primary/30 hover:shadow-md",
-                action.status === "executed" ? "border-emerald-100 bg-emerald-50/30 opacity-80" : "border-[#DCE4F3] bg-[#F7FAFF]",
-              )}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={cn(
-                      "rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm",
-                      action.level === "P0" ? "bg-gradient-to-r from-red-500 to-orange-500" : "bg-gradient-to-r from-amber-500 to-yellow-500"
-                    )}>
-                      {action.level}
-                    </span>
-                    <p className="text-base font-black text-slate-900">{action.title}</p>
-                  </div>
-                  <p className="text-sm font-medium leading-relaxed text-slate-600 mb-4">{action.why}</p>
-                  <div className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 border border-border/50 shadow-sm">
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[11px] font-bold text-primary uppercase tracking-tight">Expected Impact: {action.impact}</span>
-                  </div>
-                  <AssistActionBar
-                    className="mt-4 max-w-sm"
-                    compact
-                    summary={{
-                      label: "해설 보기",
-                      onClick: () => openAiAssist(`${action.title} 해설`, "이 액션을 점주 관점에서 해설해줘", `${action.title}: ${action.why}`),
-                    }}
-                    action={{
-                      label: "추천 조치",
-                      onClick: () => openAiAssist(`${action.title} 실행 가이드`, "이 액션을 오늘 어떻게 실행하면 좋을지 순서대로 알려줘", `${action.title}: ${action.impact}`, "action"),
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col gap-2 shrink-0">
-                  {action.status !== "executed" ? (
-                    <button
-                      onClick={() => handleActionStatus(action.id, "executed")}
-                      disabled={pendingActionId === action.id}
-                      className="rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-primary/20 transition-all hover:bg-[#1E5BE9] active:scale-95 disabled:opacity-50"
-                    >
-                      실행
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 rounded-xl text-emerald-700 font-black text-xs italic uppercase">
-                      <Zap className="h-3 w-3 fill-emerald-700" /> Done
+          {actionBoard.length === 0 ? (
+            <EmptyState
+              title="오늘 실행할 액션이 없습니다"
+              description="현재 매장 상태 기준으로 즉시 조치가 필요한 항목이 없거나 아직 액션이 생성되지 않았습니다."
+            />
+          ) : (
+            actionBoard.map((action) => (
+              <article
+                key={action.id}
+                className={cn(
+                  "rounded-2xl border p-5 transition-all group hover:border-primary/30 hover:shadow-md",
+                  action.status === "executed" ? "border-emerald-100 bg-emerald-50/30 opacity-80" : "border-[#DCE4F3] bg-[#F7FAFF]",
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={cn(
+                        "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        action.level === "P0" ? "border-red-200 bg-red-50 text-red-600" : "border-amber-200 bg-amber-50 text-amber-700"
+                      )}>
+                        {action.level}
+                      </span>
+                      <p className="text-base font-bold text-slate-900">{action.title}</p>
                     </div>
-                  )}
+                    <p className="text-sm font-medium leading-relaxed text-slate-600 mb-4">{action.why}</p>
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-white px-3 py-1.5 shadow-sm">
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                      <span className="text-[11px] font-semibold text-primary">예상 효과: {action.impact}</span>
+                    </div>
+                    <AssistActionBar
+                      className="mt-4 max-w-sm"
+                      compact
+                      summary={{
+                        label: "해설 보기",
+                        onClick: () => openAiAssist(`${action.title} 해설`, "이 액션을 점주 관점에서 해설해줘", `${action.title}: ${action.why}`),
+                      }}
+                      action={{
+                        label: "추천 조치",
+                        onClick: () => openAiAssist(`${action.title} 실행 가이드`, "이 액션을 오늘 어떻게 실행하면 좋을지 순서대로 알려줘", `${action.title}: ${action.impact}`, "action"),
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 shrink-0">
+                    {action.status !== "executed" ? (
+                      <button
+                        onClick={() => handleActionStatus(action.id, "executed")}
+                        disabled={pendingActionId === action.id}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9] disabled:opacity-50"
+                      >
+                        실행
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5 rounded-xl bg-emerald-100 px-4 py-2 text-xs font-semibold text-emerald-700">
+                        <Zap className="h-3 w-3 fill-emerald-700" /> 완료
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))
+          )}
         </div>
       </section>
 

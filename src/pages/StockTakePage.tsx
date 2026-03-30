@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInventoryItems, getInventorySummary, getTheoreticalInventory, getMenuCosts } from "@/services/inventory";
-import { getResourceCatalog } from "@/services/data";
+import { getOwnerDashboard } from "@/services/owner";
 
 type Category = "전체" | "육류/어패류" | "채소/과일" | "양념/소스" | "건식품/곡류";
 type StockItem = {
@@ -81,13 +81,11 @@ export const StockTakePage = () => {
 
   useEffect(() => {
     let alive = true;
-    getResourceCatalog()
-      .then((catalog) => {
-        if (!alive) return;
-        const stores = catalog.sources.find((source) => source.source_kind === "menu_lineup")?.stores.map((store) => store.store_key) ?? [];
-        if (stores.length === 0) return;
-        setStoreOptions(stores);
-        setSelectedStore((current) => (stores.includes(current) ? current : stores[0]));
+    getOwnerDashboard()
+      .then((dashboard) => {
+        if (!alive || !dashboard.store_key) return;
+        setStoreOptions([dashboard.store_key]);
+        setSelectedStore(dashboard.store_key);
       })
       .catch(() => {
         if (!alive) return;

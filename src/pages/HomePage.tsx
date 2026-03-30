@@ -22,9 +22,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { getResourceCatalog } from "@/services/data";
-import { runWorkflow } from "@/services/hq";
+import { getAgentSystemStatus, runWorkflow } from "@/services/hq";
+import { getOwnerDashboard } from "@/services/owner";
+import { useAuth } from "@/contexts/useAuth";
 import { cn } from "@/lib/utils";
-import { homeCatalogMock } from "@/lib/mockData";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 
 const quickRoutes = [
   { 
@@ -58,9 +61,17 @@ const quickRoutes = [
 ];
 
 export const HomePage: React.FC = () => {
+  const { user } = useAuth();
   const [storeCount, setStoreCount] = useState(0);
   const [menuCount, setMenuCount] = useState(0);
   const [latestDate, setLatestDate] = useState("-");
+  const [engineHealth, setEngineHealth] = useState([
+    { name: "데이터 정합성", info: "실시간 POS 데이터 검증", health: 0, icon: Activity },
+    { name: "분석 지능", info: "매출/리스크 분석 엔진", health: 0, icon: Sparkles },
+    { name: "인사이트 배포", info: "액션 생성 및 전송", health: 0, icon: Zap },
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   const [isSimulating, setIsSimulating] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
@@ -72,20 +83,77 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     let alive = true;
-    getResourceCatalog().then((catalog) => {
+    setIsLoading(true);
+    setLoadError(null);
+
+    const loadHomeData = async () => {
+      const systemStatus = await getAgentSystemStatus();
       if (!alive) return;
-      const posSource = catalog.sources.find(s => s.source_kind === "pos_daily_sales");
-      setStoreCount(posSource?.stores.length || 14);
-      setMenuCount(catalog.sources.find(s => s.source_kind === "menu_lineup")?.stores.length || 120);
-      setLatestDate(posSource?.stores[0]?.date_end || "2026-03-17");
-    }).catch(() => {
+
+      if (user?.role === "store_owner") {
+        const ownerDashboard = await getOwnerDashboard();
+        if (!alive) return;
+        setStoreCount(ownerDashboard.store_name ? 1 : 0);
+        setMenuCount(ownerDashboard.ai_analysis?.menu_strategy?.menu_matrix?.length ?? 0);
+        setLatestDate(ownerDashboard.latest_date ?? "-");
+        return systemStatus;
+      }
+
+      const catalog = await getResourceCatalog();
       if (!alive) return;
-      setStoreCount(14);
-      setMenuCount(120);
-      setLatestDate("2026-03-17");
-    });
+      const posSource = catalog.sources.find((s) => s.source_kind === "pos_daily_sales");
+      const menuSource = catalog.sources.find((s) => s.source_kind === "menu_lineup");
+      setStoreCount(posSource?.stores.length ?? 0);
+      setMenuCount(menuSource?.stores.reduce((acc, store) => acc + store.file_count, 0) ?? 0);
+      setLatestDate(posSource?.stores[0]?.date_end ?? "-");
+      return systemStatus;
+    };
+
+    loadHomeData()
+      .then((systemStatus) => {
+        if (!alive) return;
+
+        const agents = Array.isArray((systemStatus as { agents?: unknown[] }).agents)
+          ? ((systemStatus as { agents: Array<{ agent_name: string; status: string }> }).agents)
+          : [];
+
+        const mapStatusToHealth = (status?: string) => {
+          if (status === "healthy") return 98;
+          if (status === "degraded") return 72;
+          if (status === "down") return 18;
+          return 0;
+        };
+
+        setEngineHealth([
+          {
+            name: "데이터 정합성",
+            info: "실시간 POS 데이터 검증",
+            health: mapStatusToHealth(agents.find((agent) => agent.agent_name === "analysis_agent")?.status),
+            icon: Activity,
+          },
+          {
+            name: "분석 지능",
+            info: "매출/리스크 분석 엔진",
+            health: mapStatusToHealth(agents.find((agent) => agent.agent_name === "strategy_agent")?.status),
+            icon: Sparkles,
+          },
+          {
+            name: "인사이트 배포",
+            info: "액션 생성 및 전송",
+            health: mapStatusToHealth(agents.find((agent) => agent.agent_name === "execution_agent")?.status),
+            icon: Zap,
+          },
+        ]);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        setLoadError(error instanceof Error ? error.message : "홈 데이터를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
+      });
     return () => { alive = false; };
-  }, []);
+  }, [user?.role]);
 
   const handleRunSimulation = async () => {
     setIsSimulating(true);
@@ -120,33 +188,36 @@ export const HomePage: React.FC = () => {
     { label: "데이터 최신일", value: latestDate, unit: "", sub: "동기화 상태 정상", icon: Calendar },
   ];
 
+  if (isLoading) {
+    return <LoadingState message="홈 대시보드를 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="홈 데이터를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
   return (
-    <div className="mx-auto max-w-[1400px] space-y-8 pb-12">
-      {/* 1. 상단 브랜딩 & 시뮬레이션 섹션 */}
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-10">
+      {/* 페이지 헤더 */}
       <div className="grid gap-6 lg:grid-cols-12">
-        <section className="flex flex-col justify-between rounded-2xl border border-border/90 bg-card p-8 shadow-elevated lg:col-span-7">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="h-3.5 w-3.5 fill-current" />
-              </span>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Crystal Jade Intelligence</span>
+        <section className="flex flex-col justify-between rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6 lg:col-span-7">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">통합 홈</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              지능형 멀티에이전트<br />
-              <span className="text-primary text-opacity-90">오케스트레이션 허브</span>
-            </h1>
-            <p className="max-w-md text-sm font-medium leading-relaxed text-slate-500">
-              데이터 수집부터 점주 액션 배포까지, 크리스탈 제이드 전용 AI 에이전트들이 브랜드 가치와 수익성을 실시간으로 관리합니다.
+            <h2 className="text-2xl font-bold text-slate-900">운영 홈</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              데이터 적재 현황, 주요 운영 허브, 엔진 상태를 한 화면에서 확인합니다.
             </p>
           </div>
 
-          <div className="mt-10 flex items-center gap-4">
+          <div className="mt-5 flex flex-wrap items-center gap-2">
             <button
               onClick={handleRunSimulation}
               disabled={isSimulating}
               className={cn(
-                "group flex h-12 items-center gap-2.5 rounded-xl bg-primary px-6 text-[14px] font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-[#1E5BE9] hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0",
+                "inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E5BE9] disabled:opacity-70",
                 isSimulating && "animate-pulse"
               )}
             >
@@ -155,7 +226,7 @@ export const HomePage: React.FC = () => {
             </button>
             <Link
               to="/hq/control-tower"
-              className="flex h-12 items-center gap-2 rounded-xl border border-border bg-white px-6 text-[14px] font-bold text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#DCE4F3] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-[#F7FAFF]"
             >
               관제 현황 보기
               <ChevronRight className="h-4 w-4 text-slate-400" />
@@ -164,15 +235,15 @@ export const HomePage: React.FC = () => {
         </section>
 
         {/* 활동 로그 / 실시간 스트림 (우측) */}
-        <section className="rounded-2xl border border-border/90 bg-card p-6 shadow-elevated lg:col-span-5">
-          <div className="mb-6 flex items-center justify-between">
+        <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6 lg:col-span-5">
+          <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-900">
               <Activity className="h-4 w-4 text-primary" />
-              <h3 className="text-[13px] font-bold uppercase tracking-tight">Real-time Stream</h3>
+              <h3 className="text-lg font-bold text-slate-900">실시간 운영 로그</h3>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="live-point" />
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Live</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Live</span>
             </div>
           </div>
 
@@ -182,7 +253,7 @@ export const HomePage: React.FC = () => {
               isSimulating && workflowData ? "opacity-0 -translate-y-4" : "opacity-100 translate-y-0"
             )}>
               {activities.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 rounded-xl border border-slate-50 bg-slate-50/50 p-3.5">
+                <div key={idx} className="flex items-start gap-3 rounded-xl border border-[#DCE4F3] bg-[#F7FAFF] p-3.5 shadow-sm">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
                     <Clock className="h-3.5 w-3.5 text-slate-400" />
                   </div>
@@ -227,23 +298,24 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* 2. 핵심 지표 섹션 */}
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-3">
         {kpis.map((kpi) => (
-          <article key={kpi.label} className="group relative rounded-2xl border border-border/90 bg-card p-6 shadow-elevated transition-all hover:shadow-md">
+          <article key={kpi.label} className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{kpi.label}</p>
+                <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold tabular-nums text-slate-900 tracking-tight">{kpi.value}</span>
-                  <span className="text-sm font-bold text-slate-400">{kpi.unit}</span>
+                  <span className="text-3xl font-bold text-slate-900">{kpi.value}</span>
+                  <span className="text-sm font-medium text-slate-400">{kpi.unit}</span>
                 </div>
-                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                <p className="mt-1 text-xs text-slate-400">{kpi.sub}</p>
+                <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-primary">
                   <ShieldCheck className="h-3 w-3" />
-                  {kpi.sub}
+                  정상 운영
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-2.5 transition-colors group-hover:bg-[#eef3ff]">
-                <kpi.icon className="h-5 w-5 text-slate-400 transition-colors group-hover:text-primary" />
+              <div className="rounded-lg bg-[#EEF4FF] p-1.5">
+                <kpi.icon className="h-4 w-4 text-primary" />
               </div>
             </div>
           </article>
@@ -251,29 +323,29 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 3. 빠른 실행 (역할별 라우트) */}
-      <section>
-        <div className="mb-4 flex items-center gap-2 px-1">
-          <Zap className="h-4 w-4 text-primary fill-primary" />
-          <h2 className="text-[13px] font-bold uppercase tracking-tight text-slate-900">Operational Hubs</h2>
+      <section className="rounded-2xl border border-border/90 bg-card p-5 shadow-elevated md:p-6">
+        <div className="mb-5 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-primary" />
+          <h3 className="text-lg font-bold text-slate-900">바로 가기</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickRoutes.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className="group flex items-start gap-4 rounded-2xl border border-border/90 bg-card p-5 shadow-elevated transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+              className="group flex items-start gap-4 rounded-2xl border border-[#DCE4F3] bg-[#F7FAFF] p-5 shadow-sm transition-colors hover:bg-white"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 transition-colors group-hover:bg-primary group-hover:text-white">
-                <item.icon className="h-5 w-5 text-slate-500 transition-colors group-hover:text-white" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF4FF]">
+                <item.icon className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.title}</h3>
-                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-500 group-hover:bg-primary/10 group-hover:text-primary">
+                  <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+                  <span className="rounded border border-[#DCE4F3] bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
                     {item.role}
                   </span>
                 </div>
-                <p className="mt-1 text-[12px] font-medium leading-relaxed text-slate-500 group-hover:text-slate-600">
+                <p className="mt-1 text-[12px] font-medium leading-relaxed text-slate-500">
                   {item.desc}
                 </p>
               </div>
@@ -283,32 +355,29 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 4. AI 지능형 엔진 가동 상태 (Reliability Monitor) */}
-      <section className="rounded-2xl border border-[#DCE4F3] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center">
-          {/* 설명 영역 */}
-          <div className="shrink-0 md:w-72">
+      <section className="rounded-2xl border border-[#BFD4FF] bg-[#EEF4FF] p-5 shadow-sm md:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
+            <ShieldCheck className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">엔진 상태</p>
+            <p className="mt-0.5 text-sm font-bold text-slate-900">시스템 신뢰도 모니터</p>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[280px_1fr_auto] lg:items-center">
+          <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <ShieldCheck className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900">시스템 신뢰도 모니터</h3>
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <h3 className="text-lg font-bold text-slate-900">운영 엔진 상태</h3>
             </div>
-            <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">
-              AgentGo Biz의 지능형 엔진은 실시간으로 데이터를 검증하고 인사이트를 생성하여, 점주님께 가장 정확한 운영 지침을 제공합니다.
+            <p className="mt-1 text-sm text-slate-500">
+              데이터 검증, 분석, 인사이트 배포 상태를 확인합니다.
             </p>
           </div>
-
-          {/* 엔진 상태 영역 (구분선) */}
-          <div className="hidden h-12 w-px bg-slate-100 md:block" />
-
-          {/* 에이전트별 간결한 상태바 */}
-          <div className="grid flex-1 gap-6 sm:grid-cols-3">
-            {[
-              { name: "데이터 정합성", info: "실시간 POS 데이터 검증", health: 99, icon: Activity },
-              { name: "분석 지능", info: "Gemini 전략 도출 엔진", health: 98, icon: Sparkles },
-              { name: "인사이트 배포", info: "맞춤형 액션 생성 및 전송", health: 95, icon: Zap },
-            ].map((agent) => (
-              <div key={agent.name} className="flex flex-col justify-center">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {engineHealth.map((agent) => (
+              <div key={agent.name} className="rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-slate-700">{agent.name}</span>
@@ -318,7 +387,7 @@ export const HomePage: React.FC = () => {
                   </div>
                   <span className="font-mono text-[11px] font-black text-primary">{agent.health}%</span>
                 </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-slate-50">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EEF4FF]">
                   <div 
                     className="h-full bg-primary/80 transition-all duration-1000" 
                     style={{ width: `${agent.health}%` }} 
@@ -328,14 +397,12 @@ export const HomePage: React.FC = () => {
               </div>
             ))}
           </div>
-
-          {/* 관제 센터 연결 버튼 */}
           <div className="shrink-0">
             <Link
               to="/hq/control-tower"
-              className="flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-[11px] font-bold text-slate-600 transition-all hover:bg-slate-100 hover:text-primary active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#DCE4F3] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-[#F7FAFF]"
             >
-              종합 관제 센터
+              관제 센터
               <ChevronRight className="h-3 w-3" />
             </Link>
           </div>

@@ -2,6 +2,9 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, BarChart2, Minus, Sparkles, FileText, Download, Loader2, Target, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getSvStores, analyzeSupervisorStore, type StoreRiskSummary, type StoreAiAnalysis } from "@/services/supervisor";
 
 type KpiMetric = "sales_total" | "avg_order_value" | "risk_score" | "cancel_rate";
@@ -18,6 +21,8 @@ export const SvAnalysisPage: React.FC = () => {
   const [selectedKpi, setSelectedKpi] = useState<KpiMetric>("sales_total");
   const [period, setPeriod] = useState<Period>("이번주");
   const [stores, setStores] = useState<StoreRiskSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<StoreAiAnalysis | null>(null);
@@ -25,17 +30,22 @@ export const SvAnalysisPage: React.FC = () => {
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     getSvStores()
       .then((response) => {
         if (!alive) return;
         setStores(response);
         if (response.length > 0) {
-          handleStoreSelect(response[0].id);
+          void handleStoreSelect(response[0].id);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setStores([]);
+        setLoadError(error instanceof Error ? error.message : "SV 분석 데이터를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
       });
     return () => {
       alive = false;
@@ -57,19 +67,32 @@ export const SvAnalysisPage: React.FC = () => {
   };
 
   const kpiOpt = kpiOptions.find((option) => option.value === selectedKpi)!;
+  const metricValue = (store: StoreRiskSummary, key: KpiMetric): number => {
+    const value = store[key];
+    return typeof value === "number" ? value : 0;
+  };
 
   const { ranked, kpiMax, gap, gapPct } = useMemo(() => {
     const sorted = [...stores]
-      .sort((a, b) => (b[selectedKpi] as number) - (a[selectedKpi] as number));
-    const max = Math.max(...sorted.map((store) => store[selectedKpi] as number), 1);
+      .sort((a, b) => metricValue(b, selectedKpi) - metricValue(a, selectedKpi));
+    const max = Math.max(...sorted.map((store) => metricValue(store, selectedKpi)), 1);
     const top = sorted[0] ?? null;
     const bottom = sorted[sorted.length - 1] ?? null;
-    const computedGap = top && bottom ? (top[selectedKpi] as number) - (bottom[selectedKpi] as number) : 0;
-    const computedGapPct = bottom && (bottom[selectedKpi] as number) !== 0 ? Math.round((computedGap / (bottom[selectedKpi] as number)) * 100) : 0;
+    const computedGap = top && bottom ? metricValue(top, selectedKpi) - metricValue(bottom, selectedKpi) : 0;
+    const bottomValue = bottom ? metricValue(bottom, selectedKpi) : 0;
+    const computedGapPct = bottomValue !== 0 ? Math.round((computedGap / bottomValue) * 100) : 0;
     return { ranked: sorted, kpiMax: max, gap: computedGap, gapPct: computedGapPct };
   }, [selectedKpi, stores]);
 
   const selectedStoreName = stores.find(s => s.id === selectedStoreId)?.name || "매장";
+
+  if (isLoading) {
+    return <LoadingState message="SV 분석 화면을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="SV 분석 데이터를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -121,7 +144,12 @@ export const SvAnalysisPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {ranked.map((row, idx) => (
+            {ranked.length === 0 ? (
+              <EmptyState
+                title="분석할 담당 매장이 없습니다"
+                description="담당 매장 데이터가 없어서 KPI 랭킹과 AI 분석 리포트를 만들 수 없습니다."
+              />
+            ) : ranked.map((row, idx) => (
               <button 
                 key={row.id} 
                 onClick={() => handleStoreSelect(row.id)}
@@ -141,13 +169,15 @@ export const SvAnalysisPage: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-sm font-bold truncate", selectedStoreId === row.id ? "text-primary" : "text-slate-700")}>{row.name}</p>
                   <div className="mt-1 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={cn("h-full rounded-full transition-all duration-1000", idx === 0 ? "bg-primary" : "bg-slate-300")}
-                      style={{ width: `${((row[selectedKpi] as number) / kpiMax) * 100}%` }}
+                      style={{ width: `${(metricValue(row, selectedKpi) / kpiMax) * 100}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-xs font-black text-slate-900 font-mono">{(row[selectedKpi] as number).toLocaleString()}</span>
+                <span className="text-xs font-black text-slate-900 font-mono">
+                  {row[selectedKpi] == null ? "데이터 없음" : metricValue(row, selectedKpi).toLocaleString()}
+                </span>
               </button>
             ))}
           </div>
@@ -164,7 +194,24 @@ export const SvAnalysisPage: React.FC = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest">AI Pre-Visit Report</span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="rounded-lg bg-white/10 p-2 hover:bg-white/20 transition-all">
+                  <button
+                    onClick={() => {
+                      if (!aiAnalysis) return;
+                      const text = [
+                        `${selectedStoreName} AI 사전 방문 분석`,
+                        ...aiAnalysis.ai_coaching_points.map((point, index) => `${index + 1}. ${point}`),
+                      ].join("\n");
+                      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${selectedStoreName}-sv-analysis.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    disabled={!aiAnalysis}
+                    className="rounded-lg bg-white/10 p-2 hover:bg-white/20 transition-all disabled:opacity-40"
+                  >
                     <Download className="h-4 w-4 text-white" />
                   </button>
                 </div>
@@ -262,10 +309,7 @@ export const SvAnalysisPage: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                  <FileText className="h-16 w-16 mb-4 opacity-20" />
-                  <p className="text-sm font-bold">분석할 매장을 선택해 주세요.</p>
-                </div>
+                <EmptyState title="분석할 매장을 선택해 주세요" description="좌측 KPI 랭킹에서 매장을 선택하면 AI 사전 방문 분석 리포트를 생성합니다." />
               )}
             </div>
           </article>
