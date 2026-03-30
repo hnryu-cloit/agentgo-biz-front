@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { FileText, Download, RefreshCcw, Clock, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssistActionBar } from "@/components/commons/AssistActionBar";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
 import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getReports, generateReport, downloadReport } from "@/services/reports";
 import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 import type { ReportResponse } from "@/types/api";
@@ -21,14 +24,6 @@ type Report = {
   size?: string;
   fileUrl?: string | null;
 };
-
-const initialReports: Report[] = [
-  { id: "cj-r1", type: "daily_owner", title: "일간 점주 리포트 — [CJ]광화문점", period: "2026-02-28", createdAt: "2026-02-28 22:00", status: "ready", size: "248KB" },
-  { id: "cj-r2", type: "weekly_hq", title: "본사 주간 리포트 — 크리스탈제이드 W09", period: "2026-02-22 ~ 2026-02-28", createdAt: "2026-03-01 06:00", status: "ready", size: "1.2MB" },
-  { id: "cj-r3", type: "daily_owner", title: "일간 점주 리포트 — [CJ]소공점", period: "2026-02-28", createdAt: "2026-02-28 22:05", status: "ready", size: "231KB" },
-  { id: "cj-r4", type: "daily_owner", title: "일간 점주 리포트 — [CJ]광화문점 영수증 상세", period: "2026-02-28", createdAt: "2026-02-28 08:00", status: "failed" },
-  { id: "cj-r5", type: "weekly_hq", title: "본사 주간 리포트 — 크리스탈제이드 W08", period: "2026-02-15 ~ 2026-02-21", createdAt: "2026-02-22 06:00", status: "ready", size: "1.1MB" },
-];
 
 const typeLabel: Record<ReportType, string> = {
   daily_owner: "일간 점주",
@@ -62,21 +57,25 @@ export const ReportsPage: React.FC = () => {
   const [filter, setFilter] = useState<ReportType | "전체">("전체");
   const [generating, setGenerating] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
-  const [reportList, setReportList] = useState(initialReports);
+  const [reportList, setReportList] = useState<Report[]>([]);
   const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
   const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     getReports()
       .then((res) => {
         if (!alive) return;
-        setReportList(res.length > 0 ? res.map(apiToReport) : initialReports);
+        setReportList(res.map(apiToReport));
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setReportList(initialReports);
+        setLoadError(error instanceof Error ? error.message : "리포트 목록을 불러오지 못했습니다.");
       });
     getStoreIntelligence("[CJ]광화문점")
       .then((res) => {
@@ -86,11 +85,22 @@ export const ReportsPage: React.FC = () => {
       .catch(() => {
         if (!alive) return;
         setStoreIntelligence(null);
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
       });
     return () => { alive = false; };
   }, []);
 
   const filtered = reportList.filter((r) => filter === "전체" || r.type === filter);
+
+  if (isLoading) {
+    return <LoadingState message="리포트 목록을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="리포트를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   const handleAssist = (
     cardId: string,
@@ -301,6 +311,11 @@ export const ReportsPage: React.FC = () => {
 
       {/* 리포트 목록 */}
       <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="생성된 리포트가 없습니다" description="상단 버튼으로 일간 또는 주간 리포트를 생성할 수 있습니다." />
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead className="border-b border-border bg-gray-50">
@@ -391,6 +406,7 @@ export const ReportsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* 페이지네이션 */}
         <div className="flex items-center justify-between border-t border-border bg-card px-6 py-4">

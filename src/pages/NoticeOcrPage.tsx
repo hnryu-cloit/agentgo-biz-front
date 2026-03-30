@@ -2,7 +2,10 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { ScanLine, Upload, FileText, CheckSquare, Send, Clock, CheckCircle2, AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadNotice, getNotice, distributeNotice, getNotices } from "@/services/hq";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
+import { reprocessOcr, uploadNotice, getNotice, distributeNotice, getNotices } from "@/services/hq";
 import type { NoticeResponse } from "@/types/api";
 
 const steps = ["이미지 업로드", "AI OCR 분석", "체크리스트 확인", "전사 배포"];
@@ -10,22 +13,30 @@ const steps = ["이미지 업로드", "AI OCR 분석", "체크리스트 확인",
 export const NoticeOcrPage: React.FC = () => {
   const [uploaded, setUploaded] = useState(false);
   const [notice, setNotice] = useState<NoticeResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDistributing, setIsDistributing] = useState(false);
+  const [isReprocessing, setIsReprocessing] = useState(false);
   const [checks, setChecks] = useState<number[]>([]);
 
   // 최근 공지 하나 가져오기 (초기 상태용)
   useEffect(() => {
+    setIsLoading(true);
+    setLoadError(null);
     getNotices().then(list => {
       if (list.length > 0) {
         const latest = list[0];
         setNotice(latest);
         setUploaded(true);
         if (latest.checklist) {
-          // 예시로 첫 2개 체크된 상태
-          setChecks(latest.checklist.map((_, i) => i).slice(0, 2));
+          setChecks([]);
         }
       }
+    }).catch((error) => {
+      setLoadError(error instanceof Error ? error.message : "공지 OCR 데이터를 불러오지 못했습니다.");
+    }).finally(() => {
+      setIsLoading(false);
     });
   }, []);
 
@@ -68,9 +79,29 @@ export const NoticeOcrPage: React.FC = () => {
     setChecks((prev) => prev.includes(idx) ? prev.filter((c) => c !== idx) : [...prev, idx]);
   };
 
+  const handleReprocess = async () => {
+    if (!notice) return;
+    setIsReprocessing(true);
+    try {
+      await reprocessOcr(notice.id);
+      const refreshed = await getNotice(notice.id);
+      setNotice(refreshed);
+    } finally {
+      setIsReprocessing(false);
+    }
+  };
+
   const checklistItems = notice?.checklist ?? [];
   const doneCount = checks.length;
   const currentStep = notice?.distributed_at ? 3 : notice?.ocr_status === "completed" ? 2 : notice ? 1 : 0;
+
+  if (isLoading) {
+    return <LoadingState message="공지 OCR 화면을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="공지 OCR 데이터를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -145,10 +176,10 @@ export const NoticeOcrPage: React.FC = () => {
                   <p className="text-[10px] text-muted-foreground mt-0.5">ID: {notice.id.slice(0,8)} · {notice.ocr_status.toUpperCase()}</p>
                 </div>
                 <button
-                  onClick={() => { setUploaded(false); setNotice(null); }}
+                  onClick={() => void handleReprocess()}
                   className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 </button>
               </div>
             ) : (
@@ -286,10 +317,7 @@ export const NoticeOcrPage: React.FC = () => {
                    <p className="text-sm font-medium text-foreground leading-relaxed whitespace-pre-wrap">{notice.summary}</p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center opacity-40">
-                  <FileText className="h-12 w-12 mb-2" />
-                  <p className="text-sm font-medium">분석 결과가 여기에 표시됩니다.</p>
-                </div>
+                <EmptyState title="분석 결과가 없습니다" description="공지 파일을 업로드하면 OCR 결과와 요약이 여기에 표시됩니다." />
               )}
             </div>
 

@@ -2,6 +2,9 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { Store, CheckCircle2, ChevronDown, FileText, Upload, Trash2, Download, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getStores, updateStore } from "@/services/settings";
 
 type StoreFile = {
@@ -32,8 +35,12 @@ const serviceTypes: StoreConfig["serviceType"][] = ["홀", "배달", "테이크�
 
 export const SettingsStoresPage: React.FC = () => {
   const [configs, setConfigs] = useState<StoreConfig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
+    setLoadError(null);
     getStores()
       .then((res) => {
         if (res.length === 0) { setConfigs([]); return; }
@@ -51,7 +58,10 @@ export const SettingsStoresPage: React.FC = () => {
           saved: false,
         })));
       })
-      .catch(() => setConfigs([]));
+      .catch((error) => {
+        setLoadError(error instanceof Error ? error.message : "매장 설정을 불러오지 못했습니다.");
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const toggleExpand = (id: string) => {
@@ -86,6 +96,14 @@ export const SettingsStoresPage: React.FC = () => {
     });
   };
 
+  if (isLoading) {
+    return <LoadingState message="매장 설정을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="매장 설정을 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
@@ -99,6 +117,9 @@ export const SettingsStoresPage: React.FC = () => {
 
       {/* Store List */}
       <div className="space-y-4">
+        {configs.length === 0 && (
+          <EmptyState title="설정할 매장이 없습니다" description="현재 조회 가능한 매장 정보가 없습니다." />
+        )}
         {configs.map((c) => (
           <article key={c.id} className={cn(
             "rounded-2xl border transition-all duration-300 shadow-sm",

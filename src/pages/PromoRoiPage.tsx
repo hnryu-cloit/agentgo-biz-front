@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, BarChart2, Calendar, DollarSign, Sparkles, Target, TrendingUp } from "lucide-react";
 import { getRoiAnalysis, getStoreIntelligence, type RoiMetrics, type StoreIntelligence } from "@/services/analysis";
 import { cn } from "@/lib/utils";
-import { isRoiMetricsEmpty, roiMock } from "@/lib/mockData";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 
 type MetricRow = {
   label: string;
@@ -27,20 +29,25 @@ const emptyMetrics: RoiMetrics = {
 export const PromoRoiPage: React.FC = () => {
   const [roi, setRoi] = useState<RoiMetrics>(emptyMetrics);
   const [storeIntelligence, setStoreIntelligence] = useState<StoreIntelligence | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     Promise.all([
       getRoiAnalysis().catch(() => null),
       getStoreIntelligence("[CJ]광화문점").catch(() => null),
     ]).then(([response, intelligence]) => {
       if (!alive) return;
-      setRoi(!response || isRoiMetricsEmpty(response) ? roiMock : response);
+      if (response) setRoi(response);
       setStoreIntelligence(intelligence);
-    }).catch(() => {
+    }).catch((error) => {
       if (!alive) return;
-      setRoi(roiMock);
-      setStoreIntelligence(null);
+      setLoadError(error instanceof Error ? error.message : "ROI 데이터를 불러오지 못했습니다.");
+    }).finally(() => {
+      if (alive) setIsLoading(false);
     });
     return () => { alive = false; };
   }, []);
@@ -63,6 +70,23 @@ export const PromoRoiPage: React.FC = () => {
       .filter((value): value is string => Boolean(value))
       .join(", ")
     : "";
+
+  if (isLoading) {
+    return <LoadingState message="ROI 분석을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="ROI 데이터를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
+  if (roi.period_label === "데이터 없음" || roi.contributing_factors.length === 0) {
+    return (
+      <EmptyState
+        title="ROI 분석 데이터가 없습니다"
+        description="프로모션 전후 비교에 필요한 매출 데이터가 아직 적재되지 않았습니다."
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pb-10">

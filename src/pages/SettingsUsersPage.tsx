@@ -5,7 +5,10 @@ import {
   Search, Filter, ChevronLeft, ChevronRight, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getUsers, setUserActive } from "@/services/settings";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
+import { createUser, getUsers, setUserActive } from "@/services/settings";
 
 type UserRole = "store_owner" | "supervisor" | "hq_admin" | "marketer";
 
@@ -37,12 +40,24 @@ const roleStyle: Record<UserRole, string> = {
 export const SettingsUsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "store_owner" as UserRole,
+    store_id: "",
+  });
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     getUsers()
       .then((res) => {
-        if (!alive || res.length === 0) return;
+        if (!alive) return;
         setUsers(res.map((u) => ({
           id: u.id,
           name: u.name,
@@ -53,7 +68,13 @@ export const SettingsUsersPage: React.FC = () => {
           active: u.is_active,
         })));
       })
-      .catch(() => {});
+      .catch((error) => {
+        if (!alive) return;
+        setLoadError(error instanceof Error ? error.message : "사용자 목록을 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
+      });
     return () => { alive = false; };
   }, []);
 
@@ -71,6 +92,35 @@ export const SettingsUsersPage: React.FC = () => {
     u.name.includes(search) || u.email.includes(search) || u.department.includes(search) || roleLabel[u.role].includes(search)
   );
 
+  const handleCreateUser = async () => {
+    const created = await createUser({
+      email: newUser.email,
+      name: newUser.name,
+      password: newUser.password,
+      role: newUser.role,
+      store_id: newUser.store_id || undefined,
+    });
+    setUsers((prev) => [{
+      id: created.id,
+      name: created.name,
+      email: created.email,
+      role: created.role as UserRole,
+      department: "",
+      lastLogin: created.updated_at.replace("T", " ").slice(0, 16),
+      active: created.is_active,
+    }, ...prev]);
+    setShowCreateForm(false);
+    setNewUser({ name: "", email: "", password: "", role: "store_owner", store_id: "" });
+  };
+
+  if (isLoading) {
+    return <LoadingState message="사용자 목록을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="사용자 목록을 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
   return (
     <div className="space-y-6 pb-10">
 
@@ -87,12 +137,29 @@ export const SettingsUsersPage: React.FC = () => {
               <p className="mt-0.5 text-sm text-muted-foreground">시스템 접속 계정을 관리하고 직무에 맞는 운영 권한을 부여합니다.</p>
             </div>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1E5BE9] transition-colors">
+          <button onClick={() => setShowCreateForm((prev) => !prev)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1E5BE9] transition-colors">
             <UserPlus className="h-4 w-4" />
             신규 사용자 초대
           </button>
         </div>
       </section>
+
+      {showCreateForm && (
+        <section className="rounded-2xl border border-border/90 bg-card shadow-elevated p-5 md:p-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <input value={newUser.name} onChange={(e) => setNewUser((prev) => ({ ...prev, name: e.target.value }))} placeholder="이름" className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm" />
+            <input value={newUser.email} onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))} placeholder="이메일" className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm" />
+            <input type="password" value={newUser.password} onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))} placeholder="임시 비밀번호" className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm" />
+            <select value={newUser.role} onChange={(e) => setNewUser((prev) => ({ ...prev, role: e.target.value as UserRole }))} className="h-10 rounded-lg border border-[#d5deec] bg-card px-3 text-sm">
+              {Object.entries(roleLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button onClick={() => setShowCreateForm(false)} className="rounded-lg border border-[#d5deec] bg-card px-4 py-2 text-sm">취소</button>
+            <button onClick={() => void handleCreateUser()} disabled={!newUser.name || !newUser.email || !newUser.password} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">생성</button>
+          </div>
+        </section>
+      )}
 
       {/* 테이블 섹션 */}
       <section className="rounded-2xl border border-border/90 bg-card shadow-elevated overflow-hidden">
@@ -120,6 +187,11 @@ export const SettingsUsersPage: React.FC = () => {
         </div>
 
         {/* 테이블 */}
+        {filteredUsers.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="표시할 사용자가 없습니다" description="검색 조건에 맞는 계정이 없거나 아직 사용자가 생성되지 않았습니다." />
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead className="border-b border-border bg-gray-50">
@@ -215,6 +287,7 @@ export const SettingsUsersPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* 페이지네이션 */}
         <div className="flex items-center justify-between border-t border-border bg-card px-6 py-4">

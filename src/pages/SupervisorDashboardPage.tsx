@@ -4,8 +4,10 @@ import { Activity, AlertTriangle, BarChart2, CheckSquare, MapPin, Megaphone, Shi
 import { cn } from "@/lib/utils";
 import { AssistActionBar } from "@/components/commons/AssistActionBar";
 import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { getSvDashboard, getSvStores, type StoreRiskSummary, type SvDashboard } from "@/services/supervisor";
-import { isSupervisorDashboardEmpty, supervisorDashboardMock, supervisorStoresMock } from "@/lib/mockData";
 
 const emptyDashboard: SvDashboard = {
   total_stores: 0,
@@ -23,6 +25,8 @@ function openAiAssist(label: string, prompt: string, contextText?: string, inten
 export const SupervisorDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<SvDashboard>(emptyDashboard);
   const [stores, setStores] = useState<StoreRiskSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<StoreRiskSummary | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
@@ -30,16 +34,20 @@ export const SupervisorDashboardPage: React.FC = () => {
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     Promise.all([getSvDashboard(), getSvStores()])
       .then(([dashboardResponse, storeResponse]) => {
         if (!alive) return;
-        setDashboard(isSupervisorDashboardEmpty(dashboardResponse) ? supervisorDashboardMock : dashboardResponse);
-        setStores(storeResponse.length > 0 ? storeResponse : supervisorStoresMock);
+        setDashboard(dashboardResponse);
+        setStores(storeResponse);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setDashboard(supervisorDashboardMock);
-        setStores(supervisorStoresMock);
+        setLoadError(error instanceof Error ? error.message : "SV 대시보드를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
       });
     return () => {
       alive = false;
@@ -66,6 +74,14 @@ export const SupervisorDashboardPage: React.FC = () => {
   );
 
   const maxSales = Math.max(...stores.map((store) => store.sales_total ?? 0), 1);
+
+  if (isLoading) {
+    return <LoadingState message="SV 대시보드를 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="SV 대시보드를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   const handleOpenReport = (store: StoreRiskSummary) => {
     setSelectedStore(store);
@@ -257,17 +273,24 @@ export const SupervisorDashboardPage: React.FC = () => {
           <h3 className="text-lg font-bold text-slate-900">매장 매출 비교</h3>
         </div>
         <div className="mt-4 space-y-3">
-          {stores.map((store) => (
-            <div key={store.id} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 text-sm font-medium text-slate-700">{store.name}</span>
-              <div className="flex-1">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
-                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(((store.sales_total ?? 0) / maxSales) * 100)}%` }} />
+          {stores.length === 0 ? (
+            <EmptyState
+              title="담당 매장 데이터가 없습니다"
+              description="현재 계정에 연결된 매장 데이터가 없어 비교 보드를 표시할 수 없습니다."
+            />
+          ) : (
+            stores.map((store) => (
+              <div key={store.id} className="flex items-center gap-3">
+                <span className="w-24 shrink-0 text-sm font-medium text-slate-700">{store.name}</span>
+                <div className="flex-1">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCE4F3]">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(((store.sales_total ?? 0) / maxSales) * 100)}%` }} />
+                  </div>
                 </div>
+                <span className="w-28 shrink-0 text-right text-sm font-semibold text-slate-900">{(store.sales_total ?? 0).toLocaleString()}원</span>
               </div>
-              <span className="w-28 shrink-0 text-right text-sm font-semibold text-slate-900">{(store.sales_total ?? 0).toLocaleString()}원</span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

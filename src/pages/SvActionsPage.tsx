@@ -2,6 +2,9 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
 import { escalateAction, getSvActions, getSvStores } from "@/services/supervisor";
 
 type EscalationForm = {
@@ -22,13 +25,18 @@ type ComplianceSummary = {
 export const SvActionsPage: React.FC = () => {
   const [stores, setStores] = useState<Array<{ id: string; name: string }>>([]);
   const [summaries, setSummaries] = useState<ComplianceSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterStore, setFilterStore] = useState("전체");
   const [escForm, setEscForm] = useState<EscalationForm>({ storeId: "", content: "", level: "P0" });
   const [escSent, setEscSent] = useState(false);
+  const [escError, setEscError] = useState<string | null>(null);
   const [showEscModal, setShowEscModal] = useState(false);
 
   useEffect(() => {
     let alive = true;
+    setIsLoading(true);
+    setLoadError(null);
     Promise.all([getSvStores(), getSvActions()])
       .then(([storeResponse, actionResponse]) => {
         if (!alive) return;
@@ -37,10 +45,12 @@ export const SvActionsPage: React.FC = () => {
         setSummaries(actionResponse);
         setEscForm((prev) => ({ ...prev, storeId: prev.storeId || nextStores[0]?.id || "" }));
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setStores([]);
-        setSummaries([]);
+        setLoadError(error instanceof Error ? error.message : "SV 액션 현황을 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
       });
     return () => {
       alive = false;
@@ -64,8 +74,16 @@ export const SvActionsPage: React.FC = () => {
 
   const handleEsc = async () => {
     if (!escForm.content.trim()) return;
+    setEscError(null);
     try {
-      await escalateAction(escForm.storeId, {
+      const targetSummary = summaries.find((summary) => summary.store_id === escForm.storeId);
+      const actionRef = targetSummary?.store_id;
+      if (!actionRef) {
+        setEscError("에스컬레이션할 대상 액션 기준 데이터가 없습니다.");
+        return;
+      }
+
+      await escalateAction(actionRef, {
         store_id: escForm.storeId,
         title: `[${escForm.level}] 현장 리스크 보고`,
         description: escForm.content,
@@ -77,10 +95,19 @@ export const SvActionsPage: React.FC = () => {
         setEscSent(false);
         setEscForm((current) => ({ ...current, content: "" }));
       }, 1500);
-    } catch {
+    } catch (error) {
       setEscSent(false);
+      setEscError(error instanceof Error ? error.message : "에스컬레이션 전송에 실패했습니다.");
     }
   };
+
+  if (isLoading) {
+    return <LoadingState message="SV 액션 현황을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="SV 액션 현황을 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
 
   return (
     <>
@@ -111,7 +138,9 @@ export const SvActionsPage: React.FC = () => {
           </div>
 
           <div className="space-y-5">
-            {rateByStore.map((rate) => (
+            {rateByStore.length === 0 ? (
+              <EmptyState title="액션 이행률 데이터가 없습니다" description="담당 매장의 액션 집계가 아직 생성되지 않았습니다." />
+            ) : rateByStore.map((rate) => (
               <div key={rate.name} className="group flex items-center gap-4">
                 <span className="w-20 shrink-0 text-sm font-bold text-[#34415b]">{rate.name}</span>
                 <div className="flex-1">
@@ -168,6 +197,9 @@ export const SvActionsPage: React.FC = () => {
             </div>
           </div>
 
+          {filtered.length === 0 ? (
+            <EmptyState title="표시할 액션 이행 현황이 없습니다" description="선택한 조건에 맞는 매장 액션 집계가 없습니다." />
+          ) : (
           <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="bg-[#f4f7ff] text-[#4a5568]">
@@ -218,6 +250,7 @@ export const SvActionsPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       </div>
 
@@ -272,6 +305,12 @@ export const SvActionsPage: React.FC = () => {
               <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <p className="text-sm text-emerald-700">본사에 에스컬레이션 보고가 전송되었습니다.</p>
+              </div>
+            )}
+
+            {escError && (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                {escError}
               </div>
             )}
 

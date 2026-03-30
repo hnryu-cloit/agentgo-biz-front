@@ -8,12 +8,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInToken | null>(null);
   const [isLoading, setIsLoading] = useState(() => Boolean(authStorage.getAccessToken()));
 
-  // 앱 마운트 시 토큰이 있으면 유저 정보 복원
   useEffect(() => {
     const token = authStorage.getAccessToken();
     if (!token) {
+      setIsLoading(false);
       return;
     }
+
     getMe()
       .then((me) => {
         setUser({
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         authStorage.clear();
+        setUser(null);
       })
       .finally(() => setIsLoading(false));
   }, []);

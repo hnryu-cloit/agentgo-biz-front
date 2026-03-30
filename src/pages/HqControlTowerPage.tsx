@@ -22,11 +22,13 @@ import {
 import { cn } from "@/lib/utils";
 import { AssistActionBar } from "@/components/commons/AssistActionBar";
 import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
-import { getAgentStatuses, getAlerts, getControlTowerOverview } from "@/services/hq";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
+import { getAgentStatuses, getAgentSystemStatus, getAlerts, getControlTowerOverview, runWorkflow } from "@/services/hq";
 import { getUploadJobs } from "@/services/data";
 import { getStoreIntelligence, type StoreIntelligence } from "@/services/analysis";
 import type { AlertResponse, UploadJobResponse } from "@/types/api";
-import { alertsMock, controlTowerOverviewMock, uploadJobsMock } from "@/lib/mockData";
 
 type TabKey = "agents" | "workflows" | "data" | "risk";
 
@@ -55,12 +57,6 @@ type WorkflowRun = {
   duration?: string;
   startedAt: string;
 };
-
-const workflowRuns: WorkflowRun[] = [
-  { id: "w1", name: "[CJ]광화문점 매출 하락 분석 → 객수 회복 액션 제안", stage: "실행", status: "completed", store: "[CJ]광화문점", duration: "2분 14초", startedAt: "21:32" },
-  { id: "w2", name: "크리스탈제이드 재방문 고객 분석 → 점심 쿠폰 전략", stage: "전략", status: "running", store: "크리스탈제이드", startedAt: "18:05" },
-  { id: "w3", name: "[CJ]소공점 취소율 점검 → 원인 분류", stage: "분석", status: "failed", store: "[CJ]소공점", duration: "48초", startedAt: "07:57" },
-];
 
 const regions = [
   { label: "수도권 CJ", status: "광화문·소공·용산 운영 중", pct: 101 },
@@ -95,51 +91,86 @@ export const HqControlTowerPage: React.FC = () => {
   const [uploadJobs, setUploadJobs] = useState<UploadJobResponse[]>([]);
   const [alerts, setAlerts] = useState<AlertResponse[]>([]);
   const [flagshipIntelligence, setFlagshipIntelligence] = useState<StoreIntelligence | null>(null);
+  const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
+  const [agentSystemStatus, setAgentSystemStatus] = useState<Record<string, unknown> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isRunningWorkflow, setIsRunningWorkflow] = useState(false);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
   const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
-    getControlTowerOverview().then((response) => {
-      if (!alive) return;
-      setOverview(response);
-    }).catch(() => {
-      if (!alive) return;
-      setOverview(controlTowerOverviewMock);
-    });
-    
-    getAgentStatuses().then((response) => {
-      if (!alive || response.length === 0) return;
-      setAgents(response.map((agent) => ({
-        id: agent.id,
-        name: agent.display_name,
-        health: Math.max(0, Math.round(100 - (agent.error_rate * 100))),
-        lastRun: agent.last_heartbeat ?? "N/A",
-        dailyTasks: 0,
-        status: agent.status === "healthy" ? "정상" : agent.status === "degraded" ? "주의" : "장애",
-        type: agent.agent_name,
-      })));
-    }).catch(() => undefined);
-
-    // 추가 데이터 로드
-    getUploadJobs().then((jobs) => {
-      if (alive) setUploadJobs(jobs.length > 0 ? jobs.slice(0, 5) : uploadJobsMock);
-    }).catch(() => {
-      if (alive) setUploadJobs(uploadJobsMock);
-    });
-    getAlerts().then((list) => {
-      if (alive) setAlerts(list.length > 0 ? list.slice(0, 5) : alertsMock);
-    }).catch(() => {
-      if (alive) setAlerts(alertsMock);
-    });
-    getStoreIntelligence("[CJ]광화문점").then((res) => {
-      if (alive) setFlagshipIntelligence(res);
-    }).catch(() => {
-      if (alive) setFlagshipIntelligence(null);
-    });
+    setIsLoading(true);
+    setLoadError(null);
+    Promise.all([
+      getControlTowerOverview(),
+      getAgentStatuses(),
+      getUploadJobs(),
+      getAlerts(),
+      getStoreIntelligence("[CJ]광화문점").catch(() => null),
+      getAgentSystemStatus().catch(() => null),
+    ])
+      .then(([overviewResponse, agentResponse, jobs, alertList, intelligence, systemStatus]) => {
+        if (!alive) return;
+        setOverview(overviewResponse);
+        setUploadJobs(jobs.slice(0, 5));
+        setAlerts(alertList.slice(0, 5));
+        setFlagshipIntelligence(intelligence);
+        setAgentSystemStatus(systemStatus);
+        setAgents(
+          agentResponse.map((agent) => ({
+            id: agent.id,
+            name: agent.display_name,
+            health: Math.max(0, Math.round(100 - (agent.error_rate * 100))),
+            lastRun: agent.last_heartbeat ?? "N/A",
+            dailyTasks: 0,
+            status: agent.status === "healthy" ? "정상" : agent.status === "degraded" ? "주의" : "장애",
+            type: agent.agent_name,
+          })),
+        );
+      })
+      .catch((error) => {
+        if (!alive) return;
+        setLoadError(error instanceof Error ? error.message : "본사 관제 데이터를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
+      });
 
     return () => { alive = false; };
   }, []);
+
+  const handleRunWorkflow = async () => {
+    setIsRunningWorkflow(true);
+    try {
+      const response = await runWorkflow({
+        workflow_name: "hq_control_tower_run",
+        params: { dry_run: false },
+      });
+      const run = response as {
+        workflow_id?: string;
+        workflow_name?: string;
+        status?: "completed" | "running" | "failed" | "pending";
+        store_id?: string | null;
+        triggered_at?: string;
+      };
+      const startedAt = run.triggered_at ? new Date(run.triggered_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "지금";
+      setWorkflowRuns((current) => [
+        {
+          id: run.workflow_id ?? crypto.randomUUID(),
+          name: run.workflow_name ?? "전사 워크플로우 실행",
+          stage: "실행",
+          status: run.status ?? "completed",
+          store: run.store_id ?? "전사",
+          startedAt,
+        },
+        ...current,
+      ]);
+    } finally {
+      setIsRunningWorkflow(false);
+    }
+  };
 
   const handleAssist = (
     cardId: string,
@@ -162,6 +193,14 @@ export const HqControlTowerPage: React.FC = () => {
     openAiAssist(label, prompt, contextText, intent);
   };
 
+  if (isLoading) {
+    return <LoadingState message="본사 관제 데이터를 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="본사 관제 데이터를 불러올 수 없습니다" message={loadError} onRetry={() => window.location.reload()} />;
+  }
+
   return (
     <div className="space-y-6 pb-10">
 
@@ -182,9 +221,13 @@ export const HqControlTowerPage: React.FC = () => {
               <div className="live-point" />
               <span className="text-xs font-semibold text-emerald-600">시스템 정상</span>
             </div>
-            <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm">
+            <button
+              onClick={handleRunWorkflow}
+              disabled={isRunningWorkflow}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E5BE9] shadow-sm disabled:opacity-60"
+            >
               <Play className="h-4 w-4 fill-current" />
-              전사 워크플로우 실행
+              {isRunningWorkflow ? "실행 중..." : "전사 워크플로우 실행"}
             </button>
           </div>
         </div>
@@ -387,31 +430,38 @@ export const HqControlTowerPage: React.FC = () => {
           )}
 
           {tab === "workflows" && (
-            <div className="space-y-3">
-              {workflowRuns.map((wf) => (
-                <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 hover:border-[#b8ccff] hover:bg-[#eef3ff] transition-all group">
-                  <div className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                    wf.status === "running" ? "bg-primary/10" : wf.status === "completed" ? "bg-emerald-50" : "bg-red-50"
-                  )}>
-                    {wf.status === "running" ? <RotateCcw className="h-5 w-5 text-primary animate-spin" /> :
-                     wf.status === "completed" ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> :
-                     <TriangleAlert className="h-5 w-5 text-red-500" />}
+            workflowRuns.length === 0 ? (
+              <EmptyState
+                title="아직 실행된 워크플로우가 없습니다"
+                description="상단의 전사 워크플로우 실행 버튼으로 분석 파이프라인을 시작할 수 있습니다."
+              />
+            ) : (
+              <div className="space-y-3">
+                {workflowRuns.map((wf) => (
+                  <div key={wf.id} className="flex items-center gap-4 rounded-xl border border-[#d5deec] bg-[#f4f7ff] p-4 hover:border-[#b8ccff] hover:bg-[#eef3ff] transition-all group">
+                    <div className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                      wf.status === "running" ? "bg-primary/10" : wf.status === "completed" ? "bg-emerald-50" : "bg-red-50"
+                    )}>
+                      {wf.status === "running" ? <RotateCcw className="h-5 w-5 text-primary animate-spin" /> :
+                       wf.status === "completed" ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> :
+                       <TriangleAlert className="h-5 w-5 text-red-500" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{wf.name}</p>
+                      <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Building2 className="h-3 w-3" />
+                        {wf.store} · {wf.startedAt} 시작{wf.duration && ` · 소요 ${wf.duration}`}
+                      </p>
+                    </div>
+                    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">{wf.stage} 단계</span>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground">
+                      <Settings2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{wf.name}</p>
-                    <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Building2 className="h-3 w-3" />
-                      {wf.store} · {wf.startedAt} 시작{wf.duration && ` · 소요 ${wf.duration}`}
-                    </p>
-                  </div>
-                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">{wf.stage} 단계</span>
-                  <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#d5deec] bg-card text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground">
-                    <Settings2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
 
           {tab === "data" && (
@@ -440,9 +490,9 @@ export const HqControlTowerPage: React.FC = () => {
                   <Database className="h-8 w-8 text-primary opacity-20" />
                   <p className="text-sm font-semibold text-foreground">데이터 관리 센터</p>
                   <p className="text-xs text-muted-foreground">모든 가맹점의 Raw 데이터 정규화 상태를 관리합니다.</p>
-                  <button className="mt-2 rounded-lg border border-[#d5deec] bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-[#eef3ff]">
+                  <a href="/data/upload" className="mt-2 rounded-lg border border-[#d5deec] bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-[#eef3ff]">
                     상세 내역 보기
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -614,6 +664,14 @@ export const HqControlTowerPage: React.FC = () => {
                 )}>{node.status}</span>
               </div>
             ))}
+            {agentSystemStatus && (
+              <div className="rounded-xl border border-[#d5deec] bg-[#f4f7ff] px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">리소스 헬스</p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  최신 매출일 {(agentSystemStatus.resource_health as { latest_sales_date?: string | null } | undefined)?.latest_sales_date ?? "-"}
+                </p>
+              </div>
+            )}
           </div>
           <button className="mt-4 w-full rounded-lg border border-[#d5deec] bg-card px-4 py-2.5 text-sm font-medium text-[#34415b] hover:bg-[#f4f7ff] transition-colors">
             시스템 로그 보기

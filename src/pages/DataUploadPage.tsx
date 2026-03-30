@@ -3,9 +3,11 @@ import { FileText, RefreshCcw, Upload, Loader2, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssistActionBar } from "@/components/commons/AssistActionBar";
 import { InlineAssistPanel } from "@/components/commons/InlineAssistPanel";
-import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob, importResourceDataset } from "@/services/data";
+import { EmptyState } from "@/components/commons/EmptyState";
+import { ErrorState } from "@/components/commons/ErrorState";
+import { LoadingState } from "@/components/commons/LoadingState";
+import { getResourceCatalog, getResourceDataset, getUploadJobs, retryUploadJob, importResourceDataset, uploadDataFile, confirmDataMapping } from "@/services/data";
 import type { DataType, ResourceSourceCatalog, UploadJobResponse } from "@/types/api";
-import { resourceCatalogMock, resourceDatasetPreviewMock, uploadJobsMock } from "@/lib/mockData";
 
 type ResourceType = Extract<DataType, "pos_daily_sales" | "bo_point_usage" | "receipt_listing" | "menu_lineup">;
 
@@ -28,23 +30,35 @@ export const DataUploadPage = () => {
   const [selectedStore, setSelectedStore] = useState("");
   const [preview, setPreview] = useState<{ headers: string[]; rows: Record<string, unknown>[] } | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadJobResponse[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mappingPeriodStart, setMappingPeriodStart] = useState("");
+  const [mappingPeriodEnd, setMappingPeriodEnd] = useState("");
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedAssistCard, setSelectedAssistCard] = useState<string | null>(null);
   const [inlineAssist, setInlineAssist] = useState<{ cardId: string; title: string; why: string; actionLabel: string } | null>(null);
 
   const loadData = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(null);
     Promise.all([getResourceCatalog(), getUploadJobs()])
       .then(([catalog, jobs]) => {
-        setSources(catalog.sources.length > 0 ? catalog.sources : resourceCatalogMock);
-        setUploadHistory(jobs.length > 0 ? jobs : uploadJobsMock);
-        if (catalog.sources.length > 0 && !selectedType) {
+        setSources(catalog.sources);
+        setUploadHistory(jobs);
+        if (catalog.sources.length > 0 && !catalog.sources.some((source) => source.source_kind === selectedType)) {
           setSelectedType(catalog.sources[0].source_kind as ResourceType);
         }
       })
-      .catch(() => {
-        setSources(resourceCatalogMock);
-        setUploadHistory(uploadJobsMock);
+      .catch((error) => {
+        setLoadError(error instanceof Error ? error.message : "데이터 업로드 정보를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [selectedType]);
 
@@ -73,17 +87,20 @@ export const DataUploadPage = () => {
   useEffect(() => {
     if (!selectedStore) {
       setPreview(null);
+      setPreviewError(null);
       return;
     }
     let alive = true;
+    setPreviewError(null);
     getResourceDataset(selectedType, selectedStore, 10)
       .then((dataset) => {
         if (!alive) return;
-        setPreview(dataset.rows.length > 0 ? { headers: dataset.headers, rows: dataset.rows } : resourceDatasetPreviewMock);
+        setPreview(dataset.rows.length > 0 ? { headers: dataset.headers, rows: dataset.rows } : null);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
-        setPreview(resourceDatasetPreviewMock);
+        setPreview(null);
+        setPreviewError(error instanceof Error ? error.message : "미리보기를 불러오지 못했습니다.");
       });
     return () => {
       alive = false;
@@ -100,8 +117,35 @@ export const DataUploadPage = () => {
     try {
       const updated = await retryUploadJob(jobId);
       setUploadHistory((current) => current.map((row) => (row.id === jobId ? updated : row)));
+      setStatusMessage("실패한 업로드 작업을 재시도 상태로 변경했습니다.");
     } finally {
       setRetryingJobId(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedStore) return;
+    setIsUploading(true);
+    setStatusMessage(null);
+    try {
+      const created = await uploadDataFile(selectedFile, selectedType, selectedStore);
+      if (mappingPeriodStart || mappingPeriodEnd) {
+        await confirmDataMapping({
+          job_id: created.job_id,
+          store_id: selectedStore,
+          period_start: mappingPeriodStart || undefined,
+          period_end: mappingPeriodEnd || undefined,
+        });
+      }
+      setSelectedFile(null);
+      setMappingPeriodStart("");
+      setMappingPeriodEnd("");
+      setStatusMessage("파일 업로드를 시작했습니다. 업로드 이력에서 처리 상태를 확인할 수 있습니다.");
+      loadData();
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "파일 업로드에 실패했습니다.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -125,6 +169,14 @@ export const DataUploadPage = () => {
     });
     openAiAssist(label, prompt, contextText, intent);
   };
+
+  if (isLoading) {
+    return <LoadingState message="데이터 업로드 화면을 불러오는 중..." />;
+  }
+
+  if (loadError) {
+    return <ErrorState title="데이터 업로드 정보를 불러올 수 없습니다" message={loadError} onRetry={loadData} />;
+  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -174,6 +226,44 @@ export const DataUploadPage = () => {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div>
+            <div className="mb-4 rounded-xl border border-[#DCE4F3] bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-slate-800">신규 파일 업로드</p>
+              <p className="mt-1 text-xs text-slate-500">CSV 또는 XLSX 파일을 업로드하면 백엔드 업로드 파이프라인 작업이 생성됩니다.</p>
+              <div className="mt-4 space-y-3">
+                <input
+                  type="file"
+                  accept=".csv,.xlsx"
+                  onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#EEF4FF] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary"
+                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input
+                    type="date"
+                    value={mappingPeriodStart}
+                    onChange={(event) => setMappingPeriodStart(event.target.value)}
+                    className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
+                  />
+                  <input
+                    type="date"
+                    value={mappingPeriodEnd}
+                    onChange={(event) => setMappingPeriodEnd(event.target.value)}
+                    className="h-10 rounded-lg border border-[#D6E0F0] bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-primary/50"
+                  />
+                </div>
+                <button
+                  onClick={handleUpload}
+                  disabled={!selectedFile || !selectedStore || isUploading}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#1E5BE9] disabled:opacity-50"
+                >
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {isUploading ? "업로드 중..." : "파일 업로드"}
+                </button>
+                {statusMessage && (
+                  <p className="text-xs font-medium text-slate-600">{statusMessage}</p>
+                )}
+              </div>
+            </div>
+
             <div
               className={cn(
                 "rounded-xl border-2 border-dashed p-8 text-center transition-all",
@@ -283,6 +373,13 @@ export const DataUploadPage = () => {
                   </tbody>
                 </table>
               </div>
+            ) : previewError ? (
+              <ErrorState title="미리보기를 불러올 수 없습니다" message={previewError} onRetry={loadData} />
+            ) : (activeSource?.stores.length ?? 0) === 0 ? (
+              <EmptyState
+                title="선택한 리소스에 적재된 매장이 없습니다"
+                description="먼저 리소스 import 또는 파일 업로드를 수행한 뒤 다시 확인해 주세요."
+              />
             ) : (
               <div className="flex h-48 items-center justify-center rounded-lg border border-[#DCE4F3] bg-white text-sm text-slate-400 shadow-inner">
                 선택된 리소스가 없습니다
