@@ -1,5 +1,6 @@
 import type React from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/useAuth";
 import Logo from "@/assets/logo.svg";
@@ -20,39 +21,28 @@ type MenuSection = {
 
 const menuSections: MenuSection[] = [
   {
-    items: [
-      { to: "/", label: "홈", icon: "home" },
-    ],
-  },
-  {
     section: "점주",
-    roles: ["store_owner", "supervisor", "hq_admin"],
+    roles: ["store_owner"],
     items: [
       { to: "/owner/dashboard", label: "점주 홈", icon: "storefront" },
       { to: "/owner/labor", label: "인력 최적화", icon: "group" },
       { to: "/owner/stock-take", label: "재고 실사 관리", icon: "inventory_2" },
-    ],
-  },
-  {
-    section: "마케팅",
-    roles: ["marketer", "hq_admin"],
-    items: [
-      { to: "/marketing/campaigns", label: "캠페인 설계", icon: "campaign" },
-      { to: "/marketing/rfm", label: "고객 세그먼트", icon: "group" },
-      { to: "/marketing/performance", label: "캠페인 성과", icon: "bar_chart" },
-    ],
-  },
-  {
-    section: "분석",
-    roles: ["store_owner", "supervisor", "hq_admin", "marketer"],
-    items: [
-      { to: "/analysis/roi", label: "프로모션 ROI", icon: "trending_up" },
       { to: "/analysis/benchmark", label: "매장 벤치마크", icon: "leaderboard" },
     ],
   },
   {
+    section: "마케팅",
+    roles: ["marketer"],
+    items: [
+      { to: "/marketing/campaigns", label: "캠페인 설계", icon: "campaign" },
+      { to: "/marketing/rfm", label: "고객 세그먼트", icon: "group" },
+      { to: "/marketing/performance", label: "캠페인 성과", icon: "bar_chart" },
+      { to: "/analysis/roi", label: "프로모션 ROI", icon: "trending_up" },
+    ],
+  },
+  {
     section: "SV",
-    roles: ["supervisor", "hq_admin"],
+    roles: ["supervisor"],
     items: [
       { to: "/supervisor/dashboard", label: "SV 홈", icon: "analytics" },
       { to: "/supervisor/analysis", label: "SV 분석", icon: "compare" },
@@ -71,7 +61,7 @@ const menuSections: MenuSection[] = [
   },
   {
     section: "리포트 / 설정",
-    roles: ["hq_admin", "supervisor"],
+    roles: ["hq_admin"],
     items: [
       { to: "/reports", label: "리포트", icon: "description" },
       { to: "/settings/users", label: "사용자 관리", icon: "manage_accounts" },
@@ -97,27 +87,33 @@ const roleConfig: Record<string, { label: string; icon: string }> = {
 
 export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
-  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   // 유저 역할이 정의되지 않은 경우 기본값으로 가맹점주 설정
   const currentRole = (user?.role as Role) || "store_owner";
-
-  const handleRoleChange = (newRole: Role) => {
-    if (!user) return;
-    
-    // 1. AuthContext 업데이트 (App.tsx 라우팅 및 Sidebar 메뉴 즉시 반영)
-    setUser({
-      ...user,
-      role: newRole,
-      // 점주일 때만 데모 매장 ID 할당, 나머지는 null (본사/SV는 전역 관점)
-      store_id: newRole === "store_owner" ? "demo-store" : null,
-    });
-    
-    // 2. LocalStorage 업데이트 (새로고침 시 유지용 - auth.ts의 BYPASS_ROLE_KEY와 일치)
-    localStorage.setItem("bypassUserRole", newRole);
+  const homePathByRole: Record<Role, string> = {
+    store_owner: "/owner/dashboard",
+    supervisor: "/supervisor/dashboard",
+    hq_admin: "/hq/control-tower",
+    marketer: "/marketing/rfm",
   };
 
-  const visibleSections = menuSections.filter(
+  const homeSection: MenuSection = {
+    items: [
+      { to: homePathByRole[currentRole], label: "홈", icon: "home" },
+    ],
+  };
+
+  const handleRoleChange = (newRole: Role) => {
+    if (!user || user.role === newRole) return;
+
+    localStorage.setItem("preferredLoginRole", newRole);
+    signOut();
+    navigate("/login", { replace: true });
+  };
+
+  const visibleSections = [homeSection, ...menuSections].filter(
     (s) => !s.roles || s.roles.includes(currentRole)
   );
 
