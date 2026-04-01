@@ -106,11 +106,16 @@ src/
 
 ## Feature List
 
-기능 명세는 아래 CSV로 관리합니다.
+현재 코드 기준의 실구현 기능 인벤토리를 점검했고, 기존 CSV 목록은 정리했습니다.
 
-- `feature list/agentgo_biz_front.csv`
-- `feature list/agentgo_biz_backend.csv`
-- `feature list/agentgo_biz_ai.csv`
+정리 기준:
+- 프론트: 실제 라우트와 `src/services/*`
+- 백엔드: `app/api/v1/endpoints/*`
+- AI: `app/api/v1/endpoints/ai.py` 및 현재 연결된 서비스 계층
+
+상태 기준:
+- `완료`: 코드상 화면/라우트/API가 연결되어 바로 사용 가능한 항목
+- `진행중`: 화면 또는 API는 있으나 mock fallback, 부분 구현, 후속 연결이 남은 항목
 
 컬럼 구조:
 `대분류,중분류,소분류,기능,설명,작업상태,우선순위,전제조건,인수조건`
